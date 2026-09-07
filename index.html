@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planificateur Multi-Plateformes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen p-4 md:p-8 font-sans">
+
+    <div class="max-w-5xl mx-auto space-y-6">
+        
+        <header class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold bg-gradient-to-r from-red-500 via-purple-500 to-blue-500 bg-clip-text text-transparent">
+                        Hub de Publication Vidéo
+                    </h1>
+                    <p class="text-slate-400 text-sm mt-1">Calculez et synchronisez vos fenêtres de tir algorithmiques.</p>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Titre de la vidéo (Optionnel)</label>
+                        <input type="text" id="videoTitle" placeholder="Ex: 5 Astuces Utiles..." 
+                               class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Date YouTube (J0)</label>
+                        <input type="date" id="launchDate" 
+                               class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap gap-3 mt-6 pt-4 border-t border-slate-800 justify-end">
+                <button onclick="copyPlanningText()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-sm font-medium transition flex items-center gap-2">
+                    <i class="fa-regular fa-copy"></i> Copier le résumé texte
+                </button>
+                <button onclick="exportICalendar()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium transition flex items-center gap-2 shadow-lg shadow-indigo-900/40">
+                    <i class="fa-regular fa-calendar-plus"></i> Exporter vers iCal / Google Cal
+                </button>
+            </div>
+        </header>
+
+        <div id="scheduleGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            </div>
+
+    </div>
+
+    <script>
+        const platformsConfig = [
+            {
+                id: 'yt',
+                name: 'YouTube Shorts',
+                icon: 'fa-brands fa-youtube',
+                color: 'from-red-600/20 to-red-900/10 border-red-500/40',
+                badgeColor: 'bg-red-500/20 text-red-400 border-red-500/30',
+                dayOffset: 0,
+                timeSlot: '16h00 - 17h00',
+                startTime: '16:00',
+                endTime: '17:00',
+                kpi: 'Taux de clic (CTR) & Abonnés gagnés',
+                strategy: 'Point de départ. Publier en fin d\'après-midi pour capter l\'Europe et l\'amorce du trafic US. Optimiser la miniature et le titre.'
+            },
+            {
+                id: 'pin',
+                name: 'Pinterest (Pin YT)',
+                icon: 'fa-brands fa-pinterest',
+                color: 'from-rose-600/20 to-rose-900/10 border-rose-500/40',
+                badgeColor: 'bg-rose-500/20 text-rose-400 border-rose-500/30',
+                dayOffset: 0,
+                timeSlot: '18h00 - 20h00',
+                startTime: '18:00',
+                endTime: '20:00',
+                kpi: 'Sauvegardes (Saves) & Trafic sortant',
+                strategy: 'Créer une épingle (Pin) avec une image forte ou un extrait de 5s, avec un lien direct vers le Short YouTube. Favorise le SEO de long terme.'
+            },
+            {
+                id: 'fb',
+                name: 'Facebook Reels',
+                icon: 'fa-brands fa-facebook',
+                color: 'from-blue-600/20 to-blue-900/10 border-blue-500/40',
+                badgeColor: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+                dayOffset: 1,
+                timeSlot: '11h30 - 13h30',
+                startTime: '11:30',
+                endTime: '13:30',
+                kpi: 'Commentaires & Temps de visionnage',
+                strategy: 'Décalage de ~20h avec YT. L\'audience se connecte sur la pause déjeuner. Poser une question en description pour générer des commentaires.'
+            },
+            {
+                id: 'ig',
+                name: 'Instagram Reels',
+                icon: 'fa-brands fa-instagram',
+                color: 'from-fuchsia-600/20 to-fuchsia-900/10 border-fuchsia-500/40',
+                badgeColor: 'bg-fuchsia-500/20 text-fuchsia-400 border-fuchsia-500/30',
+                dayOffset: 1,
+                timeSlot: '18h30 - 20h30',
+                startTime: '18:30',
+                endTime: '20:30',
+                kpi: 'Partages en DM & Enregistrements',
+                strategy: 'Décalage de ~6h avec Facebook. Usage "détente" du soir. Texte accrocheur à l\'écran, hashtags de tendance.'
+            }
+        ];
+
+        // Définir la date par défaut sur aujourd'hui
+        const dateInput = document.getElementById('launchDate');
+        dateInput.value = new Date().toISOString().split('T')[0];
+
+        function formatDate(dateObj) {
+            return dateObj.toLocaleDateString('fr-FR', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
+        }
+
+        function calculateSchedule() {
+            const baseDateVal = dateInput.value;
+            if (!baseDateVal) return [];
+
+            const baseDate = new Date(baseDateVal + 'T00:00:00');
+
+            return platformsConfig.map(p => {
+                const targetDate = new Date(baseDate);
+                targetDate.setDate(baseDate.getDate() + p.dayOffset);
+                return {
+                    ...p,
+                    computedDate: targetDate,
+                    formattedDateStr: formatDate(targetDate)
+                };
+            });
+        }
+
+        function renderGrid() {
+            const schedule = calculateSchedule();
+            const gridContainer = document.getElementById('scheduleGrid');
+            gridContainer.innerHTML = '';
+
+            schedule.forEach((item) => {
+                const dayLabel = item.dayOffset === 0 ? 'Jour 1 (J0)' : 'Jour 2 (J+1)';
+                
+                const cardHtml = `
+                    <div class="bg-gradient-to-br ${item.color} border bg-slate-900/80 rounded-xl p-5 shadow-lg flex flex-col justify-between space-y-4 relative overflow-hidden">
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center gap-3">
+                                    <i class="${item.icon} text-2xl text-slate-200"></i>
+                                    <h3 class="font-bold text-lg text-white">${item.name}</h3>
+                                </div>
+                                <span class="text-xs font-semibold px-2.5 py-1 rounded-full border ${item.badgeColor}">
+                                    ${dayLabel}
+                                </span>
+                            </div>
+
+                            <div class="bg-slate-950/60 rounded-lg p-3 border border-slate-800/80 space-y-1 mb-4">
+                                <div class="text-sm font-semibold text-slate-200 capitalize">
+                                    <i class="fa-regular fa-calendar text-indigo-400 mr-2"></i>${item.formattedDateStr}
+                                </div>
+                                <div class="text-sm font-semibold text-emerald-400">
+                                    <i class="fa-regular fa-clock text-emerald-400 mr-2"></i>Créneau : ${item.timeSlot}
+                                </div>
+                            </div>
+
+                            <div class="space-y-2 text-xs">
+                                <div>
+                                    <span class="text-slate-400 font-semibold block">KPI Clé (Focus) :</span>
+                                    <span class="text-slate-200 font-medium">${item.kpi}</span>
+                                </div>
+                                <div>
+                                    <span class="text-slate-400 font-semibold block">Action stratégique :</span>
+                                    <p class="text-slate-300 leading-relaxed">${item.strategy}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pt-3 border-t border-slate-800/60 flex items-center justify-between text-xs">
+                            <span class="text-slate-400">Statut :</span>
+                            <select onchange="saveStatus('${item.id}', this.value)" id="status-${item.id}" class="bg-slate-950 text-slate-200 border border-slate-700 rounded px-2 py-1 text-xs focus:outline-none">
+                                <option value="todo">⏳ À planifier</option>
+                                <option value="scheduled">📅 Programmé</option>
+                                <option value="done">✅ Publié</option>
+                            </select>
+                        </div>
+                    </div>
+                `;
+                gridContainer.innerHTML += cardHtml;
+            });
+
+            loadStatuses();
+        }
+
+        function saveStatus(id, value) {
+            localStorage.setItem('pub_status_' + id + '_' + dateInput.value, value);
+        }
+
+        function loadStatuses() {
+            platformsConfig.forEach(p => {
+                const saved = localStorage.getItem('pub_status_' + p.id + '_' + dateInput.value);
+                const select = document.getElementById(`status-${p.id}`);
+                if (saved && select) select.value = saved;
+            });
+        }
+
+        function copyPlanningText() {
+            const schedule = calculateSchedule();
+            const videoTitle = document.getElementById('videoTitle').value || 'Vidéo Sans Titre';
+            
+            let text = `📌 PLANNING DE PUBLICATION : ${videoTitle}\n\n`;
+            schedule.forEach(s => {
+                text += `• ${s.name} (${s.dayOffset === 0 ? 'J0' : 'J+1'}) :\n`;
+                text += `  🗓 Date: ${s.formattedDateStr}\n`;
+                text += `  ⏰ Heure: ${s.timeSlot}\n`;
+                text += `  🎯 KPI: ${s.kpi}\n`;
+                text += `  💡 Action: ${s.strategy}\n\n`;
+            });
+
+            navigator.clipboard.writeText(text);
+            alert("Planning copié dans le presse-papier !");
+        }
+
+        function exportICalendar() {
+            const schedule = calculateSchedule();
+            const videoTitle = document.getElementById('videoTitle').value || 'Publication Vidéo';
+
+            let icsContent = [
+                'BEGIN:VCALENDAR',
+                'VERSION:2.0',
+                'PRODID:-//Hub Publication Multi-Plateformes//FR'
+            ];
+
+            schedule.forEach(item => {
+                const year = item.computedDate.getFullYear();
+                const month = String(item.computedDate.getMonth() + 1).padStart(2, '0');
+                const day = String(item.computedDate.getDate()).padStart(2, '0');
+
+                const [startH, startM] = item.startTime.split(':');
+                const [endH, endM] = item.endTime.split(':');
+
+                const dtStart = `${year}${month}${day}T${startH}${startM}00`;
+                const dtEnd = `${year}${month}${day}T${endH}${endM}00`;
+
+                icsContent.push('BEGIN:VEVENT');
+                icsContent.push(`SUMMARY:[${item.name}] ${videoTitle}`);
+                icsContent.push(`DESCRIPTION:Focus KPI: ${item.kpi}\\nAction: ${item.strategy}`);
+                icsContent.push(`DTSTART:${dtStart}`);
+                icsContent.push(`DTEND:${dtEnd}`);
+                icsContent.push('END:VEVENT');
+            });
+
+            icsContent.push('END:VCALENDAR');
+
+            const blob = new Blob([icsContent.join('\n')], { type: 'text/calendar;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.setAttribute('download', `planning-${dateInput.value}.ics`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        dateInput.addEventListener('change', renderGrid);
+        renderGrid();
+    </script>
+</body>
+</html>
