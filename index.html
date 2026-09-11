@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SocialSync Hub - Synchro GitHub</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- FullCalendar CSS & JS -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+
+    <style>
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        .fc { --fc-border-color: #334155; --fc-page-bg-color: transparent; }
+        .fc-theme-standard td, .fc-theme-standard th { border-color: #334155 !important; }
+        .fc-col-header-cell-cushion, .fc-daygrid-day-number { color: #cbd5e1 !important; text-decoration: none !important; }
+        .fc-event { border: none !important; cursor: pointer; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col">
+
+    <!-- BARRE DE NAVIGATION -->
+    <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                
+                <!-- Logo / Titre -->
+                <div class="flex items-center gap-3">
+                    <div class="bg-gradient-to-tr from-indigo-600 to-pink-500 p-2.5 rounded-xl shadow-lg">
+                        <i class="fa-solid fa-share-nodes text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <span class="font-bold text-lg bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent block">
+                            SocialSync Hub
+                        </span>
+                        <span class="text-xs text-slate-400">Synchro GitHub API Active</span>
+                    </div>
+                </div>
+
+                <!-- Onglets & Statut GitHub -->
+                <div class="flex items-center gap-3">
+                    <!-- Badge de Statut de Connexion GitHub -->
+                    <div id="githubStatusBadge" onclick="openConfigModal()" class="cursor-pointer px-3 py-1.5 rounded-lg border text-xs font-semibold flex items-center gap-2 bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-500 transition">
+                        <i class="fa-brands fa-github text-sm"></i>
+                        <span id="githubStatusText">Non configuré</span>
+                        <span id="githubStatusDot" class="w-2 h-2 rounded-full bg-amber-500"></span>
+                    </div>
+
+                    <nav class="flex space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
+                        <button id="tabBtnPlanner" onclick="switchTab('planner')" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-2 bg-indigo-600 text-white shadow-md">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                            <span>Planificateur</span>
+                        </button>
+                        <button id="tabBtnCalendar" onclick="switchTab('calendar')" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-2 text-slate-400 hover:text-white">
+                            <i class="fa-solid fa-calendar-days"></i>
+                            <span>Calendrier</span>
+                            <span id="savedCountBadge" class="bg-slate-800 text-indigo-400 text-[10px] px-2 py-0.5 rounded-full border border-slate-700">0</span>
+                        </button>
+                    </nav>
+                </div>
+
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTENU PRINCIPAL -->
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+        <!-- ONGLET 1 : PLANIFICATEUR -->
+        <section id="tabPlanner" class="space-y-6">
+            
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+                    <div>
+                        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-rocket text-indigo-400"></i> Nouvelle Programmation
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-0.5">Saisissez la date YT pour générer les créneaux multi-plateformes.</p>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 mb-1">Titre de la vidéo <span class="text-red-400">*</span></label>
+                            <input type="text" id="videoTitle" placeholder="Ex: 5 Astuces Secrètes..." 
+                                   class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 w-64">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 mb-1">Date Lancement YT (J0) <span class="text-red-400">*</span></label>
+                            <input type="date" id="launchDate" 
+                                   class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex gap-2">
+                        <button onclick="copyPlanningText()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium transition flex items-center gap-2">
+                            <i class="fa-regular fa-copy"></i> Copier texte
+                        </button>
+                        <button onclick="exportICalendar()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium transition flex items-center gap-2">
+                            <i class="fa-regular fa-calendar-plus"></i> Export .ICS
+                        </button>
+                    </div>
+
+                    <button onclick="saveProject()" id="saveBtn" class="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold rounded-xl text-sm transition shadow-lg shadow-emerald-900/30 flex items-center gap-2">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Sauvegarder dans GitHub
+                    </button>
+                </div>
+            </div>
+
+            <!-- Grille des 5 Plateformes -->
+            <div id="scheduleGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+        </section>
+
+        <!-- ONGLET 2 : CALENDRIER & SUIVI -->
+        <section id="tabCalendar" class="hidden space-y-6">
+            
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
+                <div>
+                    <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-calendar-check text-indigo-400"></i> Suivi & Planning Global
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-1">Synchronisé en temps réel avec votre dépôt GitHub.</p>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <button onclick="syncFromGitHub()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold transition flex items-center gap-2 shadow-md">
+                        <i class="fa-solid fa-rotate"></i> Forcer la synchro GitHub
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+                    <div id="calendar"></div>
+                </div>
+
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col h-[650px]">
+                    <h3 class="font-bold text-lg text-white mb-4 flex items-center justify-between">
+                        <span><i class="fa-solid fa-list-check text-indigo-400 mr-2"></i>Projets Enregistrés</span>
+                    </h3>
+
+                    <div id="projectsList" class="flex-grow overflow-y-auto space-y-4 pr-1"></div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODAL DE CONFIGURATION GITHUB -->
+    <div id="configModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl relative">
+            <button onclick="closeConfigModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <div class="flex items-center gap-3">
+                <div class="bg-slate-800 p-3 rounded-xl text-white">
+                    <i class="fa-brands fa-github text-2xl"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-lg text-white">Configuration GitHub API</h3>
+                    <p class="text-xs text-slate-400">Connectez l'application à votre dépôt.</p>
+                </div>
+            </div>
+
+            <div class="space-y-4 text-xs">
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Nom d'utilisateur GitHub</label>
+                    <input type="text" id="ghUsername" placeholder="ex: mon-pseudo" 
+                           class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500">
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Nom du Dépôt (Repository)</label>
+                    <input type="text" id="ghRepo" placeholder="ex: socialsync-hub" 
+                           class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500">
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">GitHub Personal Access Token (PAT)</label>
+                    <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" 
+                           class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500">
+                    <p class="text-[10px] text-slate-500 mt-1">Nécessite le droit <code class="text-indigo-400">repo</code> ou <code class="text-indigo-400">contents:write</code>.</p>
+                </div>
+            </div>
+
+            <div class="pt-3 border-t border-slate-800 flex justify-end gap-3">
+                <button onclick="closeConfigModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg text-xs font-semibold hover:bg-slate-700">Annuler</button>
+                <button onclick="saveGitHubConfig()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-500 shadow-lg shadow-indigo-900/40">Tester & Enregistrer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOTIFICATION TOAST -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-2xl transition-all duration-300 opacity-0 translate-y-10 pointer-events-none flex items-center gap-3 z-50">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-xl"></i>
+        <span id="toastMsg" class="text-sm font-semibold">Action réussie !</span>
+    </div>
+
+    <script>
+        // CONFIGURATION DES PLATEFORMES
+        const platformsConfig = [
+            { id: 'yt', name: 'YouTube Shorts', icon: 'fa-brands fa-youtube', color: 'from-red-600/20 to-red-900/10 border-red-500/40', badgeColor: 'bg-red-500/20 text-red-400 border-red-500/30', calendarColor: '#ef4444', dayOffset: 0, timeSlot: '16h00 - 17h00', startTime: '16:00', endTime: '17:00', kpi: 'CTR & Abonnés', strategy: 'Point de départ. Fin d'après-midi.' },
+            { id: 'pin', name: 'Pinterest (Pin YT)', icon: 'fa-brands fa-pinterest', color: 'from-rose-600/20 to-rose-900/10 border-rose-500/40', badgeColor: 'bg-rose-500/20 text-rose-400 border-rose-500/30', calendarColor: '#e11d48', dayOffset: 0, timeSlot: '18h00 - 20h00', startTime: '18:00', endTime: '20:00', kpi: 'Saves & Trafic', strategy: 'Épingle avec lien direct YT.' },
+            { id: 'tiktok', name: 'TikTok', icon: 'fa-brands fa-tiktok', color: 'from-cyan-600/20 to-slate-900/10 border-cyan-500/40', badgeColor: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30', calendarColor: '#06b6d4', dayOffset: 0, timeSlot: '19h00 - 21h00', startTime: '19:00', endTime: '21:00', kpi: 'Rétention (>70%)', strategy: 'Accroche 2s, audio tendance.' },
+            { id: 'fb', name: 'Facebook Reels', icon: 'fa-brands fa-facebook', color: 'from-blue-600/20 to-blue-900/10 border-blue-500/40', badgeColor: 'bg-blue-500/20 text-blue-400 border-blue-500/30', calendarColor: '#3b82f6', dayOffset: 1, timeSlot: '11h30 - 13h30', startTime: '11:30', endTime: '13:30', kpi: 'Commentaires', strategy: 'Pause déjeuner. Poser question.' },
+            { id: 'ig', name: 'Instagram Reels', icon: 'fa-brands fa-instagram', color: 'from-fuchsia-600/20 to-fuchsia-900/10 border-fuchsia-500/40', badgeColor: 'bg-fuchsia-500/20 text-fuchsia-400 border-fuchsia-500/30', calendarColor: '#d946ef', dayOffset: 1, timeSlot: '18h30 - 20h30', startTime: '18:30', endTime: '20:30', kpi: 'Partages DM & Saves', strategy: 'Usage détente du soir.' }
+        ];
+
+        // ÉTAT DE L'APPLICATION
+        let projects = [];
+        let currentSha = null; // SHA du fichier GitHub pour les mises à jour
+        let calendar = null;
+        let currentEditProjectId = null;
+
+        const FILE_PATH = 'data/publications.json';
+
+        const dateInput = document.getElementById('launchDate');
+        dateInput.value = new Date().toISOString().split('T')[0];
+
+        // INIT
+        window.addEventListener('DOMContentLoaded', () => {
+            loadGitHubConfigInputs();
+            checkGitHubConnectionAndLoad();
+            renderGrid();
+        });
+
+        // GITHUB API CORE FUNCTIONS
+        function getGitHubConfig() {
+            return {
+                username: localStorage.getItem('gh_user') || '',
+                repo: localStorage.getItem('gh_repo') || '',
+                token: localStorage.getItem('gh_token') || ''
+            };
+        }
+
+        function loadGitHubConfigInputs() {
+            const conf = getGitHubConfig();
+            document.getElementById('ghUsername').value = conf.username;
+            document.getElementById('ghRepo').value = conf.repo;
+            document.getElementById('ghToken').value = conf.token;
+        }
+
+        function saveGitHubConfig() {
+            const user = document.getElementById('ghUsername').value.trim();
+            const repo = document.getElementById('ghRepo').value.trim();
+            const token = document.getElementById('ghToken').value.trim();
+
+            if (!user || !repo || !token) {
+                alert("Veuillez remplir tous les champs de configuration GitHub.");
+                return;
+            }
+
+            localStorage.setItem('gh_user', user);
+            localStorage.setItem('gh_repo', repo);
+            localStorage.setItem('gh_token', token);
+
+            closeConfigModal();
+            checkGitHubConnectionAndLoad();
+        }
+
+        async function checkGitHubConnectionAndLoad() {
+            const conf = getGitHubConfig();
+            const badgeText = document.getElementById('githubStatusText');
+            const badgeDot = document.getElementById('githubStatusDot');
+
+            if (!conf.username || !conf.repo || !conf.token) {
+                badgeText.innerText = "Non configuré";
+                badgeDot.className = "w-2 h-2 rounded-full bg-amber-500";
+                return;
+            }
+
+            badgeText.innerText = "Connexion...";
+            badgeDot.className = "w-2 h-2 rounded-full bg-blue-500 animate-pulse";
+
+            try {
+                await syncFromGitHub();
+                badgeText.innerText = "Connecté à GitHub";
+                badgeDot.className = "w-2 h-2 rounded-full bg-emerald-500";
+            } catch (err) {
+                console.error(err);
+                badgeText.innerText = "Erreur Connexion";
+                badgeDot.className = "w-2 h-2 rounded-full bg-red-500";
+            }
+        }
+
+        async function syncFromGitHub() {
+            const conf = getGitHubConfig();
+            if (!conf.username || !conf.repo || !conf.token) return;
+
+            const url = `https://api.github.com/repos/${conf.username}/${conf.repo}/contents/${FILE_PATH}`;
+
+            const res = await fetch(url, {
+                headers: {
+                    'Authorization': `token ${conf.token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+
+            if (res.status === 404) {
+                // Le fichier n'existe pas encore
+                projects = [];
+                currentSha = null;
+            } else if (res.ok) {
+                const data = await res.json();
+                currentSha = data.sha;
+                // Décoder le contenu Base64 (UTF-8)
+                const binaryStr = atob(data.content.replace(/
+/g, ''));
+                const bytes = new Uint8Array(binaryStr.length);
+                for (let i = 0; i < binaryStr.length; i++) {
+                    bytes[i] = binaryStr.charCodeAt(i);
+                }
+                const jsonText = new TextDecoder().decode(bytes);
+                projects = JSON.parse(jsonText);
+            } else {
+                throw new Error("Échec du chargement depuis GitHub");
+            }
+
+            updateBadgeCount();
+            if (!document.getElementById('tabCalendar').classList.contains('hidden')) {
+                renderCalendarAndProjects();
+            }
+            showToast("Données synchronisées avec GitHub !");
+        }
+
+        async function pushToGitHub(commitMessage) {
+            const conf = getGitHubConfig();
+            if (!conf.username || !conf.repo || !conf.token) {
+                openConfigModal();
+                throw new Error("GitHub non configuré.");
+            }
+
+            const url = `https://api.github.com/repos/${conf.username}/${conf.repo}/contents/${FILE_PATH}`;
+            
+            // Encoder en Base64 UTF-8
+            const jsonString = JSON.stringify(projects, null, 2);
+            const utf8Bytes = new TextEncoder().encode(jsonString);
+            let binary = '';
+            utf8Bytes.forEach(b => binary += String.fromCharCode(b));
+            const base64Content = btoa(binary);
+
+            const bodyData = {
+                message: commitMessage || 'Mise à jour des publications',
+                content: base64Content
+            };
+
+            if (currentSha) {
+                bodyData.sha = currentSha;
+            }
+
+            const res = await fetch(url, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${conf.token}`,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/vnd.github.v3+json'
+                },
+                body: JSON.stringify(bodyData)
+            });
+
+            if (res.ok) {
+                const resData = await res.json();
+                currentSha = resData.content.sha;
+                showToast("Sauvegardé directement dans GitHub !");
+            } else {
+                const errData = await res.json();
+                alert("Erreur GitHub API : " + (errData.message || "Impossible de sauvegarder"));
+                throw new Error(errData.message);
+            }
+        }
+
+        // NAVIGATION & MODAL
+        function switchTab(tabName) {
+            const tabPlanner = document.getElementById('tabPlanner');
+            const tabCalendar = document.getElementById('tabCalendar');
+            const btnPlanner = document.getElementById('tabBtnPlanner');
+            const btnCalendar = document.getElementById('tabBtnCalendar');
+
+            if (tabName === 'planner') {
+                tabPlanner.classList.remove('hidden');
+                tabCalendar.classList.add('hidden');
+                btnPlanner.className = "px-3.5 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-2 bg-indigo-600 text-white shadow-md";
+                btnCalendar.className = "px-3.5 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-2 text-slate-400 hover:text-white";
+            } else {
+                tabPlanner.classList.add('hidden');
+                tabCalendar.classList.remove('hidden');
+                btnCalendar.className = "px-3.5 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-2 bg-indigo-600 text-white shadow-md";
+                btnPlanner.className = "px-3.5 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-2 text-slate-400 hover:text-white";
+                renderCalendarAndProjects();
+            }
+        }
+
+        function openConfigModal() { document.getElementById('configModal').classList.remove('hidden'); }
+        function closeConfigModal() { document.getElementById('configModal').classList.add('hidden'); }
+
+        // LOGIQUE PLANIFICATEUR
+        function formatDateStr(dateObj) {
+            return dateObj.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+        }
+
+        function calculateSchedule() {
+            const baseDateVal = dateInput.value;
+            if (!baseDateVal) return [];
+            const baseDate = new Date(baseDateVal + 'T00:00:00');
+
+            return platformsConfig.map(p => {
+                const targetDate = new Date(baseDate);
+                targetDate.setDate(baseDate.getDate() + p.dayOffset);
+                return {
+                    ...p,
+                    computedDate: targetDate,
+                    formattedDateStr: formatDateStr(targetDate),
+                    isoDateStr: targetDate.toISOString().split('T')[0]
+                };
+            });
+        }
+
+        function renderGrid() {
+            const schedule = calculateSchedule();
+            const gridContainer = document.getElementById('scheduleGrid');
+            gridContainer.innerHTML = '';
+
+            schedule.forEach((item) => {
+                const dayLabel = item.dayOffset === 0 ? 'Jour 1 (J0)' : 'Jour 2 (J+1)';
+                
+                gridContainer.innerHTML += `
+                    <div class="bg-gradient-to-br ${item.color} border bg-slate-900/90 rounded-xl p-5 shadow-lg flex flex-col justify-between space-y-4">
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center gap-2.5">
+                                    <i class="${item.icon} text-2xl text-slate-100"></i>
+                                    <h3 class="font-bold text-base text-white">${item.name}</h3>
+                                </div>
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border ${item.badgeColor}">${dayLabel}</span>
+                            </div>
+                            <div class="bg-slate-950/70 rounded-lg p-2.5 border border-slate-800 mb-3 text-xs flex justify-between">
+                                <span><i class="fa-regular fa-calendar text-indigo-400 mr-1.5"></i>${item.formattedDateStr}</span>
+                                <span class="text-emerald-400"><i class="fa-regular fa-clock mr-1"></i>${item.timeSlot}</span>
+                            </div>
+                            <div class="space-y-1.5 text-xs">
+                                <div><span class="text-slate-400 block text-[10px]">KPI :</span> <span class="text-slate-200 font-medium">${item.kpi}</span></div>
+                                <div><span class="text-slate-400 block text-[10px]">Action :</span> <p class="text-slate-300 text-[11px]">${item.strategy}</p></div>
+                            </div>
+                        </div>
+                        <div class="pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs">
+                            <span class="text-slate-400">Statut :</span>
+                            <select id="status-select-${item.id}" class="bg-slate-950 text-slate-100 border border-slate-700 rounded-lg px-2 py-1 text-xs">
+                                <option value="todo">⏳ À planifier</option>
+                                <option value="scheduled">📅 Programmé</option>
+                                <option value="done">✅ Publié</option>
+                            </select>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        async function saveProject() {
+            const titleInput = document.getElementById('videoTitle');
+            const title = titleInput.value.trim();
+            if (!title) { alert("Veuillez saisir un titre !"); titleInput.focus(); return; }
+
+            const saveBtn = document.getElementById('saveBtn');
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Sauvegarde GitHub...`;
+
+            try {
+                const schedule = calculateSchedule();
+                const platformStatuses = {};
+                schedule.forEach(item => {
+                    const sel = document.getElementById(`status-select-${item.id}`);
+                    platformStatuses[item.id] = {
+                        status: sel ? sel.value : 'todo',
+                        date: item.isoDateStr,
+                        time: item.startTime,
+                        timeSlot: item.timeSlot
+                    };
+                });
+
+                const projectId = currentEditProjectId || 'proj_' + Date.now();
+                const newProject = {
+                    id: projectId,
+                    title: title,
+                    launchDate: dateInput.value,
+                    updatedAt: new Date().toISOString(),
+                    platforms: platformStatuses
+                };
+
+                const existingIndex = projects.findIndex(p => p.id === projectId);
+                if (existingIndex >= 0) projects[existingIndex] = newProject;
+                else projects.push(newProject);
+
+                await pushToGitHub(`Add/Update project: ${title}`);
+                updateBadgeCount();
+
+                currentEditProjectId = null;
+                titleInput.value = '';
+            } catch (err) {
+                console.error(err);
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Sauvegarder dans GitHub`;
+            }
+        }
+
+        // CALENDRIER ET SUIVI
+        function renderCalendarAndProjects() {
+            if (!calendar) {
+                const calendarEl = document.getElementById('calendar');
+                calendar = new FullCalendar.Calendar(calendarEl, {
+                    initialView: 'dayGridMonth',
+                    locale: 'fr',
+                    headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
+                    buttonText: { today: "Aujourd'hui", month: 'Mois', week: 'Semaine' },
+                    events: getCalendarEvents()
+                });
+                calendar.render();
+            } else {
+                calendar.removeAllEvents();
+                calendar.addEventSource(getCalendarEvents());
+            }
+
+            renderProjectsList();
+        }
+
+        function getCalendarEvents() {
+            const events = [];
+            projects.forEach(proj => {
+                platformsConfig.forEach(plat => {
+                    const pData = proj.platforms[plat.id];
+                    if (pData) {
+                        let icon = pData.status === 'done' ? '✅' : (pData.status === 'scheduled' ? '📅' : '⏳');
+                        events.push({
+                            title: `${icon} [${plat.name}] ${proj.title}`,
+                            start: `${pData.date}T${pData.time}:00`,
+                            backgroundColor: plat.calendarColor,
+                            borderColor: plat.calendarColor
+                        });
+                    }
+                });
+            });
+            return events;
+        }
+
+        function renderProjectsList() {
+            const listEl = document.getElementById('projectsList');
+            listEl.innerHTML = '';
+
+            if (projects.length === 0) {
+                listEl.innerHTML = `<div class="text-center text-slate-500 py-10 text-xs">Aucun projet enregistré.</div>`;
+                return;
+            }
+
+            const sorted = [...projects].sort((a,b) => new Date(b.launchDate) - new Date(a.launchDate));
+
+            sorted.forEach(proj => {
+                let platformsHtml = '';
+                platformsConfig.forEach(plat => {
+                    const pData = proj.platforms[plat.id];
+                    if (pData) {
+                        platformsHtml += `
+                            <div class="flex items-center justify-between text-[11px] py-1 border-b border-slate-800/50 last:border-0">
+                                <span class="text-slate-300 font-medium flex items-center gap-1.5">
+                                    <i class="${plat.icon} text-xs"></i> ${plat.name}
+                                </span>
+                                <select onchange="updatePlatformStatusDirect('${proj.id}', '${plat.id}', this.value)" class="bg-slate-950 text-[10px] border border-slate-700 rounded px-1.5 py-0.5 text-slate-200">
+                                    <option value="todo" ${pData.status==='todo'?'selected':''}>⏳ À planifier</option>
+                                    <option value="scheduled" ${pData.status==='scheduled'?'selected':''}>📅 Programmé</option>
+                                    <option value="done" ${pData.status==='done'?'selected':''}>✅ Publié</option>
+                                </select>
+                            </div>
+                        `;
+                    }
+                });
+
+                listEl.innerHTML += `
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-2">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <h4 class="font-bold text-xs text-slate-100">${proj.title}</h4>
+                                <p class="text-[10px] text-slate-400">Lancement YT: ${new Date(proj.launchDate).toLocaleDateString('fr-FR')}</p>
+                            </div>
+                            <div class="flex gap-1">
+                                <button onclick="loadProjectToEdit('${proj.id}')" class="text-slate-400 hover:text-indigo-400 p-1 text-xs"><i class="fa-solid fa-pen"></i></button>
+                                <button onclick="deleteProject('${proj.id}')" class="text-slate-400 hover:text-red-400 p-1 text-xs"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </div>
+                        <div class="bg-slate-900/80 rounded-lg p-2 border border-slate-800/80 space-y-0.5">${platformsHtml}</div>
+                    </div>
+                `;
+            });
+        }
+
+        async function updatePlatformStatusDirect(projId, platId, newStatus) {
+            const proj = projects.find(p => p.id === projId);
+            if (proj && proj.platforms[platId]) {
+                proj.platforms[platId].status = newStatus;
+                await pushToGitHub(`Update status: ${proj.title} [${platId}]`);
+                renderCalendarAndProjects();
+            }
+        }
+
+        function loadProjectToEdit(projId) {
+            const proj = projects.find(p => p.id === projId);
+            if (!proj) return;
+
+            currentEditProjectId = proj.id;
+            document.getElementById('videoTitle').value = proj.title;
+            dateInput.value = proj.launchDate;
+
+            renderGrid();
+            platformsConfig.forEach(plat => {
+                if (proj.platforms[plat.id]) {
+                    const sel = document.getElementById(`status-select-${plat.id}`);
+                    if (sel) sel.value = proj.platforms[plat.id].status;
+                }
+            });
+
+            switchTab('planner');
+            showToast("Projet chargé pour modification.");
+        }
+
+        async function deleteProject(projId) {
+            if (confirm("Supprimer ce projet de GitHub ?")) {
+                const proj = projects.find(p => p.id === projId);
+                projects = projects.filter(p => p.id !== projId);
+                await pushToGitHub(`Delete project: ${proj ? proj.title : projId}`);
+                renderCalendarAndProjects();
+                updateBadgeCount();
+            }
+        }
+
+        function updateBadgeCount() {
+            document.getElementById('savedCountBadge').innerText = projects.length;
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMsg').innerText = msg;
+            toast.classList.remove('opacity-0', 'translate-y-10', 'pointer-events-none');
+            setTimeout(() => toast.classList.add('opacity-0', 'translate-y-10', 'pointer-events-none'), 3000);
+        }
+
+        function copyPlanningText() {
+            const schedule = calculateSchedule();
+            const videoTitle = document.getElementById('videoTitle').value || 'Vidéo Sans Titre';
+            let text = `📌 PLANNING DE PUBLICATION : ${videoTitle}
+
+`;
+            schedule.forEach(s => {
+                text += `• ${s.name} (${s.dayOffset === 0 ? 'J0' : 'J+1'}) :
+  🗓 Date: ${s.formattedDateStr}
+  ⏰ Heure: ${s.timeSlot}
+  🎯 KPI: ${s.kpi}
+  💡 Action: ${s.strategy}
+
+`;
+            });
+            navigator.clipboard.writeText(text);
+            showToast("Planning copié !");
+        }
+
+        function exportICalendar() {
+            const schedule = calculateSchedule();
+            const videoTitle = document.getElementById('videoTitle').value || 'Publication Vidéo';
+            let icsContent = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//SocialSync Hub//FR'];
+
+            schedule.forEach(item => {
+                const year = item.computedDate.getFullYear();
+                const month = String(item.computedDate.getMonth() + 1).padStart(2, '0');
+                const day = String(item.computedDate.getDate()).padStart(2, '0');
+                const [startH, startM] = item.startTime.split(':');
+                const [endH, endM] = item.endTime.split(':');
+
+                icsContent.push('BEGIN:VEVENT');
+                icsContent.push(`SUMMARY:[${item.name}] ${videoTitle}`);
+                icsContent.push(`DESCRIPTION:KPI: ${item.kpi}\nAction: ${item.strategy}`);
+                icsContent.push(`DTSTART:${year}${month}${day}T${startH}${startM}00`);
+                icsContent.push(`DTEND:${year}${month}${day}T${endH}${endM}00`);
+                icsContent.push('END:VEVENT');
+            });
+            icsContent.push('END:VCALENDAR');
+
+            const blob = new Blob([icsContent.join('
+')], { type: 'text/calendar;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.setAttribute('download', `planning-${dateInput.value}.ics`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        dateInput.addEventListener('change', renderGrid);
+    </script>
+</body>
+</html>
