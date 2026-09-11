@@ -1,55 +1,180 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Planificateur Multi-Plateformes</title>
+    <title>Hub de Publication Multi-Plateformes</title>
+    
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- FullCalendar CSS & JS -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+
+    <style>
+        /* Custom scrollbar and Calendar dark mode tweaks */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        .fc { --fc-border-color: #334155; --fc-page-bg-color: transparent; }
+        .fc-theme-standard td, .fc-theme-standard th { border-color: #334155 !important; }
+        .fc-col-header-cell-cushion, .fc-daygrid-day-number { color: #cbd5e1 !important; text-decoration: none !important; }
+        .fc-event { border: none !important; cursor: pointer; }
+    </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen p-4 md:p-8 font-sans">
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col">
 
-    <div class="max-w-5xl mx-auto space-y-6">
-        
-        <header class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <!-- BARRE DE NAVIGATION (ONGLETS) -->
+    <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                
+                <!-- Logo / Titre -->
+                <div class="flex items-center gap-3">
+                    <div class="bg-gradient-to-tr from-indigo-600 to-pink-500 p-2.5 rounded-xl shadow-lg">
+                        <i class="fa-solid fa-share-nodes text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <span class="font-bold text-lg bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent block">
+                            SocialSync Hub
+                        </span>
+                        <span class="text-xs text-slate-400">Planificateur Multi-Plateformes</span>
+                    </div>
+                </div>
+
+                <!-- Boutons d'Onglets -->
+                <nav class="flex space-x-2 bg-slate-950 p-1 rounded-xl border border-slate-800">
+                    <button id="tabBtnPlanner" onclick="switchTab('planner')" class="px-4 py-2 text-sm font-semibold rounded-lg transition flex items-center gap-2 bg-indigo-600 text-white shadow-md">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                        <span>Planificateur</span>
+                    </button>
+                    <button id="tabBtnCalendar" onclick="switchTab('calendar')" class="px-4 py-2 text-sm font-semibold rounded-lg transition flex items-center gap-2 text-slate-400 hover:text-white">
+                        <i class="fa-solid fa-calendar-days"></i>
+                        <span>Calendrier & Suivi</span>
+                        <span id="savedCountBadge" class="bg-slate-800 text-indigo-400 text-xs px-2 py-0.5 rounded-full border border-slate-700">0</span>
+                    </button>
+                </nav>
+
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTENU PRINCIPAL -->
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+        <!-- ========================================== -->
+        <!-- ONGLET 1 : PLANIFICATEUR & CRÉATION -->
+        <!-- ========================================== -->
+        <section id="tabPlanner" class="space-y-6">
+            
+            <!-- Formulaire Général -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+                    <div>
+                        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-rocket text-indigo-400"></i> Nouvelle Programmation Vidéo
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-0.5">Saisissez la date de sortie YouTube pour générer automatiquement l'ensemble des créneaux.</p>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 mb-1">Titre de la vidéo <span class="text-red-400">*</span></label>
+                            <input type="text" id="videoTitle" placeholder="Ex: 5 Astuces Secrètes..." 
+                                   class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 w-64">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 mb-1">Date de lancement YT (J0) <span class="text-red-400">*</span></label>
+                            <input type="date" id="launchDate" 
+                                   class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions Rapides & Sauvegarde -->
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex gap-2">
+                        <button onclick="copyPlanningText()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium transition flex items-center gap-2">
+                            <i class="fa-regular fa-copy"></i> Copier le texte
+                        </button>
+                        <button onclick="exportICalendar()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium transition flex items-center gap-2">
+                            <i class="fa-regular fa-calendar-plus"></i> Fichier .ICS
+                        </button>
+                    </div>
+
+                    <button onclick="saveProject()" class="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold rounded-xl text-sm transition shadow-lg shadow-emerald-900/30 flex items-center gap-2">
+                        <i class="fa-solid fa-floppy-disk"></i> Enregistrer & Ajouter au Calendrier
+                    </button>
+                </div>
+            </div>
+
+            <!-- Grille des 5 Plateformes -->
+            <div id="scheduleGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <!-- Généré dynamiquement en JS -->
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- ONGLET 2 : CALENDRIER & SUIVI -->
+        <!-- ========================================== -->
+        <section id="tabCalendar" class="hidden space-y-6">
+            
+            <!-- En-tête Suivi -->
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
                 <div>
-                    <h1 class="text-2xl font-bold bg-gradient-to-r from-red-500 via-purple-500 to-blue-500 bg-clip-text text-transparent">
-                        Hub de Publication Vidéo
-                    </h1>
-                    <p class="text-slate-400 text-sm mt-1">Calculez et synchronisez vos fenêtres de tir algorithmiques.</p>
+                    <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-calendar-check text-indigo-400"></i> Suivi & Planning Global
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-1">Visualisez l'ensemble de vos publications planifiées et mettez à jour leurs statuts.</p>
                 </div>
 
-                <div class="flex flex-wrap items-center gap-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">Titre de la vidéo (Optionnel)</label>
-                        <input type="text" id="videoTitle" placeholder="Ex: 5 Astuces Utiles..." 
-                               class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">Date YouTube (J0)</label>
-                        <input type="date" id="launchDate" 
-                               class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
-                    </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="exportDataJSON()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium transition flex items-center gap-2 border border-slate-700">
+                        <i class="fa-solid fa-download"></i> Exporter Backup (.json)
+                    </button>
+                    <label class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium transition flex items-center gap-2 border border-slate-700 cursor-pointer">
+                        <i class="fa-solid fa-upload"></i> Importer Backup
+                        <input type="file" id="importJsonFile" accept=".json" class="hidden" onchange="importDataJSON(event)">
+                    </label>
                 </div>
             </div>
 
-            <div class="flex flex-wrap gap-3 mt-6 pt-4 border-t border-slate-800 justify-end">
-                <button onclick="copyPlanningText()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-sm font-medium transition flex items-center gap-2">
-                    <i class="fa-regular fa-copy"></i> Copier le résumé texte
-                </button>
-                <button onclick="exportICalendar()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium transition flex items-center gap-2 shadow-lg shadow-indigo-900/40">
-                    <i class="fa-regular fa-calendar-plus"></i> Exporter vers iCal / Google Cal
-                </button>
-            </div>
-        </header>
+            <!-- Layout : Calendrier + Liste -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- Vue Calendrier (2 Colonnes) -->
+                <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+                    <div id="calendar"></div>
+                </div>
 
-        <div id="scheduleGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            </div>
+                <!-- Vue Liste des Projets Enregistrés (1 Colonne) -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col h-[650px]">
+                    <h3 class="font-bold text-lg text-white mb-4 flex items-center justify-between">
+                        <span><i class="fa-solid fa-list-check text-indigo-400 mr-2"></i>Projets Sauvegardés</span>
+                    </h3>
 
+                    <div id="projectsList" class="flex-grow overflow-y-auto space-y-4 pr-1">
+                        <!-- Liste générée en JS -->
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- NOTIFICATION TOAST -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-2xl transition-all duration-300 opacity-0 translate-y-10 pointer-events-none flex items-center gap-3 z-50">
+        <i class="fa-solid fa-circle-check text-xl"></i>
+        <span id="toastMsg" class="text-sm font-semibold">Projet sauvegardé avec succès !</span>
     </div>
 
+    <!-- JAVASCRIPT APP LOGIC -->
     <script>
+        // --- 1. CONFIGURATION DES PLATEFORMES ---
         const platformsConfig = [
             {
                 id: 'yt',
@@ -57,12 +182,13 @@
                 icon: 'fa-brands fa-youtube',
                 color: 'from-red-600/20 to-red-900/10 border-red-500/40',
                 badgeColor: 'bg-red-500/20 text-red-400 border-red-500/30',
+                calendarColor: '#ef4444',
                 dayOffset: 0,
                 timeSlot: '16h00 - 17h00',
                 startTime: '16:00',
                 endTime: '17:00',
                 kpi: 'Taux de clic (CTR) & Abonnés gagnés',
-                strategy: 'Point de départ. Publier en fin d\'après-midi pour capter l\'Europe et l\'amorce du trafic US. Optimiser la miniature et le titre.'
+                strategy: 'Point de départ (J0). Publier en fin d\'après-midi pour capter l\'Europe et l\'amorce du trafic US. Optimiser la miniature et le titre.'
             },
             {
                 id: 'pin',
@@ -70,12 +196,27 @@
                 icon: 'fa-brands fa-pinterest',
                 color: 'from-rose-600/20 to-rose-900/10 border-rose-500/40',
                 badgeColor: 'bg-rose-500/20 text-rose-400 border-rose-500/30',
+                calendarColor: '#e11d48',
                 dayOffset: 0,
                 timeSlot: '18h00 - 20h00',
                 startTime: '18:00',
                 endTime: '20:00',
                 kpi: 'Sauvegardes (Saves) & Trafic sortant',
-                strategy: 'Créer une épingle (Pin) avec une image forte ou un extrait de 5s, avec un lien direct vers le Short YouTube. Favorise le SEO de long terme.'
+                strategy: 'Épingle avec image/extrait fort et lien direct vers le Short YouTube. Favorise le SEO long terme.'
+            },
+            {
+                id: 'tiktok',
+                name: 'TikTok',
+                icon: 'fa-brands fa-tiktok',
+                color: 'from-cyan-600/20 to-slate-900/10 border-cyan-500/40',
+                badgeColor: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
+                calendarColor: '#06b6d4',
+                dayOffset: 0,
+                timeSlot: '19h00 - 21h00',
+                startTime: '19:00',
+                endTime: '21:00',
+                kpi: 'Taux de rétention (>70%) & Replays',
+                strategy: 'Format ultra-dynamique. Accroche dans les 2 premières secondes. Audio tendance + 3 à 5 hashtags ciblés.'
             },
             {
                 id: 'fb',
@@ -83,12 +224,13 @@
                 icon: 'fa-brands fa-facebook',
                 color: 'from-blue-600/20 to-blue-900/10 border-blue-500/40',
                 badgeColor: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+                calendarColor: '#3b82f6',
                 dayOffset: 1,
                 timeSlot: '11h30 - 13h30',
                 startTime: '11:30',
                 endTime: '13:30',
                 kpi: 'Commentaires & Temps de visionnage',
-                strategy: 'Décalage de ~20h avec YT. L\'audience se connecte sur la pause déjeuner. Poser une question en description pour générer des commentaires.'
+                strategy: 'Décalage de ~20h avec YT. L\'audience se connecte sur la pause déjeuner. Poser une question en description.'
             },
             {
                 id: 'ig',
@@ -96,6 +238,7 @@
                 icon: 'fa-brands fa-instagram',
                 color: 'from-fuchsia-600/20 to-fuchsia-900/10 border-fuchsia-500/40',
                 badgeColor: 'bg-fuchsia-500/20 text-fuchsia-400 border-fuchsia-500/30',
+                calendarColor: '#d946ef',
                 dayOffset: 1,
                 timeSlot: '18h30 - 20h30',
                 startTime: '18:30',
@@ -105,16 +248,45 @@
             }
         ];
 
-        // Définir la date par défaut sur aujourd'hui
+        // --- STATE & LOCAL STORAGE ---
+        let projects = JSON.parse(localStorage.getItem('socialsync_projects') || '[]');
+        let currentEditProjectId = null;
+        let calendar = null;
+
+        // Date par défaut : Aujourd'hui
         const dateInput = document.getElementById('launchDate');
         dateInput.value = new Date().toISOString().split('T')[0];
 
-        function formatDate(dateObj) {
+        // --- 2. SWITCH ONGLETS ---
+        function switchTab(tabName) {
+            const tabPlanner = document.getElementById('tabPlanner');
+            const tabCalendar = document.getElementById('tabCalendar');
+            const btnPlanner = document.getElementById('tabBtnPlanner');
+            const btnCalendar = document.getElementById('tabBtnCalendar');
+
+            if (tabName === 'planner') {
+                tabPlanner.classList.remove('hidden');
+                tabCalendar.classList.add('hidden');
+                
+                btnPlanner.className = "px-4 py-2 text-sm font-semibold rounded-lg transition flex items-center gap-2 bg-indigo-600 text-white shadow-md";
+                btnCalendar.className = "px-4 py-2 text-sm font-semibold rounded-lg transition flex items-center gap-2 text-slate-400 hover:text-white";
+            } else {
+                tabPlanner.classList.add('hidden');
+                tabCalendar.classList.remove('hidden');
+                
+                btnCalendar.className = "px-4 py-2 text-sm font-semibold rounded-lg transition flex items-center gap-2 bg-indigo-600 text-white shadow-md";
+                btnPlanner.className = "px-4 py-2 text-sm font-semibold rounded-lg transition flex items-center gap-2 text-slate-400 hover:text-white";
+
+                renderCalendarAndProjects();
+            }
+        }
+
+        // --- 3. CALCUL DES DATES ET HEURES ---
+        function formatDateStr(dateObj) {
             return dateObj.toLocaleDateString('fr-FR', {
-                weekday: 'long',
+                weekday: 'short',
                 day: 'numeric',
-                month: 'long',
-                year: 'numeric'
+                month: 'short'
             });
         }
 
@@ -130,11 +302,13 @@
                 return {
                     ...p,
                     computedDate: targetDate,
-                    formattedDateStr: formatDate(targetDate)
+                    formattedDateStr: formatDateStr(targetDate),
+                    isoDateStr: targetDate.toISOString().split('T')[0]
                 };
             });
         }
 
+        // --- 4. RENDU DE LA GRILLE DU PLANIFICATEUR ---
         function renderGrid() {
             const schedule = calculateSchedule();
             const gridContainer = document.getElementById('scheduleGrid');
@@ -144,42 +318,40 @@
                 const dayLabel = item.dayOffset === 0 ? 'Jour 1 (J0)' : 'Jour 2 (J+1)';
                 
                 const cardHtml = `
-                    <div class="bg-gradient-to-br ${item.color} border bg-slate-900/80 rounded-xl p-5 shadow-lg flex flex-col justify-between space-y-4 relative overflow-hidden">
+                    <div class="bg-gradient-to-br ${item.color} border bg-slate-900/90 rounded-xl p-5 shadow-lg flex flex-col justify-between space-y-4 relative">
                         <div>
                             <div class="flex items-center justify-between mb-3">
-                                <div class="flex items-center gap-3">
-                                    <i class="${item.icon} text-2xl text-slate-200"></i>
-                                    <h3 class="font-bold text-lg text-white">${item.name}</h3>
+                                <div class="flex items-center gap-2.5">
+                                    <i class="${item.icon} text-2xl text-slate-100"></i>
+                                    <h3 class="font-bold text-base text-white">${item.name}</h3>
                                 </div>
-                                <span class="text-xs font-semibold px-2.5 py-1 rounded-full border ${item.badgeColor}">
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border ${item.badgeColor}">
                                     ${dayLabel}
                                 </span>
                             </div>
 
-                            <div class="bg-slate-950/60 rounded-lg p-3 border border-slate-800/80 space-y-1 mb-4">
-                                <div class="text-sm font-semibold text-slate-200 capitalize">
-                                    <i class="fa-regular fa-calendar text-indigo-400 mr-2"></i>${item.formattedDateStr}
-                                </div>
-                                <div class="text-sm font-semibold text-emerald-400">
-                                    <i class="fa-regular fa-clock text-emerald-400 mr-2"></i>Créneau : ${item.timeSlot}
+                            <div class="bg-slate-950/70 rounded-lg p-3 border border-slate-800 space-y-1 mb-3">
+                                <div class="text-xs font-semibold text-slate-200 capitalize flex items-center justify-between">
+                                    <span><i class="fa-regular fa-calendar text-indigo-400 mr-1.5"></i>${item.formattedDateStr}</span>
+                                    <span class="text-emerald-400"><i class="fa-regular fa-clock mr-1"></i>${item.timeSlot}</span>
                                 </div>
                             </div>
 
                             <div class="space-y-2 text-xs">
                                 <div>
-                                    <span class="text-slate-400 font-semibold block">KPI Clé (Focus) :</span>
+                                    <span class="text-slate-400 font-semibold block text-[11px]">KPI Clé :</span>
                                     <span class="text-slate-200 font-medium">${item.kpi}</span>
                                 </div>
                                 <div>
-                                    <span class="text-slate-400 font-semibold block">Action stratégique :</span>
-                                    <p class="text-slate-300 leading-relaxed">${item.strategy}</p>
+                                    <span class="text-slate-400 font-semibold block text-[11px]">Action recommandée :</span>
+                                    <p class="text-slate-300 leading-relaxed text-[11px]">${item.strategy}</p>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="pt-3 border-t border-slate-800/60 flex items-center justify-between text-xs">
-                            <span class="text-slate-400">Statut :</span>
-                            <select onchange="saveStatus('${item.id}', this.value)" id="status-${item.id}" class="bg-slate-950 text-slate-200 border border-slate-700 rounded px-2 py-1 text-xs focus:outline-none">
+                        <div class="pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs">
+                            <span class="text-slate-400 font-medium">Statut :</span>
+                            <select id="status-select-${item.id}" class="bg-slate-950 text-slate-100 border border-slate-700 rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:border-indigo-500 font-medium">
                                 <option value="todo">⏳ À planifier</option>
                                 <option value="scheduled">📅 Programmé</option>
                                 <option value="done">✅ Publié</option>
@@ -189,22 +361,268 @@
                 `;
                 gridContainer.innerHTML += cardHtml;
             });
-
-            loadStatuses();
         }
 
-        function saveStatus(id, value) {
-            localStorage.setItem('pub_status_' + id + '_' + dateInput.value, value);
+        // --- 5. SAUVEGARDE UN PROJET DANS LE LOCALSTORAGE ---
+        function saveProject() {
+            const titleInput = document.getElementById('videoTitle');
+            const title = titleInput.value.trim();
+            const launchDate = dateInput.value;
+
+            if (!title) {
+                alert("Veuillez saisir un titre pour la vidéo !");
+                titleInput.focus();
+                return;
+            }
+
+            const schedule = calculateSchedule();
+            const platformStatuses = {};
+
+            schedule.forEach(item => {
+                const sel = document.getElementById(`status-select-${item.id}`);
+                platformStatuses[item.id] = {
+                    status: sel ? sel.value : 'todo',
+                    date: item.isoDateStr,
+                    time: item.startTime,
+                    timeSlot: item.timeSlot
+                };
+            });
+
+            const projectId = currentEditProjectId || 'proj_' + Date.now();
+            
+            const newProject = {
+                id: projectId,
+                title: title,
+                launchDate: launchDate,
+                updatedAt: new Date().toISOString(),
+                platforms: platformStatuses
+            };
+
+            // Mettre à jour ou ajouter
+            const existingIndex = projects.findIndex(p => p.id === projectId);
+            if (existingIndex >= 0) {
+                projects[existingIndex] = newProject;
+            } else {
+                projects.push(newProject);
+            }
+
+            localStorage.setItem('socialsync_projects', JSON.stringify(projects));
+            
+            showToast("Projet enregistré dans le calendrier !");
+            updateBadgeCount();
+
+            // Réinitialiser le formulaire
+            currentEditProjectId = null;
+            titleInput.value = '';
         }
 
-        function loadStatuses() {
-            platformsConfig.forEach(p => {
-                const saved = localStorage.getItem('pub_status_' + p.id + '_' + dateInput.value);
-                const select = document.getElementById(`status-${p.id}`);
-                if (saved && select) select.value = saved;
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMsg').innerText = msg;
+            toast.classList.remove('opacity-0', 'translate-y-10', 'pointer-events-none');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-10', 'pointer-events-none');
+            }, 3000);
+        }
+
+        function updateBadgeCount() {
+            document.getElementById('savedCountBadge').innerText = projects.length;
+        }
+
+        // --- 6. GESTION DU CALENDRIER ET LISTE DE SUIVI ---
+        function renderCalendarAndProjects() {
+            // Initialiser FullCalendar au besoin
+            if (!calendar) {
+                const calendarEl = document.getElementById('calendar');
+                calendar = new FullCalendar.Calendar(calendarEl, {
+                    initialView: 'dayGridMonth',
+                    locale: 'fr',
+                    headerToolbar: {
+                        left: 'prev,next today',
+                        center: 'title',
+                        right: 'dayGridMonth,timeGridWeek'
+                    },
+                    buttonText: {
+                        today: "Aujourd'hui",
+                        month: 'Mois',
+                        week: 'Semaine'
+                    },
+                    events: getCalendarEvents()
+                });
+                calendar.render();
+            } else {
+                calendar.removeAllEvents();
+                calendar.addEventSource(getCalendarEvents());
+            }
+
+            renderProjectsList();
+        }
+
+        function getCalendarEvents() {
+            const events = [];
+
+            projects.forEach(proj => {
+                platformsConfig.forEach(plat => {
+                    const platData = proj.platforms[plat.id];
+                    if (platData) {
+                        let statusIcon = "⏳";
+                        if (platData.status === 'scheduled') statusIcon = "📅";
+                        if (platData.status === 'done') statusIcon = "✅";
+
+                        events.push({
+                            title: `${statusIcon} [${plat.name}]${proj.title}`,
+                            start: `${platData.date}T${platData.time}:00`,
+                            backgroundColor: plat.calendarColor,
+                            borderColor: plat.calendarColor,
+                            extendedProps: {
+                                projectId: proj.id,
+                                platformId: plat.id
+                            }
+                        });
+                    }
+                });
+            });
+
+            return events;
+        }
+
+        function renderProjectsList() {
+            const listEl = document.getElementById('projectsList');
+            listEl.innerHTML = '';
+
+            if (projects.length === 0) {
+                listEl.innerHTML = `<div class="text-center text-slate-500 py-10 text-xs">Aucun projet enregistré pour le moment.</div>`;
+                return;
+            }
+
+            // Trier par date de lancement décroissante
+            const sorted = [...projects].sort((a,b) => new Date(b.launchDate) - new Date(a.launchDate));
+
+            sorted.forEach(proj => {
+                let platformsHtml = '';
+                
+                platformsConfig.forEach(plat => {
+                    const pData = proj.platforms[plat.id];
+                    if (pData) {
+                        let badgeBg = "bg-slate-800 text-slate-400 border-slate-700";
+                        let statusText = "À planifier";
+                        if (pData.status === 'scheduled') { badgeBg = "bg-blue-500/20 text-blue-400 border-blue-500/30"; statusText = "Programmé"; }
+                        if (pData.status === 'done') { badgeBg = "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"; statusText = "Publié"; }
+
+                        platformsHtml += `
+                            <div class="flex items-center justify-between text-[11px] py-1 border-b border-slate-800/50 last:border-0">
+                                <span class="text-slate-300 font-medium flex items-center gap-1.5">
+                                    <i class="${plat.icon} text-xs"></i> ${plat.name}
+                                </span>
+                                <select onchange="updatePlatformStatusDirect('${proj.id}', '${plat.id}', this.value)" class="bg-slate-950 text-[10px] border border-slate-700 rounded px-1.5 py-0.5 text-slate-200">
+                                    <option value="todo" ${pData.status==='todo'?'selected':''}>⏳ À planifier</option>
+                                    <option value="scheduled" ${pData.status==='scheduled'?'selected':''}>📅 Programmé</option>
+                                    <option value="done" ${pData.status==='done'?'selected':''}>✅ Publié</option>
+                                </select>
+                            </div>
+                        `;
+                    }
+                });
+
+                const cardHtml = `
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-3.5 space-y-3">
+                        <div class="flex items-start justify-between gap-2">
+                            <div>
+                                <h4 class="font-bold text-sm text-slate-100">${proj.title}</h4>
+                                <p class="text-[10px] text-slate-400 mt-0.5">Lancement YT : ${new Date(proj.launchDate).toLocaleDateString('fr-FR')}</p>
+                            </div>
+                            <div class="flex gap-1">
+                                <button onclick="loadProjectToEdit('${proj.id}')" title="Modifier/Charger" class="text-slate-400 hover:text-indigo-400 p-1 text-xs">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                                <button onclick="deleteProject('${proj.id}')" title="Supprimer" class="text-slate-400 hover:text-red-400 p-1 text-xs">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-900/80 rounded-lg p-2 border border-slate-800/80 space-y-0.5">
+                            ${platformsHtml}
+                        </div>
+                    </div>
+                `;
+                listEl.innerHTML += cardHtml;
             });
         }
 
+        function updatePlatformStatusDirect(projId, platId, newStatus) {
+            const proj = projects.find(p => p.id === projId);
+            if (proj && proj.platforms[platId]) {
+                proj.platforms[platId].status = newStatus;
+                localStorage.setItem('socialsync_projects', JSON.stringify(projects));
+                renderCalendarAndProjects();
+                showToast("Statut mis à jour !");
+            }
+        }
+
+        function loadProjectToEdit(projId) {
+            const proj = projects.find(p => p.id === projId);
+            if (!proj) return;
+
+            currentEditProjectId = proj.id;
+            document.getElementById('videoTitle').value = proj.title;
+            dateInput.value = proj.launchDate;
+
+            renderGrid();
+
+            // Remplir les statuts dans la grille
+            platformsConfig.forEach(plat => {
+                if (proj.platforms[plat.id]) {
+                    const sel = document.getElementById(`status-select-${plat.id}`);
+                    if (sel) sel.value = proj.platforms[plat.id].status;
+                }
+            });
+
+            switchTab('planner');
+            showToast("Projet chargé dans le planificateur.");
+        }
+
+        function deleteProject(projId) {
+            if (confirm("Voulez-vous vraiment supprimer cette vidéo du suivi ?")) {
+                projects = projects.filter(p => p.id !== projId);
+                localStorage.setItem('socialsync_projects', JSON.stringify(projects));
+                renderCalendarAndProjects();
+                updateBadgeCount();
+                showToast("Projet supprimé.");
+            }
+        }
+
+        // --- 7. EXPORTATION & IMPORTATION DES DONNÉES JSON ---
+        function exportDataJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(projects, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `backup_publications_${new Date().toISOString().split('T')[0]}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function importDataJSON(event) {
+            const fileReader = new FileReader();
+            fileReader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (Array.isArray(imported)) {
+                        projects = imported;
+                        localStorage.setItem('socialsync_projects', JSON.stringify(projects));
+                        renderCalendarAndProjects();
+                        updateBadgeCount();
+                        showToast("Sauvegarde importée avec succès !");
+                    }
+                } catch(err) {
+                    alert("Fichier JSON invalide.");
+                }
+            };
+            fileReader.readAsText(event.target.files[0]);
+        }
+
+        // --- 8. FONCTIONS D'EXPORT DIVERSES (Copie Texte & iCal) ---
         function copyPlanningText() {
             const schedule = calculateSchedule();
             const videoTitle = document.getElementById('videoTitle').value || 'Vidéo Sans Titre';
@@ -219,7 +637,7 @@
             });
 
             navigator.clipboard.writeText(text);
-            alert("Planning copié dans le presse-papier !");
+            showToast("Planning copié dans le presse-papier !");
         }
 
         function exportICalendar() {
@@ -229,7 +647,7 @@
             let icsContent = [
                 'BEGIN:VCALENDAR',
                 'VERSION:2.0',
-                'PRODID:-//Hub Publication Multi-Plateformes//FR'
+                'PRODID:-//SocialSync Hub//FR'
             ];
 
             schedule.forEach(item => {
@@ -244,8 +662,8 @@
                 const dtEnd = `${year}${month}${day}T${endH}${endM}00`;
 
                 icsContent.push('BEGIN:VEVENT');
-                icsContent.push(`SUMMARY:[${item.name}] ${videoTitle}`);
-                icsContent.push(`DESCRIPTION:Focus KPI: ${item.kpi}\\nAction: ${item.strategy}`);
+                icsContent.push(`SUMMARY:[${item.name}]${videoTitle}`);
+                icsContent.push(`DESCRIPTION:Focus KPI: ${item.kpi}\\nAction:${item.strategy}`);
                 icsContent.push(`DTSTART:${dtStart}`);
                 icsContent.push(`DTEND:${dtEnd}`);
                 icsContent.push('END:VEVENT');
@@ -262,8 +680,10 @@
             document.body.removeChild(link);
         }
 
+        // --- INIT ---
         dateInput.addEventListener('change', renderGrid);
         renderGrid();
+        updateBadgeCount();
     </script>
 </body>
 </html>
