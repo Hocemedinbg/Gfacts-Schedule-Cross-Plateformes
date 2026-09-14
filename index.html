@@ -4,10 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SocialSync Hub - Synchro GitHub</title>
-    
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/locales/fr.global.min.js"></script>
 
     <style>
         ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -16,7 +17,7 @@
         .fc { --fc-border-color: #334155; --fc-page-bg-color: transparent; }
         .fc-theme-standard td, .fc-theme-standard th { border-color: #334155 !important; }
         .fc-col-header-cell-cushion, .fc-daygrid-day-number { color: #cbd5e1 !important; text-decoration: none !important; }
-        .fc-event { border: none !important; cursor: pointer; background: transparent; }
+        .fc-event { border: none !important; cursor: pointer; }
         .fc-daygrid-event-harness { margin-bottom: 4px !important; }
     </style>
 </head>
@@ -111,7 +112,7 @@
                             <i class="fa-regular fa-calendar-plus"></i> Export .ICS
                         </button>
                     </div>
-                    <button onclick="saveProject()" id="saveBtn" class="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold rounded-xl text-sm transition shadow-lg shadow-emerald-900/30 flex items-center gap-2">
+                    <button onclick="saveProject()" id="saveBtn" class="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold rounded-xl text-sm transition shadow-lg shadow-emerald-900/30 flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
                         <i class="fa-solid fa-cloud-arrow-up"></i> Sauvegarder dans GitHub
                     </button>
                 </div>
@@ -127,7 +128,7 @@
                     <h2 class="text-xl font-bold text-white flex items-center gap-2">
                         <i class="fa-solid fa-calendar-check text-indigo-400"></i> Suivi & Planning Global
                     </h2>
-                    <p class="text-xs text-slate-400 mt-1">Synchronisé en temps réel avec votre dépôt GitHub.</p>
+                    <p class="text-xs text-slate-400 mt-1">Synchronisé avec votre dépôt GitHub.</p>
                 </div>
                 <div class="flex items-center gap-3 flex-wrap">
                     <button onclick="exportAllData()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold transition flex items-center gap-2">
@@ -180,12 +181,12 @@
                 <div>
                     <label class="block font-semibold text-slate-300 mb-1">GitHub Personal Access Token (PAT)</label>
                     <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500">
-                    <p class="text-[10px] text-slate-500 mt-1">Nécessite le droit <code class="text-indigo-400">repo</code> ou <code class="text-indigo-400">contents:write</code>.</p>
+                    <p class="text-[10px] text-slate-500 mt-1">Classic : droit <code class="text-indigo-400">repo</code>. Fine-grained : <code class="text-indigo-400">Contents → Read and write</code>.</p>
                 </div>
             </div>
             <div class="pt-3 border-t border-slate-800 flex justify-end gap-3">
                 <button onclick="closeConfigModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg text-xs font-semibold hover:bg-slate-700">Annuler</button>
-                <button onclick="saveGitHubConfig()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-500 shadow-lg shadow-indigo-900/40">Tester & Enregistrer</button>
+                <button onclick="saveGitHubConfig()" id="saveConfigBtn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-500 shadow-lg shadow-indigo-900/40 disabled:opacity-60">Tester & Enregistrer</button>
             </div>
         </div>
     </div>
@@ -236,8 +237,11 @@
     </div>
 
     <script>
+        // ============================================================
+        // CONFIGURATION PLATEFORMES & SEO
+        // ============================================================
         const platformsConfig = [
-            { id: 'yt', name: 'YouTube Shorts', icon: 'fa-brands fa-youtube', color: 'from-red-600/20 to-red-900/10 border-red-500/40', badgeColor: 'bg-red-500/20 text-red-400 border-red-500/30', calendarColor: '#ef4444', dayOffset: 0, timeSlot: '16h00 - 17h00', startTime: '16:00', endTime: '17:00', kpi: 'CTR & Abonnés', strategy: 'Point de départ. Fin d\'après-midi.' },
+            { id: 'yt', name: 'YouTube Shorts', icon: 'fa-brands fa-youtube', color: 'from-red-600/20 to-red-900/10 border-red-500/40', badgeColor: 'bg-red-500/20 text-red-400 border-red-500/30', calendarColor: '#ef4444', dayOffset: 0, timeSlot: '16h00 - 17h00', startTime: '16:00', endTime: '17:00', kpi: 'CTR & Abonnés', strategy: "Point de départ. Fin d'après-midi." },
             { id: 'pin', name: 'Pinterest (Pin YT)', icon: 'fa-brands fa-pinterest', color: 'from-rose-600/20 to-rose-900/10 border-rose-500/40', badgeColor: 'bg-rose-500/20 text-rose-400 border-rose-500/30', calendarColor: '#e11d48', dayOffset: 0, timeSlot: '18h00 - 20h00', startTime: '18:00', endTime: '20:00', kpi: 'Saves & Trafic', strategy: 'Épingle avec lien direct YT.' },
             { id: 'tiktok', name: 'TikTok', icon: 'fa-brands fa-tiktok', color: 'from-cyan-600/20 to-slate-900/10 border-cyan-500/40', badgeColor: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30', calendarColor: '#06b6d4', dayOffset: 0, timeSlot: '19h00 - 21h00', startTime: '19:00', endTime: '21:00', kpi: 'Rétention (>70%)', strategy: 'Accroche 2s, audio tendance.' },
             { id: 'fb', name: 'Facebook Reels', icon: 'fa-brands fa-facebook', color: 'from-blue-600/20 to-blue-900/10 border-blue-500/40', badgeColor: 'bg-blue-500/20 text-blue-400 border-blue-500/30', calendarColor: '#3b82f6', dayOffset: 1, timeSlot: '11h30 - 13h30', startTime: '11:30', endTime: '13:30', kpi: 'Commentaires', strategy: 'Pause déjeuner. Poser question.' },
@@ -252,40 +256,127 @@
             pin: { label: 'Pinterest', fields: ['Script Start', 'Pin Title', 'Pin Description', 'Hashtags'] }
         };
 
+        // ============================================================
+        // ÉTAT GLOBAL
+        // ============================================================
         let projects = [];
         let currentSha = null;
         let calendar = null;
         let currentEditProjectId = null;
+        let toastTimer = null;
 
         const FILE_PATH = 'data/publications.json';
+        const WARN_ICON = 'fa-solid fa-triangle-exclamation';
+        const DEFAULT_SAVE_LABEL = '<i class="fa-solid fa-cloud-arrow-up"></i> Sauvegarder dans GitHub';
+
         const dateInput = document.getElementById('launchDate');
-        if (dateInput) {
-            dateInput.value = new Date().toISOString().split('T')[0];
+
+        // ============================================================
+        // UTILITAIRES
+        // ============================================================
+        function escapeHtml(str) {
+            return String(str ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
         }
 
+        function showToast(msg, icon = 'fa-solid fa-circle-check') {
+            const t = document.getElementById('toast');
+            const isWarn = icon.includes('triangle');
+            document.getElementById('toastIcon').className = icon + ' text-xl';
+            document.getElementById('toastMsg').textContent = msg;
+            t.classList.toggle('bg-amber-600', isWarn);
+            t.classList.toggle('bg-emerald-600', !isWarn);
+            t.classList.remove('opacity-0', 'translate-y-10', 'pointer-events-none');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => t.classList.add('opacity-0', 'translate-y-10', 'pointer-events-none'), 4500);
+        }
+
+        // Encodage UTF-8 -> Base64 SANS erreur sur accents/emojis (cause n°1 du bug)
+        function utf8ToBase64(str) {
+            const bytes = new TextEncoder().encode(str);
+            let bin = '';
+            const CHUNK = 0x8000;
+            for (let i = 0; i < bytes.length; i += CHUNK) {
+                bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+            }
+            return btoa(bin);
+        }
+
+        function base64ToUtf8(b64) {
+            const bin = atob(String(b64).replace(/\s/g, ''));
+            const bytes = new Uint8Array(bin.length);
+            for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+            return new TextDecoder('utf-8').decode(bytes);
+        }
+
+        function copyToClipboard(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                return navigator.clipboard.writeText(text);
+            }
+            return new Promise((resolve, reject) => {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed';
+                ta.style.opacity = '0';
+                document.body.appendChild(ta);
+                ta.select();
+                try {
+                    document.execCommand('copy') ? resolve() : reject(new Error('copy failed'));
+                } catch (e) { reject(e); }
+                finally { ta.remove(); }
+            });
+        }
+
+        function downloadBlob(content, filename, type) {
+            const blob = new Blob([content], { type });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 200);
+        }
+
+        function loadLocalProjects() {
+            try {
+                projects = JSON.parse(localStorage.getItem('socialsync_projects') || '[]');
+            } catch (e) { projects = []; }
+        }
+
+        function refreshCalendar() {
+            if (calendar) calendar.refetchEvents();
+        }
+
+        // ============================================================
+        // INITIALISATION
+        // ============================================================
         window.addEventListener('DOMContentLoaded', () => {
+            loadLocalProjects();          // On affiche d'abord le local (jamais d'écran vide)
             loadGitHubConfigInputs();
-            checkGitHubConnectionAndLoad();
             renderGrid();
             renderSeoFields();
+            renderProjectsList();
             if (dateInput) {
+                dateInput.value = new Date().toISOString().split('T')[0];
                 dateInput.addEventListener('change', renderGrid);
             }
+            checkGitHubConnectionAndLoad(); // Puis synchro silencieuse avec GitHub
         });
 
+        // ============================================================
+        // GRILLE PLANNING & CHAMPS SEO
+        // ============================================================
         function renderGrid() {
             const grid = document.getElementById('scheduleGrid');
             if (!grid) return;
-            grid.innerHTML = '';
             const baseDateVal = dateInput ? dateInput.value : new Date().toISOString().split('T')[0];
-            const baseDate = baseDateVal ? new Date(baseDateVal) : new Date();
+            const baseDate = baseDateVal ? new Date(baseDateVal + 'T00:00:00') : new Date();
+            let html = '';
 
             platformsConfig.forEach(p => {
                 const d = new Date(baseDate);
                 d.setDate(d.getDate() + p.dayOffset);
                 const formattedDate = d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
-
-                grid.innerHTML += `
+                html += `
                     <div class="bg-gradient-to-br ${p.color} border rounded-2xl p-5 shadow-lg flex flex-col justify-between space-y-4">
                         <div class="space-y-3">
                             <div class="flex items-center justify-between">
@@ -293,9 +384,7 @@
                                     <i class="${p.icon} text-xl text-white"></i>
                                     <span class="font-bold text-sm text-white">${p.name}</span>
                                 </div>
-                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border ${p.badgeColor}">
-                                    J+${p.dayOffset}
-                                </span>
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border ${p.badgeColor}">J+${p.dayOffset}</span>
                             </div>
                             <div class="text-xs text-slate-300 flex items-center justify-between border-t border-b border-slate-800/60 py-2">
                                 <span class="capitalize"><i class="fa-regular fa-calendar text-slate-400 mr-1"></i> ${formattedDate}</span>
@@ -307,33 +396,34 @@
                             <span>KPI Cible:</span>
                             <span class="font-semibold text-indigo-300">${p.kpi}</span>
                         </div>
-                    </div>
-                `;
+                    </div>`;
             });
+            grid.innerHTML = html;
         }
+
+        function seoFieldId(platId, field) { return `seo_${platId}_${field.replace(/[\s\/]/g, '_')}`; }
 
         function renderSeoFields() {
             const container = document.getElementById('seoFieldsContainer');
             if (!container) return;
-            container.innerHTML = '';
+            let html = '';
             for (const [platId, config] of Object.entries(seoFieldsConfig)) {
                 const platInfo = platformsConfig.find(p => p.id === platId);
-                let fieldsHtml = config.fields.map(f => `
+                const fieldsHtml = config.fields.map(f => `
                     <div class="mb-2">
                         <label class="block text-[10px] font-semibold text-slate-400 mb-0.5">${f}</label>
-                        <textarea id="seo_${platId}_${f.replace(/[\s\/]/g, '_')}" rows="2" placeholder="${f}..." class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-fuchsia-500 resize-y"></textarea>
-                    </div>
-                `).join('');
-                container.innerHTML += `
+                        <textarea id="${seoFieldId(platId, f)}" rows="2" placeholder="${f}..." class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-fuchsia-500 resize-y"></textarea>
+                    </div>`).join('');
+                html += `
                     <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
                         <div class="flex items-center gap-2 mb-2">
                             <i class="${platInfo.icon} text-sm text-slate-200"></i>
                             <span class="font-bold text-xs text-white">${config.label}</span>
                         </div>
                         ${fieldsHtml}
-                    </div>
-                `;
+                    </div>`;
             }
+            container.innerHTML = html;
         }
 
         function toggleSeoSection() {
@@ -350,11 +440,11 @@
         }
 
         function getSeoData() {
-            const seo = { playlist: document.getElementById('seoPlaylist').value.trim() };
+            const seo = { playlist: (document.getElementById('seoPlaylist')?.value || '').trim() };
             for (const [platId, config] of Object.entries(seoFieldsConfig)) {
                 seo[platId] = {};
                 config.fields.forEach(f => {
-                    const el = document.getElementById(`seo_${platId}_${f.replace(/[\s\/]/g, '_')}`);
+                    const el = document.getElementById(seoFieldId(platId, f));
                     seo[platId][f] = el ? el.value : '';
                 });
             }
@@ -363,32 +453,35 @@
 
         function loadSeoData(seo) {
             if (!seo) return;
-            document.getElementById('seoPlaylist').value = seo.playlist || '';
+            const pl = document.getElementById('seoPlaylist');
+            if (pl) pl.value = seo.playlist || '';
             for (const [platId, config] of Object.entries(seoFieldsConfig)) {
                 config.fields.forEach(f => {
-                    const el = document.getElementById(`seo_${platId}_${f.replace(/[\s\/]/g, '_')}`);
+                    const el = document.getElementById(seoFieldId(platId, f));
                     if (el && seo[platId]) el.value = seo[platId][f] || '';
                 });
             }
+            const hasContent = seo.playlist || Object.values(seo).some(v => typeof v === 'object' && v && Object.values(v).some(t => t));
             const section = document.getElementById('seoSection');
-            if (seo.playlist || Object.values(seo).some(v => typeof v === 'object' && Object.values(v).some(t => t))) {
-                if (section) section.classList.remove('hidden');
-                const btn = document.getElementById('seoToggleBtn');
-                if (btn) btn.innerHTML = '<i class="fa-solid fa-chevron-up text-[10px]"></i> <span>Masquer</span>';
-            }
+            const btn = document.getElementById('seoToggleBtn');
+            if (hasContent && section && section.classList.contains('hidden')) toggleSeoSection();
+            else if (!hasContent && section && !section.classList.contains('hidden') && btn) toggleSeoSection();
         }
 
         function clearSeoFields() {
-            document.getElementById('seoPlaylist').value = '';
+            const pl = document.getElementById('seoPlaylist');
+            if (pl) pl.value = '';
             for (const [platId, config] of Object.entries(seoFieldsConfig)) {
                 config.fields.forEach(f => {
-                    const el = document.getElementById(`seo_${platId}_${f.replace(/[\s\/]/g, '_')}`);
+                    const el = document.getElementById(seoFieldId(platId, f));
                     if (el) el.value = '';
                 });
             }
         }
 
-        // --- IMPORT PACKAGE SEO ---
+        // ============================================================
+        // IMPORT PACKAGE SEO
+        // ============================================================
         const seoSectionAliases = { 'youtube': 'yt', 'tiktok': 'tiktok', 'instagram': 'ig', 'facebook': 'fb', 'pinterest': 'pin' };
         const seoFieldAliases = {
             'playlist': '__PLAYLIST__',
@@ -469,7 +562,7 @@
                 const keys = Object.keys(platData);
                 if (!keys.length) continue;
                 config.fields.forEach(f => {
-                    const el = document.getElementById(`seo_${platId}_${f.replace(/[\s\/]/g, '_')}`);
+                    const el = document.getElementById(seoFieldId(platId, f));
                     if (!el) return;
                     const target = f.toLowerCase();
                     let key = keys.find(k => k.toLowerCase() === target);
@@ -499,7 +592,7 @@
                 const text = await navigator.clipboard.readText();
                 if (text) { document.getElementById('seoBulkInput').value = text; previewSeoPackage(); }
                 else showToast("Le presse-papiers est vide.");
-            } catch (e) { showToast("Collage bloqué par le navigateur — utilisez Ctrl+V."); }
+            } catch (e) { showToast("Collage bloqué par le navigateur — utilisez Ctrl+V.", WARN_ICON); }
         }
         function previewSeoPackage() {
             const raw = document.getElementById('seoBulkInput').value;
@@ -518,15 +611,17 @@
         }
         function applySeoPackage() {
             const raw = document.getElementById('seoBulkInput').value;
-            if (!raw.trim()) { showToast("Collez d'abord le package SEO."); return; }
+            if (!raw.trim()) { showToast("Collez d'abord le package SEO.", WARN_ICON); return; }
             const filled = applyParsedSeo(parseSeoPackage(raw));
-            if (filled === 0) { showToast("Format non reconnu — vérifiez le package collé."); return; }
+            if (filled === 0) { showToast("Format non reconnu — vérifiez le package collé.", WARN_ICON); return; }
             closeSeoImportModal();
             clearSeoImportInput();
             showToast(`${filled} champ(s) SEO rempli(s) automatiquement !`);
         }
 
-        // --- GITHUB API ET LOCALSTORAGE ---
+        // ============================================================
+        // GITHUB API
+        // ============================================================
         function getGitHubConfig() {
             return {
                 username: localStorage.getItem('gh_user') || '',
@@ -534,6 +629,12 @@
                 token: localStorage.getItem('gh_token') || ''
             };
         }
+
+        function isGitHubConfigured() {
+            const c = getGitHubConfig();
+            return !!(c.username && c.repo && c.token);
+        }
+
         function loadGitHubConfigInputs() {
             const conf = getGitHubConfig();
             document.getElementById('ghUsername').value = conf.username;
@@ -541,176 +642,224 @@
             document.getElementById('ghToken').value = conf.token;
         }
 
-        async function checkGitHubConnectionAndLoad() {
-            const conf = getGitHubConfig();
-            if (conf.username && conf.repo && conf.token) {
-                try {
-                    const url = `https://api.github.com/repos/${conf.username}/${conf.repo}/contents/${FILE_PATH}`;
-                    const res = await fetch(url, {
-                        headers: {
-                            'Authorization': `Bearer ${conf.token}`,
-                            'Accept': 'application/vnd.github.v3+json'
-                        }
-                    });
-                    if (res.ok) {
-                        const data = await res.json();
-                        currentSha = data.sha;
-                        const contentDecoded = decodeURIComponent(escape(atob(data.content.replace(/\s/g, ''))));
-                        projects = JSON.parse(contentDecoded);
-                        localStorage.setItem('socialsync_projects', JSON.stringify(projects));
-                    } else if (res.status === 404) {
-                        projects = JSON.parse(localStorage.getItem('socialsync_projects') || '[]');
-                    }
-                } catch (e) {
-                    console.error("Erreur synchro GitHub:", e);
-                    projects = JSON.parse(localStorage.getItem('socialsync_projects') || '[]');
-                }
-            } else {
-                projects = JSON.parse(localStorage.getItem('socialsync_projects') || '[]');
-            }
-            renderProjectsList();
-            if (calendar) {
-                calendar.removeAllEvents();
-                calendar.addEventSource(generateCalendarEvents());
-            }
-        }
-
-        function saveGitHubConfig() {
-            const u = document.getElementById('ghUsername').value.trim();
-            const r = document.getElementById('ghRepo').value.trim();
-            const t = document.getElementById('ghToken').value.trim();
-            localStorage.setItem('gh_user', u);
-            localStorage.setItem('gh_repo', r);
-            localStorage.setItem('gh_token', t);
-            closeConfigModal();
-            checkGitHubConnectionAndLoad();
-            showToast("Configuration GitHub enregistrée !");
-        }
-
-        function syncFromGitHub() {
-            checkGitHubConnectionAndLoad();
-            showToast("Synchronisation GitHub lancée !");
-        }
-
         function openConfigModal() {
             loadGitHubConfigInputs();
             document.getElementById('configModal').classList.remove('hidden');
         }
-
         function closeConfigModal() {
             document.getElementById('configModal').classList.add('hidden');
         }
 
-        // --- CORRECTION SAUVEGARDE GITHUB & LOCAL ---
-        async function saveProjectsData() {
-            localStorage.setItem('socialsync_projects', JSON.stringify(projects));
-            const conf = getGitHubConfig();
-            
-            // Si GitHub n'est pas configuré, on conserve uniquement en local
-            if (!conf.username || !conf.repo || !conf.token) {
-                return { success: true, localOnly: true };
-            }
+        async function saveGitHubConfig() {
+            const u = document.getElementById('ghUsername').value.trim();
+            const r = document.getElementById('ghRepo').value.trim();
+            const t = document.getElementById('ghToken').value.trim();
+            if (!u || !r || !t) { showToast('Remplissez les 3 champs de configuration.', WARN_ICON); return; }
 
+            const btn = document.getElementById('saveConfigBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Test en cours…';
             try {
-                const url = `https://api.github.com/repos/${conf.username}/${conf.repo}/contents/${FILE_PATH}`;
-                
-                // 1. Récupération automatique du SHA s'il est manquant
-                if (!currentSha) {
-                    const getRes = await fetch(url, {
-                        headers: {
-                            'Authorization': `Bearer ${conf.token}`,
-                            'Accept': 'application/vnd.github.v3+json'
-                        }
-                    });
-                    if (getRes.ok) {
-                        const getData = await getRes.json();
-                        currentSha = getData.sha;
-                    }
-                }
-
-                // 2. Encodage UTF-8 propre
-                const contentEncoded = btoa(unescape(encodeURIComponent(JSON.stringify(projects, null, 2))));
-                const body = {
-                    message: `Mise à jour des projets via SocialSync Hub`,
-                    content: contentEncoded
-                };
-                if (currentSha) body.sha = currentSha;
-
-                // 3. Envoi vers GitHub
-                const res = await fetch(url, {
-                    method: 'PUT',
-                    headers: {
-                        'Authorization': `Bearer ${conf.token}`,
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/vnd.github.v3+json'
-                    },
-                    body: JSON.stringify(body)
+                // Test réel de la connexion avant d'enregistrer
+                const res = await fetch(`https://api.github.com/repos/${u}/${r}`, {
+                    headers: { 'Authorization': `Bearer ${t}`, 'Accept': 'application/vnd.github.v3+json' }
                 });
 
-                if (res.ok) {
-                    const resData = await res.json();
-                    if (resData.content && resData.content.sha) {
-                        currentSha = resData.content.sha;
-                    }
-                    return { success: true, localOnly: false };
-                } else {
-                    const errData = await res.json().catch(() => ({}));
-                    return { success: false, error: errData.message || `Erreur HTTP ${res.status}` };
+                if (res.status === 401) {
+                    showToast('Token GitHub invalide ou expiré (401).', WARN_ICON);
+                    return;
                 }
-            } catch (err) {
-                console.error("Erreur d'écriture GitHub API:", err);
-                return { success: false, error: "Erreur réseau / connexion" };
+                if (res.status === 404) {
+                    showToast('Dépôt introuvable — vérifiez utilisateur et nom du repo.', WARN_ICON);
+                    return;
+                }
+
+                localStorage.setItem('gh_user', u);
+                localStorage.setItem('gh_repo', r);
+                localStorage.setItem('gh_token', t);
+                closeConfigModal();
+                currentSha = null;
+                await checkGitHubConnectionAndLoad();
+                if (res.ok) {
+                    showToast('Connexion GitHub validée et enregistrée !');
+                } else {
+                    showToast('Config enregistrée — vérifiez les permissions du token (Contents: write).', WARN_ICON);
+                }
+            } catch (e) {
+                // Erreur réseau : on enregistre quand même, l'utilisateur retentera
+                localStorage.setItem('gh_user', u);
+                localStorage.setItem('gh_repo', r);
+                localStorage.setItem('gh_token', t);
+                closeConfigModal();
+                showToast('Erreur réseau — configuration enregistrée quand même.', WARN_ICON);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Tester & Enregistrer';
             }
         }
 
+        async function checkGitHubConnectionAndLoad() {
+            const conf = getGitHubConfig();
+            if (!(conf.username && conf.repo && conf.token)) { renderProjectsList(); return; }
+
+            const url = `https://api.github.com/repos/${conf.username}/${conf.repo}/contents/${FILE_PATH}`;
+            try {
+                const res = await fetch(url, {
+                    headers: { 'Authorization': `Bearer ${conf.token}`, 'Accept': 'application/vnd.github.v3+json' }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    currentSha = data.sha;
+                    try {
+                        projects = JSON.parse(base64ToUtf8(data.content));
+                        localStorage.setItem('socialsync_projects', JSON.stringify(projects));
+                    } catch (e) {
+                        showToast('Fichier GitHub illisible (JSON corrompu) — données locales conservées.', WARN_ICON);
+                    }
+                } else if (res.status === 404) {
+                    currentSha = null; // Le fichier n'existe pas encore, il sera créé au 1er save
+                } else if (res.status === 401) {
+                    showToast('Token GitHub invalide (401) — vérifiez la configuration.', WARN_ICON);
+                } else if (res.status === 403) {
+                    showToast('Accès GitHub refusé (403) — permissions du token insuffisantes.', WARN_ICON);
+                }
+            } catch (e) {
+                console.error('Erreur synchro GitHub:', e);
+            }
+            renderProjectsList();
+            refreshCalendar();
+        }
+
+        async function syncFromGitHub() {
+            if (!isGitHubConfigured()) {
+                showToast('Configurez GitHub d\'abord (icône GitHub en haut à droite).', WARN_ICON);
+                openConfigModal();
+                return;
+            }
+            showToast('Synchronisation GitHub en cours…', 'fa-solid fa-rotate fa-spin');
+            await checkGitHubConnectionAndLoad();
+            showToast('Synchronisation GitHub terminée !');
+        }
+
+        // --- SAUVEGARDE ROBUSTE (le cœur du correctif) ---
+        async function saveProjectsData() {
+            // 1. Sauvegarde locale TOUJOURS ( jamais de perte de données )
+            localStorage.setItem('socialsync_projects', JSON.stringify(projects));
+
+            const conf = getGitHubConfig();
+            if (!isGitHubConfigured()) return { success: true, localOnly: true };
+
+            const url = `https://api.github.com/repos/${conf.username}/${conf.repo}/contents/${FILE_PATH}`;
+            const authHeaders = { 'Authorization': `Bearer ${conf.token}`, 'Accept': 'application/vnd.github.v3+json' };
+            const putHeaders = { ...authHeaders, 'Content-Type': 'application/json' };
+            // 2. Encodage UTF-8 fiable (accents, emojis) — corrige InvalidCharacterError
+            const content = utf8ToBase64(JSON.stringify(projects, null, 2));
+
+            const friendlyErrors = {
+                401: 'Token invalide ou expiré',
+                403: 'Permissions insuffisantes (Contents: write requis)',
+                404: 'Dépôt introuvable',
+                409: 'Conflit de version',
+                422: 'Requête refusée par GitHub'
+            };
+
+            try {
+                // 3. Récupération du SHA s'il est manquant
+                let sha = currentSha;
+                if (!sha) {
+                    const getRes = await fetch(url, { headers: authHeaders });
+                    if (getRes.ok) {
+                        sha = (await getRes.json()).sha;
+                    } else if (getRes.status === 404) {
+                        sha = null; // Nouveau fichier
+                    } else {
+                        return { success: false, error: friendlyErrors[getRes.status] || `Erreur HTTP ${getRes.status}` };
+                    }
+                }
+
+                // 4. Envoi (PUT)
+                const body = { message: `SocialSync Hub — mise à jour du ${new Date().toLocaleString('fr-FR')}`, content };
+                if (sha) body.sha = sha;
+                let res = await fetch(url, { method: 'PUT', headers: putHeaders, body: JSON.stringify(body) });
+
+                // 5. En cas de conflit (fichier modifié ailleurs) : on récupère le SHA à jour et on réessaie UNE fois
+                if (res.status === 409 || res.status === 422) {
+                    const getRes = await fetch(url, { headers: authHeaders });
+                    if (getRes.ok) {
+                        body.sha = (await getRes.json()).sha;
+                    } else if (getRes.status === 404) {
+                        delete body.sha; // Le fichier a été supprimé entre-temps : création
+                    }
+                    res = await fetch(url, { method: 'PUT', headers: putHeaders, body: JSON.stringify(body) });
+                }
+
+                if (res.ok) {
+                    const resData = await res.json();
+                    if (resData.content && resData.content.sha) currentSha = resData.content.sha;
+                    return { success: true, localOnly: false };
+                }
+
+                const errData = await res.json().catch(() => ({}));
+                return { success: false, error: errData.message || friendlyErrors[res.status] || `Erreur HTTP ${res.status}` };
+            } catch (err) {
+                console.error("Erreur d'écriture GitHub API:", err);
+                return { success: false, error: 'Erreur réseau (connexion interrompue ?)' };
+            }
+        }
+
+        // ============================================================
+        // GESTION DES PROJETS
+        // ============================================================
         async function saveProject() {
             const titleInput = document.getElementById('videoTitle');
-            const dateInputEl = document.getElementById('launchDate');
+            const launchDateVal = dateInput ? dateInput.value : '';
             const title = titleInput.value.trim();
-            const launchDate = dateInputEl.value;
 
-            if (!title || !launchDate) {
-                showToast("Veuillez remplir le titre et la date (J0).", "fa-solid fa-triangle-exclamation");
+            if (!title || !launchDateVal) {
+                showToast("Veuillez remplir le titre et la date (J0).", WARN_ICON);
                 return;
             }
 
             const seo = getSeoData();
+            const saveBtn = document.getElementById('saveBtn');
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sauvegarde en cours…';
 
-            if (currentEditProjectId) {
-                const index = projects.findIndex(p => p.id === currentEditProjectId);
-                if (index !== -1) {
-                    projects[index] = { ...projects[index], title, launchDate, seo, updatedAt: new Date().toISOString() };
+            try {
+                if (currentEditProjectId) {
+                    const index = projects.findIndex(p => p.id === currentEditProjectId);
+                    if (index !== -1) {
+                        projects[index] = { ...projects[index], title, launchDate: launchDateVal, seo, updatedAt: new Date().toISOString() };
+                    }
+                } else {
+                    projects.unshift({
+                        id: Date.now().toString(),
+                        title,
+                        launchDate: launchDateVal,
+                        seo,
+                        createdAt: new Date().toISOString()
+                    });
                 }
+
+                const syncResult = await saveProjectsData();
+
+                renderProjectsList();
+                refreshCalendar();
+                titleInput.value = '';
+                clearSeoFields();
+                renderGrid();
+
+                if (syncResult.localOnly) {
+                    showToast("Projet enregistré localement (GitHub non configuré).", WARN_ICON);
+                } else if (syncResult.success) {
+                    showToast("Projet sauvegardé et synchronisé sur GitHub !");
+                } else {
+                    showToast(`Enregistré en local — échec GitHub : ${syncResult.error}`, WARN_ICON);
+                }
+            } finally {
                 currentEditProjectId = null;
-                document.getElementById('saveBtn').innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Sauvegarder dans GitHub';
-            } else {
-                const newProj = {
-                    id: Date.now().toString(),
-                    title,
-                    launchDate,
-                    seo,
-                    createdAt: new Date().toISOString()
-                };
-                projects.unshift(newProj);
-            }
-
-            const syncResult = await saveProjectsData();
-            renderProjectsList();
-            if (calendar) {
-                calendar.removeAllEvents();
-                calendar.addEventSource(generateCalendarEvents());
-            }
-
-            titleInput.value = '';
-            clearSeoFields();
-
-            // Rétroaction précise
-            if (syncResult.localOnly) {
-                showToast("Sauvegardé en local (GitHub non configuré).", "fa-solid fa-triangle-exclamation");
-            } else if (syncResult.success) {
-                showToast("Projet sauvegardé et synchronisé sur GitHub !");
-            } else {
-                showToast(`Sauvegardé en local (Échec GitHub : ${syncResult.error})`, "fa-solid fa-triangle-exclamation");
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = DEFAULT_SAVE_LABEL;
             }
         }
 
@@ -718,18 +867,24 @@
             if (!confirm("Voulez-vous vraiment supprimer ce projet ?")) return;
             projects = projects.filter(p => p.id !== id);
             renderProjectsList();
-            if (calendar) {
-                calendar.removeAllEvents();
-                calendar.addEventSource(generateCalendarEvents());
-            }
+            refreshCalendar();
             const syncResult = await saveProjectsData();
-            if (syncResult.success && !syncResult.localOnly) {
-                showToast("Projet supprimé et synchronisé sur GitHub !");
-            } else if (syncResult.localOnly) {
-                showToast("Projet supprimé en local.");
-            } else {
-                showToast(`Supprimé en local (Échec GitHub : ${syncResult.error})`, "fa-solid fa-triangle-exclamation");
-            }
+            if (syncResult.localOnly) showToast("Projet supprimé en local.");
+            else if (syncResult.success) showToast("Projet supprimé et synchronisé sur GitHub !");
+            else showToast(`Supprimé en local — échec GitHub : ${syncResult.error}`, WARN_ICON);
+        }
+
+        function editProject(id) {
+            const p = projects.find(x => x.id === id);
+            if (!p) return;
+            currentEditProjectId = id;
+            document.getElementById('videoTitle').value = p.title || '';
+            if (dateInput) dateInput.value = p.launchDate || '';
+            loadSeoData(p.seo || {});
+            renderGrid();
+            document.getElementById('saveBtn').innerHTML = '<i class="fa-solid fa-rotate"></i> Mettre à jour le projet';
+            switchTab('planner');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function renderProjectsList() {
@@ -757,15 +912,10 @@
                         </div>
                         <div class="flex items-center gap-1.5 shrink-0">
                             ${p.seo ? `<button onclick="openSeoView('${p.id}')" class="p-2.5 bg-slate-800 hover:bg-fuchsia-950/50 hover:text-fuchsia-400 text-slate-400 rounded-lg transition text-xs" title="Voir Package SEO"><i class="fa-solid fa-wand-magic-sparkles"></i></button>` : ''}
-                            <button onclick="editProject('${p.id}')" class="p-2.5 bg-slate-800 hover:bg-indigo-600/30 hover:text-indigo-400 text-slate-300 rounded-lg transition text-xs" title="Modifier le projet">
-                                <i class="fa-solid fa-pen"></i>
-                            </button>
-                            <button onclick="deleteProject('${p.id}')" class="p-2.5 bg-slate-800 hover:bg-rose-950/50 hover:text-rose-400 text-slate-400 rounded-lg transition text-xs" title="Supprimer le projet">
-                                <i class="fa-solid fa-trash-can"></i>
-                            </button>
+                            <button onclick="editProject('${p.id}')" class="p-2.5 bg-slate-800 hover:bg-indigo-600/30 hover:text-indigo-400 text-slate-300 rounded-lg transition text-xs" title="Modifier le projet"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="deleteProject('${p.id}')" class="p-2.5 bg-slate-800 hover:bg-rose-950/50 hover:text-rose-400 text-slate-400 rounded-lg transition text-xs" title="Supprimer le projet"><i class="fa-solid fa-trash-can"></i></button>
                         </div>
-                    </div>
-                `;
+                    </div>`;
             }).join('');
         }
 
@@ -774,7 +924,7 @@
             if (!proj || !proj.seo) return;
             const modal = document.getElementById('seoViewModal');
             const content = document.getElementById('seoViewContent');
-            
+
             let html = `<h3 class="text-lg font-bold text-white mb-4"><i class="fa-solid fa-wand-magic-sparkles text-fuchsia-400 mr-2"></i>Package SEO - ${escapeHtml(proj.title)}</h3>`;
             if (proj.seo.playlist) {
                 html += `<div class="mb-4 bg-slate-950 p-3 rounded-xl border border-slate-800"><span class="text-xs font-semibold text-slate-400 block mb-1">Playlist</span><p class="text-sm text-white font-medium">${escapeHtml(proj.seo.playlist)}</p></div>`;
@@ -782,13 +932,12 @@
             for (const [platId, cfg] of Object.entries(seoFieldsConfig)) {
                 const platData = proj.seo[platId];
                 if (!platData) continue;
-                const hasValues = Object.values(platData).some(v => v);
-                if (!hasValues) continue;
+                if (!Object.values(platData).some(v => v)) continue;
                 const platInfo = platformsConfig.find(p => p.id === platId);
-                html += `<div class="mb-4 bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3"><div class="flex items-center gap-2 font-bold text-sm text-white"><i class="${platInfo.icon}"></i> ${cfg.label}</div>`;
+                html += `<div class="mb-4 bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3"><div class="flex items-center gap-2 font-bold text-sm text-white"><i class="${platInfo ? platInfo.icon : ''}"></i> ${cfg.label}</div>`;
                 for (const [field, val] of Object.entries(platData)) {
                     if (!val) continue;
-                    html += `<div><span class="text-[11px] font-semibold text-slate-400 block mb-1">${field}</span><pre class="bg-slate-900 border border-slate-800 p-2.5 rounded-lg text-xs text-slate-200 whitespace-pre-wrap font-sans">${escapeHtml(val)}</pre></div>`;
+                    html += `<div><span class="text-[11px] font-semibold text-slate-400 block mb-1">${escapeHtml(field)}</span><pre class="bg-slate-900 border border-slate-800 p-2.5 rounded-lg text-xs text-slate-200 whitespace-pre-wrap font-sans">${escapeHtml(val)}</pre></div>`;
                 }
                 html += `</div>`;
             }
@@ -800,6 +949,9 @@
             document.getElementById('seoViewModal').classList.add('hidden');
         }
 
+        // ============================================================
+        // ONGLETS & CALENDRIER
+        // ============================================================
         function switchTab(tab) {
             const plannerSec = document.getElementById('tabPlanner');
             const calendarSec = document.getElementById('tabCalendar');
@@ -816,33 +968,35 @@
                 calendarSec.classList.remove('hidden');
                 btnCalendar.className = "px-3.5 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-2 bg-indigo-600 text-white shadow-md";
                 btnPlanner.className = "px-3.5 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-2 text-slate-400 hover:text-white";
-                
-                if (!calendar) {
-                    initCalendar();
-                } else {
-                    calendar.render();
-                }
+                if (!calendar) initCalendar();
+                else calendar.render();
                 renderProjectsList();
             }
+        }
+
+        // Dates calculées en local (pas d'UTC) -> plus de décalage d'un jour
+        function localDateStr(d) {
+            const pad = n => String(n).padStart(2, '0');
+            return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
         }
 
         function generateCalendarEvents() {
             const events = [];
             projects.forEach(p => {
                 if (!p.launchDate) return;
-                const baseDate = new Date(p.launchDate);
+                const baseDate = new Date(p.launchDate + 'T00:00:00');
                 platformsConfig.forEach(plat => {
                     const d = new Date(baseDate);
                     d.setDate(d.getDate() + plat.dayOffset);
-                    const dateStr = d.toISOString().split('T')[0];
+                    const dateStr = localDateStr(d);
                     events.push({
                         id: `${p.id}_${plat.id}`,
-                        title: `[${plat.name}] ${p.title}`,
+                        title: `${plat.name} — ${p.title}`,
                         start: `${dateStr}T${plat.startTime}:00`,
                         end: `${dateStr}T${plat.endTime}:00`,
                         backgroundColor: plat.calendarColor,
                         borderColor: plat.calendarColor,
-                        extendedProps: { projectId: p.id, platform: plat }
+                        extendedProps: { projectId: p.id, platform: plat.name }
                     });
                 });
             });
@@ -850,132 +1004,112 @@
         }
 
         function initCalendar() {
-            const calendarEl = document.getElementById('calendar');
-            if (!calendarEl) return;
-            calendar = new FullCalendar.Calendar(calendarEl, {
+            const el = document.getElementById('calendar');
+            if (!el || typeof FullCalendar === 'undefined') return;
+            calendar = new FullCalendar.Calendar(el, {
                 initialView: 'dayGridMonth',
-                headerToolbar: {
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'dayGridMonth,timeGridWeek'
-                },
                 locale: 'fr',
-                buttonText: {
-                    today: "Aujourd'hui",
-                    month: 'Mois',
-                    week: 'Semaine'
-                },
-                events: generateCalendarEvents(),
-                eventClick: function(info) {
-                    const projId = info.event.extendedProps.projectId;
-                    if (projId) editProject(projId);
+                height: 'auto',
+                headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listWeek' },
+                eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
+                events: (info, successCallback) => successCallback(generateCalendarEvents()),
+                eventClick: (info) => {
+                    const proj = projects.find(p => p.id === info.event.extendedProps.projectId);
+                    if (proj && proj.seo) openSeoView(proj.id);
+                    else showToast(info.event.title, 'fa-solid fa-circle-info');
                 }
             });
             calendar.render();
         }
 
+        // ============================================================
+        // EXPORTS
+        // ============================================================
         function copyPlanningText() {
-            const title = document.getElementById('videoTitle').value || 'Vidéo Sans Titre';
-            const dateVal = document.getElementById('launchDate').value;
-            if (!dateVal) { showToast("Veuillez sélectionner une date."); return; }
-            const baseDate = new Date(dateVal);
-            let text = `📅 PLANNING DE PUBLICATION - ${title.toUpperCase()}\n\n`;
+            const title = document.getElementById('videoTitle').value.trim();
+            const baseVal = dateInput ? dateInput.value : '';
+            if (!title || !baseVal) {
+                showToast("Remplissez le titre et la date (J0) d'abord.", WARN_ICON);
+                return;
+            }
+            const base = new Date(baseVal + 'T00:00:00');
+            let text = `PLANNING — ${title}\nLancement YouTube (J0) : ${base.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}\n\n`;
             platformsConfig.forEach(p => {
-                const d = new Date(baseDate);
+                const d = new Date(base);
                 d.setDate(d.getDate() + p.dayOffset);
-                const dateStr = d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
-                text += `• ${p.name} (J+${p.dayOffset}) : ${dateStr} @ ${p.timeSlot}\n`;
+                text += `- ${p.name} (J+${p.dayOffset}) : ${d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} | ${p.timeSlot} | KPI: ${p.kpi}\n`;
             });
-            navigator.clipboard.writeText(text);
-            showToast("Planning copié dans le presse-papiers !");
+            copyToClipboard(text)
+                .then(() => showToast('Planning copié dans le presse-papiers !'))
+                .catch(() => showToast('Copie impossible dans ce navigateur.', WARN_ICON));
+        }
+
+        function icsEscape(s) {
+            return String(s).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
+        }
+        function icsDate(d) {
+            const pad = n => String(n).padStart(2, '0');
+            return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
         }
 
         function exportICalendar() {
-            const title = document.getElementById('videoTitle').value || 'Vidéo';
-            const dateVal = document.getElementById('launchDate').value;
-            if (!dateVal) { showToast("Veuillez sélectionner une date."); return; }
-            const baseDate = new Date(dateVal);
-            let ics = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//SocialSync Hub//FR\n";
-            platformsConfig.forEach(p => {
-                const d = new Date(baseDate);
-                d.setDate(d.getDate() + p.dayOffset);
-                const yyyy = d.getFullYear();
-                const mm = String(d.getMonth() + 1).padStart(2, '0');
-                const dd = String(d.getDate()).padStart(2, '0');
-                const startStr = `${yyyy}${mm}${dd}T${p.startTime.replace(':', '')}00`;
-                const endStr = `${yyyy}${mm}${dd}T${p.endTime.replace(':', '')}00`;
-                ics += "BEGIN:VEVENT\n";
-                ics += `SUMMARY:[${p.name}] ${title}\n`;
-                ics += `DTSTART:${startStr}\n`;
-                ics += `DTEND:${endStr}\n`;
-                ics += `DESCRIPTION:Stratégie: ${p.strategy} | KPI: ${p.kpi}\n`;
-                ics += "END:VEVENT\n";
+            if (!projects.length) {
+                showToast('Aucun projet enregistré à exporter.', WARN_ICON);
+                return;
+            }
+            let ics = 'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//SocialSync Hub//FR\r\nCALSCALE:GREGORIAN\r\n';
+            projects.forEach(p => {
+                if (!p.launchDate) return;
+                const base = new Date(p.launchDate + 'T00:00:00');
+                platformsConfig.forEach(plat => {
+                    const d = new Date(base);
+                    d.setDate(d.getDate() + plat.dayOffset);
+                    const [sh, sm] = plat.startTime.split(':');
+                    const [eh, em] = plat.endTime.split(':');
+                    const start = new Date(d); start.setHours(parseInt(sh, 10), parseInt(sm, 10), 0, 0);
+                    const end = new Date(d); end.setHours(parseInt(eh, 10), parseInt(em, 10), 0, 0);
+                    ics += 'BEGIN:VEVENT\r\n';
+                    ics += `UID:${p.id}-${plat.id}@socialsync-hub\r\n`;
+                    ics += `DTSTAMP:${icsDate(new Date())}\r\n`;
+                    ics += `DTSTART:${icsDate(start)}\r\n`;
+                    ics += `DTEND:${icsDate(end)}\r\n`;
+                    ics += `SUMMARY:${icsEscape(plat.name + ' — ' + p.title)}\r\n`;
+                    ics += `DESCRIPTION:${icsEscape('KPI: ' + plat.kpi + ' | ' + plat.strategy)}\r\n`;
+                    ics += 'END:VEVENT\r\n';
+                });
             });
-            ics += "END:VCALENDAR";
-            const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `planning_${title.replace(/\s+/g, '_')}.ics`;
-            link.click();
-            showToast("Fichier .ICS téléchargé !");
+            ics += 'END:VCALENDAR';
+            downloadBlob(ics, 'socialsync-planning.ics', 'text/calendar;charset=utf-8');
+            showToast('Fichier .ICS exporté !');
         }
 
         function exportAllData() {
-            const blob = new Blob([JSON.stringify(projects, null, 2)], { type: 'application/json' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `socialsync_backup_${new Date().toISOString().split('T')[0]}.json`;
-            link.click();
-            showToast("Sauvegarde JSON exportée !");
+            if (!projects.length) {
+                showToast('Aucune donnée à exporter.', WARN_ICON);
+                return;
+            }
+            downloadBlob(JSON.stringify(projects, null, 2), `socialsync-backup-${new Date().toISOString().split('T')[0]}.json`, 'application/json');
+            showToast('Sauvegarde JSON exportée !');
         }
 
-        function importAllData(e) {
-            const file = e.target.files[0];
+        async function importAllData(event) {
+            const file = event.target.files && event.target.files[0];
             if (!file) return;
-            const reader = new FileReader();
-            reader.onload = async (event) => {
-                try {
-                    const imported = JSON.parse(event.target.result);
-                    if (Array.isArray(imported)) {
-                        projects = imported;
-                        await saveProjectsData();
-                        renderProjectsList();
-                        if (calendar) {
-                            calendar.removeAllEvents();
-                            calendar.addEventSource(generateCalendarEvents());
-                        }
-                        showToast("Projets importés avec succès !");
-                    } else {
-                        showToast("Format JSON invalide.");
-                    }
-                } catch (err) {
-                    showToast("Erreur lors de la lecture du fichier JSON.");
-                }
-            };
-            reader.readAsText(file);
-        }
-
-        function showToast(msg, iconClass = 'fa-solid fa-circle-check') {
-            const toast = document.getElementById('toast');
-            const toastMsg = document.getElementById('toastMsg');
-            const toastIcon = document.getElementById('toastIcon');
-            if (!toast || !toastMsg) return;
-            toastMsg.textContent = msg;
-            if (toastIcon) toastIcon.className = iconClass + ' text-xl';
-            toast.classList.remove('opacity-0', 'translate-y-10', 'pointer-events-none');
-            setTimeout(() => {
-                toast.classList.add('opacity-0', 'translate-y-10', 'pointer-events-none');
-            }, 3000);
-        }
-
-        function escapeHtml(str) {
-            if (!str) return '';
-            return String(str)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;');
+            try {
+                const data = JSON.parse(await file.text());
+                if (!Array.isArray(data)) throw new Error('format invalide');
+                const map = new Map(projects.map(p => [p.id, p]));
+                data.forEach(p => { if (p && p.id) map.set(p.id, p); });
+                projects = Array.from(map.values());
+                const r = await saveProjectsData();
+                renderProjectsList();
+                refreshCalendar();
+                showToast(`Import réussi (${data.length} projet(s)).${r.success && !r.localOnly ? ' Synchronisé sur GitHub.' : ''}`);
+            } catch (e) {
+                showToast('Fichier JSON invalide.', WARN_ICON);
+            } finally {
+                event.target.value = '';
+            }
         }
     </script>
 </body>
