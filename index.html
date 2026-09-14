@@ -267,6 +267,7 @@
         let toastTimer = null;
 
         const FILE_PATH = 'data/publications.json';
+        const GH_CONFIG_KEY = 'socialsync_gh_config';
         const WARN_ICON = 'fa-solid fa-triangle-exclamation';
         const DEFAULT_SAVE_LABEL = '<i class="fa-solid fa-cloud-arrow-up"></i> Sauvegarder dans GitHub';
 
@@ -337,14 +338,40 @@
             setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 200);
         }
 
+        // ============================================================
+        // ✅ FIX 1 : NORMALISATION — garantit que projects est TOUJOURS un tableau
+        // (cause racine du bug "projects.push is not a function")
+        // ============================================================
+        function normalizeProjects(data) {
+            if (Array.isArray(data)) return data;                              // déjà un tableau ✓
+            if (data && typeof data === 'object') {
+                if (Array.isArray(data.projects))     return data.projects;    // format { projects: [...] }
+                if (Array.isArray(data.publications)) return data.publications; // format { publications: [...] }
+            }
+            return []; // tout le reste → tableau vide
+        }
+
+        // ✅ FIX 2 : chargement local sécurisé
         function loadLocalProjects() {
             try {
-                projects = JSON.parse(localStorage.getItem('socialsync_projects') || '[]');
-            } catch (e) { projects = []; }
+                projects = normalizeProjects(JSON.parse(localStorage.getItem('socialsync_projects') || '[]'));
+            } catch (e) {
+                projects = [];
+            }
+            if (!Array.isArray(projects)) projects = []; // garde-fou absolu
+        }
+
+        function saveLocalProjects() {
+            try { localStorage.setItem('socialsync_projects', JSON.stringify(projects)); } catch (e) {}
         }
 
         function refreshCalendar() {
             if (calendar) calendar.refetchEvents();
+        }
+
+        function updateSavedCountBadge() {
+            const b = document.getElementById('savedCountBadge');
+            if (b) b.textContent = Array.isArray(projects) ? projects.length : 0;
         }
 
         // ============================================================
@@ -356,6 +383,8 @@
             renderGrid();
             renderSeoFields();
             renderProjectsList();
+            initCalendar();               // ⚠️ requis pour l'onglet Calendrier
+            updateSavedCountBadge();
             if (dateInput) {
                 dateInput.value = new Date().toISOString().split('T')[0];
                 dateInput.addEventListener('change', renderGrid);
@@ -480,470 +509,517 @@
             }
         }
 
+        function resetPlannerForm() {
+            const t = document.getElementById('videoTitle');
+            if (t) t.value = '';
+            if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+            clearSeoFields();
+            currentEditProjectId = null;
+            const btn = document.getElementById('saveBtn');
+            if (btn) btn.innerHTML = DEFAULT_SAVE_LABEL;
+            const section = document.getElementById('seoSection');
+            if (section && !section.classList.contains('hidden')) toggleSeoSection();
+        }
+
         // ============================================================
         // IMPORT PACKAGE SEO
         // ============================================================
         const seoSectionAliases = { 'youtube': 'yt', 'tiktok': 'tiktok', 'instagram': 'ig', 'facebook': 'fb', 'pinterest': 'pin' };
-        const seoFieldAliases = {
-            'playlist': '__PLAYLIST__',
-            'script start': 'Script Start', 'script': 'Script Start',
-            'title': 'Title', 'description': 'Description',
-            'tags': 'Tags', 'tag': 'Tags',
-            'pinned comment': 'Pinned Comment', 'pinned': 'Pinned Comment',
-            'title/caption': 'Title/Caption', 'title / caption': 'Title/Caption',
-            'hook': 'Hook',
-            'hashtags': 'Hashtags', 'hashtag': 'Hashtags',
-            'caption': 'Caption',
-            'call to action': 'Call To Action', 'cta': 'Call To Action',
-            'post copy': 'Post copy', 'post': 'Post copy',
-            'engagement question': 'Engagement Question',
-            'pin title': 'Pin Title', 'pin description': 'Pin Description'
-        };
-        function normSeoLine(s) { return s.toLowerCase().replace(/[*_#`~>]/g, '').replace(/\s+/g, ' ').trim(); }
 
-        function parseSeoPackage(rawText) {
-            const parsed = { playlist: '', yt: {}, tiktok: {}, ig: {}, fb: {}, pin: {} };
-            let currentSection = null;
+        // ⚠️ PARTIE RECONSTRUITE (le fichier fourni était tronqué à partir d'ici)
+        function normKey(s) {
+            return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
+        }
 
-            const blockRegex = /```[\w+-]*[^\S\r\n]*\r?\n([\s\S]*?)```/g;
-            let match, lastIndex = 0, foundBlocks = false;
-            const entries = [];
-            while ((match = blockRegex.exec(rawText)) !== null) {
-                foundBlocks = true;
-                const lines = rawText.slice(lastIndex, match.index).split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-                let label = null;
-                for (const line of lines) {
-                    const n = normSeoLine(line);
-                    if (seoSectionAliases[n]) { currentSection = seoSectionAliases[n]; label = null; }
-                    else if (seoFieldAliases[n]) { label = seoFieldAliases[n]; }
-                }
-                entries.push({ section: currentSection, label, content: match[1].trim() });
-                lastIndex = blockRegex.lastIndex;
-            }
-            if (foundBlocks) {
-                entries.forEach(e => {
-                    if (!e.label) return;
-                    if (e.label === '__PLAYLIST__') parsed.playlist = e.content;
-                    else if (e.section) parsed[e.section][e.label] = e.content;
-                });
-                return parsed;
-            }
-
-            let pendingField = null;
-            const flushPending = () => {
-                if (!pendingField) return;
-                const content = pendingField.buffer.join('\n').trim();
-                if (pendingField.label === '__PLAYLIST__') parsed.playlist = content;
-                else if (pendingField.section) parsed[pendingField.section][pendingField.label] = content;
-                pendingField = null;
+        const seoFieldAliases = (() => {
+            // Alias courants (synonymes FR) → clé canonique normalisée
+            const canonical = {
+                'titre': 'title', 'titrevideo': 'title',
+                'desc': 'description',
+                'motscles': 'tags', 'keywords': 'tags',
+                'script': 'scriptstart',
+                'commentaireepingle': 'pinnedcomment', 'commentaire': 'pinnedcomment',
+                'cta': 'calltoaction',
+                'question': 'engagementquestion', 'questionengagement': 'engagementquestion',
+                'hashtag': 'hashtags',
+                'titrepin': 'pintitle',
+                'descpin': 'pindescription', 'descriptionpin': 'pindescription',
+                'post': 'postcopy', 'copiedupost': 'postcopy', 'textedupost': 'postcopy',
+                'legende': 'caption'
             };
-            rawText.split(/\r?\n/).forEach(rawLine => {
-                const n = normSeoLine(rawLine);
-                if (seoSectionAliases[n]) { flushPending(); currentSection = seoSectionAliases[n]; }
-                else if (seoFieldAliases[n]) { flushPending(); pendingField = { section: currentSection, label: seoFieldAliases[n], buffer: [] }; }
-                else if (pendingField) pendingField.buffer.push(rawLine);
+            // Table par plateforme : clé normalisée → nom exact du champ du formulaire
+            const tables = {};
+            for (const [platId, cfg] of Object.entries(seoFieldsConfig)) {
+                tables[platId] = {};
+                cfg.fields.forEach(f => { tables[platId][normKey(f)] = f; });
+            }
+            return { tables, canonical };
+        })();
+
+        function resolveSeoField(platId, label) {
+            const table = seoFieldAliases.tables[platId];
+            if (!table) return null;
+            const key = normKey(label);
+            if (table[key]) return table[key];
+            const mapped = seoFieldAliases.canonical[key];
+            if (mapped && table[mapped]) return table[mapped];
+            return null;
+        }
+
+        function parseSeoBulkText(text) {
+            const result = { playlist: '', sections: {} };
+            const sectionKeys = {};
+            for (const [name, id] of Object.entries(seoSectionAliases)) sectionKeys[normKey(name)] = id;
+            Object.assign(sectionKeys, {
+                'yt': 'yt', 'youtubeshorts': 'yt',
+                'ig': 'ig', 'insta': 'ig', 'reels': 'ig', 'reelsinstagram': 'ig',
+                'fb': 'fb',
+                'pin': 'pin'
             });
-            flushPending();
-            return parsed;
-        }
 
-        function flashSeoField(el) {
-            el.classList.add('border-fuchsia-500', 'ring-1', 'ring-fuchsia-500/50');
-            setTimeout(() => el.classList.remove('border-fuchsia-500', 'ring-1', 'ring-fuchsia-500/50'), 1600);
-        }
+            const lines = String(text || '').split(/\r?\n/);
+            let currentPlat = null;
+            let pendingLabel = null; // { platId, field } en attente de valeur sur la ligne suivante
 
-        function applyParsedSeo(parsed) {
-            let filled = 0;
-            if (parsed.playlist) {
-                const el = document.getElementById('seoPlaylist');
-                if (el) { el.value = parsed.playlist; flashSeoField(el); filled++; }
-            }
-            for (const [platId, config] of Object.entries(seoFieldsConfig)) {
-                const platData = parsed[platId] || {};
-                const keys = Object.keys(platData);
-                if (!keys.length) continue;
-                config.fields.forEach(f => {
-                    const el = document.getElementById(seoFieldId(platId, f));
-                    if (!el) return;
-                    const target = f.toLowerCase();
-                    let key = keys.find(k => k.toLowerCase() === target);
-                    if (!key) {
-                        const base = target.split('/')[0].trim();
-                        key = keys.find(k => k.toLowerCase() === base || k.toLowerCase().includes(base));
+            for (const raw of lines) {
+                const line = raw.trim();
+                if (!line) continue;
+                const norm = normKey(line);
+
+                // 1) En-tête de section ?
+                if (sectionKeys[norm]) { currentPlat = sectionKeys[norm]; pendingLabel = null; continue; }
+
+                // 2) Playlist globale ?
+                const plMatch = line.match(/^playlist\s*[:：\-–—]\s*(.+)$/i);
+                if (plMatch) { result.playlist = plMatch[1].trim(); pendingLabel = null; continue; }
+
+                // 3) "Label: valeur" ?
+                const kv = line.match(/^([^:：]{2,40}?)\s*[:：]\s*(.*)$/);
+                if (currentPlat && kv) {
+                    const field = resolveSeoField(currentPlat, kv[1]);
+                    if (field) {
+                        const val = kv[2].trim();
+                        if (val) {
+                            (result.sections[currentPlat] = result.sections[currentPlat] || {})[field] = val;
+                            pendingLabel = null;
+                        } else {
+                            pendingLabel = { platId: currentPlat, field };
+                        }
+                        continue;
                     }
-                    if (key && platData[key]) { el.value = platData[key]; flashSeoField(el); filled++; }
-                });
+                }
+
+                // 4) Valeur sur la ligne suivante pour un label seul
+                if (pendingLabel) {
+                    (result.sections[pendingLabel.platId] = result.sections[pendingLabel.platId] || {})[pendingLabel.field] = line;
+                    pendingLabel = null;
+                }
             }
-            return filled;
+            return result;
         }
 
         function openSeoImportModal() {
+            const status = document.getElementById('seoImportStatus');
+            if (status) status.innerHTML = '<span class="text-slate-500">En attente de contenu...</span>';
             document.getElementById('seoImportModal').classList.remove('hidden');
-            const section = document.getElementById('seoSection');
-            if (section && section.classList.contains('hidden')) toggleSeoSection();
-            setTimeout(() => document.getElementById('seoBulkInput').focus(), 60);
         }
-        function closeSeoImportModal() { document.getElementById('seoImportModal').classList.add('hidden'); }
-        function clearSeoImportInput() {
-            document.getElementById('seoBulkInput').value = '';
-            document.getElementById('seoImportStatus').innerHTML = '';
+
+        function closeSeoImportModal() {
+            document.getElementById('seoImportModal').classList.add('hidden');
         }
+
+        function previewSeoPackage() {
+            const status = document.getElementById('seoImportStatus');
+            const text = document.getElementById('seoBulkInput')?.value || '';
+            if (!status) return;
+            if (!text.trim()) {
+                status.innerHTML = '<span class="text-slate-500">En attente de contenu...</span>';
+                return;
+            }
+            const parsed = parseSeoBulkText(text);
+            const plats = Object.keys(parsed.sections).filter(k => Object.keys(parsed.sections[k]).length);
+            const fieldCount = plats.reduce((n, k) => n + Object.keys(parsed.sections[k]).length, 0);
+            if (!plats.length && !parsed.playlist) {
+                status.innerHTML = '<span class="text-amber-400"><i class="fa-solid fa-triangle-exclamation"></i> Aucun champ reconnu. Structure attendue : une ligne "YouTube", "TikTok"... puis des lignes "Titre: ...", "Description: ..."</span>';
+            } else {
+                const names = plats.map(id => seoFieldsConfig[id].label).join(', ');
+                status.innerHTML = `<span class="text-emerald-400"><i class="fa-solid fa-circle-check"></i> ${plats.length} plateforme(s) détectée(s)${names ? ' : ' + escapeHtml(names) : ''} — ${fieldCount} champ(s) rempli(s)${parsed.playlist ? ' + Playlist ✓' : ''}</span>`;
+            }
+        }
+
         async function pasteSeoFromClipboard() {
+            const ta = document.getElementById('seoBulkInput');
             try {
                 const text = await navigator.clipboard.readText();
-                if (text) { document.getElementById('seoBulkInput').value = text; previewSeoPackage(); }
-                else showToast("Le presse-papiers est vide.");
-            } catch (e) { showToast("Collage bloqué par le navigateur — utilisez Ctrl+V.", WARN_ICON); }
-        }
-        function previewSeoPackage() {
-            const raw = document.getElementById('seoBulkInput').value;
-            const statusEl = document.getElementById('seoImportStatus');
-            if (!raw.trim()) { statusEl.innerHTML = ''; return; }
-            const parsed = parseSeoPackage(raw);
-            let count = (parsed.playlist ? 1 : 0);
-            const secs = parsed.playlist ? ['Playlist'] : [];
-            for (const [platId, cfg] of Object.entries(seoFieldsConfig)) {
-                const n = Object.keys(parsed[platId] || {}).length;
-                if (n) { count += n; secs.push(cfg.label); }
+                if (!text) { showToast('Presse-papiers vide', WARN_ICON); return; }
+                ta.value = text;
+                previewSeoPackage();
+            } catch (e) {
+                showToast('Collage bloqué par le navigateur — faites Ctrl+V dans la zone', WARN_ICON);
+                if (ta) ta.focus();
             }
-            statusEl.innerHTML = count
-                ? `<span class="text-emerald-400 font-semibold"><i class="fa-solid fa-circle-check"></i> ${count} champ(s) détecté(s) :</span> <span class="text-slate-300">${secs.join(' · ')}</span>`
-                : `<span class="text-amber-400"><i class="fa-solid fa-triangle-exclamation"></i> Aucun champ reconnu pour le moment…</span>`;
         }
+
+        function clearSeoImportInput() {
+            const ta = document.getElementById('seoBulkInput');
+            if (ta) ta.value = '';
+            previewSeoPackage();
+        }
+
         function applySeoPackage() {
-            const raw = document.getElementById('seoBulkInput').value;
-            if (!raw.trim()) { showToast("Collez d'abord le package SEO.", WARN_ICON); return; }
-            const filled = applyParsedSeo(parseSeoPackage(raw));
-            if (filled === 0) { showToast("Format non reconnu — vérifiez le package collé.", WARN_ICON); return; }
+            const text = document.getElementById('seoBulkInput')?.value || '';
+            const parsed = parseSeoBulkText(text);
+            const plats = Object.keys(parsed.sections).filter(k => Object.keys(parsed.sections[k]).length);
+            if (!plats.length && !parsed.playlist) {
+                showToast('Rien à appliquer — vérifiez le format du texte', WARN_ICON);
+                return;
+            }
+            if (parsed.playlist) {
+                const el = document.getElementById('seoPlaylist');
+                if (el) el.value = parsed.playlist;
+            }
+            plats.forEach(id => {
+                Object.entries(parsed.sections[id]).forEach(([f, v]) => {
+                    const el = document.getElementById(seoFieldId(id, f));
+                    if (el) el.value = v;
+                });
+            });
+            const section = document.getElementById('seoSection');
+            if (section && section.classList.contains('hidden')) toggleSeoSection();
             closeSeoImportModal();
-            clearSeoImportInput();
-            showToast(`${filled} champ(s) SEO rempli(s) automatiquement !`);
+            showToast(`Package SEO appliqué (${plats.length} plateforme(s)) ✅`);
         }
 
         // ============================================================
-        // GITHUB API
+        // CONFIGURATION GITHUB
         // ============================================================
-        function getGitHubConfig() {
-            return {
-                username: localStorage.getItem('gh_user') || '',
-                repo: localStorage.getItem('gh_repo') || '',
-                token: localStorage.getItem('gh_token') || ''
-            };
-        }
-
-        function isGitHubConfigured() {
-            const c = getGitHubConfig();
-            return !!(c.username && c.repo && c.token);
-        }
-
-        function loadGitHubConfigInputs() {
-            const conf = getGitHubConfig();
-            document.getElementById('ghUsername').value = conf.username;
-            document.getElementById('ghRepo').value = conf.repo;
-            document.getElementById('ghToken').value = conf.token;
+        function getGhConfig() {
+            try { return JSON.parse(localStorage.getItem(GH_CONFIG_KEY)) || null; } catch (e) { return null; }
         }
 
         function openConfigModal() {
             loadGitHubConfigInputs();
             document.getElementById('configModal').classList.remove('hidden');
         }
+
         function closeConfigModal() {
             document.getElementById('configModal').classList.add('hidden');
         }
 
-        async function saveGitHubConfig() {
-            const u = document.getElementById('ghUsername').value.trim();
-            const r = document.getElementById('ghRepo').value.trim();
-            const t = document.getElementById('ghToken').value.trim();
-            if (!u || !r || !t) { showToast('Remplissez les 3 champs de configuration.', WARN_ICON); return; }
+        function loadGitHubConfigInputs() {
+            const cfg = getGhConfig();
+            if (!cfg) return;
+            const u = document.getElementById('ghUsername');
+            const r = document.getElementById('ghRepo');
+            const t = document.getElementById('ghToken');
+            if (u) u.value = cfg.username || '';
+            if (r) r.value = cfg.repo || '';
+            if (t) t.value = cfg.token || '';
+        }
 
+        async function ghApi(url, options = {}, creds = null) {
+            const cfg = creds || getGhConfig();
+            return fetch(url, {
+                ...options,
+                headers: {
+                    'Accept': 'application/vnd.github+json',
+                    'Authorization': `Bearer ${cfg.token}`,
+                    'X-GitHub-Api-Version': '2022-11-28',
+                    ...(options.headers || {})
+                }
+            });
+        }
+
+        async function saveGitHubConfig() {
+            const username = (document.getElementById('ghUsername')?.value || '').trim();
+            const repo = (document.getElementById('ghRepo')?.value || '').trim();
+            const token = (document.getElementById('ghToken')?.value || '').trim();
+            if (!username || !repo || !token) {
+                showToast('Remplissez les 3 champs (utilisateur, dépôt, token)', WARN_ICON);
+                return;
+            }
             const btn = document.getElementById('saveConfigBtn');
             btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Test en cours…';
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Test en cours...';
             try {
-                // Test réel de la connexion avant d'enregistrer
-                const res = await fetch(`https://api.github.com/repos/${u}/${r}`, {
-                    headers: { 'Authorization': `Bearer ${t}`, 'Accept': 'application/vnd.github.v3+json' }
-                });
-
-                if (res.status === 401) {
-                    showToast('Token GitHub invalide ou expiré (401).', WARN_ICON);
-                    return;
-                }
-                if (res.status === 404) {
-                    showToast('Dépôt introuvable — vérifiez utilisateur et nom du repo.', WARN_ICON);
-                    return;
-                }
-
-                localStorage.setItem('gh_user', u);
-                localStorage.setItem('gh_repo', r);
-                localStorage.setItem('gh_token', t);
-                closeConfigModal();
-                currentSha = null;
-                await checkGitHubConnectionAndLoad();
+                const res = await ghApi(`https://api.github.com/repos/${username}/${repo}`, {}, { username, repo, token });
                 if (res.ok) {
-                    showToast('Connexion GitHub validée et enregistrée !');
+                    localStorage.setItem(GH_CONFIG_KEY, JSON.stringify({ username, repo, token }));
+                    currentSha = null;
+                    closeConfigModal();
+                    showToast('Connexion GitHub validée et enregistrée ✅');
+                    checkGitHubConnectionAndLoad();
+                } else if (res.status === 401) {
+                    showToast('Token invalide ou expiré (401)', WARN_ICON);
+                } else if (res.status === 404) {
+                    showToast('Dépôt introuvable — vérifiez le nom, ou le token n\'y a pas accès (404)', WARN_ICON);
                 } else {
-                    showToast('Config enregistrée — vérifiez les permissions du token (Contents: write).', WARN_ICON);
+                    showToast('Erreur GitHub : HTTP ' + res.status, WARN_ICON);
                 }
             } catch (e) {
-                // Erreur réseau : on enregistre quand même, l'utilisateur retentera
-                localStorage.setItem('gh_user', u);
-                localStorage.setItem('gh_repo', r);
-                localStorage.setItem('gh_token', t);
-                closeConfigModal();
-                showToast('Erreur réseau — configuration enregistrée quand même.', WARN_ICON);
+                showToast('Erreur réseau : ' + e.message, WARN_ICON);
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = 'Tester & Enregistrer';
             }
         }
 
-        async function checkGitHubConnectionAndLoad() {
-            const conf = getGitHubConfig();
-            if (!(conf.username && conf.repo && conf.token)) { renderProjectsList(); return; }
-
-            const url = `https://api.github.com/repos/${conf.username}/${conf.repo}/contents/${FILE_PATH}`;
+        // ============================================================
+        // SYNCHRO GITHUB (LECTURE / ÉCRITURE)
+        // ============================================================
+        async function fetchRemoteFile(silent = false) {
+            const cfg = getGhConfig();
+            if (!cfg) return { ok: false, reason: 'no-config' };
             try {
-                const res = await fetch(url, {
-                    headers: { 'Authorization': `Bearer ${conf.token}`, 'Accept': 'application/vnd.github.v3+json' }
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    currentSha = data.sha;
-                    try {
-                        projects = JSON.parse(base64ToUtf8(data.content));
-                        localStorage.setItem('socialsync_projects', JSON.stringify(projects));
-                    } catch (e) {
-                        showToast('Fichier GitHub illisible (JSON corrompu) — données locales conservées.', WARN_ICON);
-                    }
-                } else if (res.status === 404) {
-                    currentSha = null; // Le fichier n'existe pas encore, il sera créé au 1er save
-                } else if (res.status === 401) {
-                    showToast('Token GitHub invalide (401) — vérifiez la configuration.', WARN_ICON);
-                } else if (res.status === 403) {
-                    showToast('Accès GitHub refusé (403) — permissions du token insuffisantes.', WARN_ICON);
-                }
+                const res = await ghApi(`https://api.github.com/repos/${cfg.username}/${cfg.repo}/contents/${FILE_PATH}`);
+                if (res.status === 404) return { ok: true, empty: true }; // fichier pas encore créé
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const json = await res.json();
+                const parsed = JSON.parse(base64ToUtf8(json.content));
+                projects = normalizeProjects(parsed); // ✅ FIX 3 : jamais d'objet brut dans projects
+                if (!Array.isArray(projects)) projects = [];
+                currentSha = json.sha;
+                return { ok: true };
             } catch (e) {
-                console.error('Erreur synchro GitHub:', e);
+                if (!silent) showToast('Erreur de synchro : ' + e.message, WARN_ICON);
+                return { ok: false, reason: e.message };
             }
-            renderProjectsList();
-            refreshCalendar();
+        }
+
+        async function pushRemoteFile(commitMessage) {
+            const cfg = getGhConfig();
+            if (!cfg) { showToast('Configurez GitHub (icône en haut à droite) pour activer la synchro.', WARN_ICON); return false; }
+            const url = `https://api.github.com/repos/${cfg.username}/${cfg.repo}/contents/${FILE_PATH}`;
+
+            // Récupère le sha courant si inconnu (évite le 422 "does not match")
+            if (!currentSha) {
+                try {
+                    const get = await ghApi(url);
+                    if (get.ok) currentSha = (await get.json()).sha;
+                } catch (e) { /* fichier probablement absent, il sera créé */ }
+            }
+
+            const body = {
+                message: commitMessage,
+                content: utf8ToBase64(JSON.stringify(projects, null, 2)),
+                ...(currentSha ? { sha: currentSha } : {})
+            };
+
+            let res = await ghApi(url, { method: 'PUT', body: JSON.stringify(body) });
+
+            // Conflit de sha → on rafraîchit et on retente UNE fois
+            if (res.status === 409 || res.status === 422) {
+                const get = await ghApi(url);
+                if (get.ok) {
+                    currentSha = (await get.json()).sha;
+                    body.sha = currentSha;
+                } else {
+                    delete body.sha;
+                }
+                res = await ghApi(url, { method: 'PUT', body: JSON.stringify(body) });
+            }
+
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.message || 'HTTP ' + res.status);
+            }
+            const json = await res.json();
+            currentSha = json.content?.sha || currentSha;
+            return true;
+        }
+
+        async function checkGitHubConnectionAndLoad() {
+            const cfg = getGhConfig();
+            if (!cfg) return;
+            const r = await fetchRemoteFile(true);
+            if (r.ok && !r.empty) {
+                renderProjectsList();
+                refreshCalendar();
+                updateSavedCountBadge();
+                showToast(`Synchronisé avec GitHub (${projects.length} projet${projects.length > 1 ? 's' : ''})`);
+            }
+            // 404 : normal au premier lancement, le fichier sera créé à la première sauvegarde
         }
 
         async function syncFromGitHub() {
-            if (!isGitHubConfigured()) {
-                showToast('Configurez GitHub d\'abord (icône GitHub en haut à droite).', WARN_ICON);
+            const cfg = getGhConfig();
+            if (!cfg) {
+                showToast('Configurez GitHub d\'abord (icône GitHub en haut)', WARN_ICON);
                 openConfigModal();
                 return;
             }
-            showToast('Synchronisation GitHub en cours…', 'fa-solid fa-rotate fa-spin');
-            await checkGitHubConnectionAndLoad();
-            showToast('Synchronisation GitHub terminée !');
-        }
-
-        // --- SAUVEGARDE ROBUSTE (le cœur du correctif) ---
-        async function saveProjectsData() {
-            // 1. Sauvegarde locale TOUJOURS ( jamais de perte de données )
-            localStorage.setItem('socialsync_projects', JSON.stringify(projects));
-
-            const conf = getGitHubConfig();
-            if (!isGitHubConfigured()) return { success: true, localOnly: true };
-
-            const url = `https://api.github.com/repos/${conf.username}/${conf.repo}/contents/${FILE_PATH}`;
-            const authHeaders = { 'Authorization': `Bearer ${conf.token}`, 'Accept': 'application/vnd.github.v3+json' };
-            const putHeaders = { ...authHeaders, 'Content-Type': 'application/json' };
-            // 2. Encodage UTF-8 fiable (accents, emojis) — corrige InvalidCharacterError
-            const content = utf8ToBase64(JSON.stringify(projects, null, 2));
-
-            const friendlyErrors = {
-                401: 'Token invalide ou expiré',
-                403: 'Permissions insuffisantes (Contents: write requis)',
-                404: 'Dépôt introuvable',
-                409: 'Conflit de version',
-                422: 'Requête refusée par GitHub'
-            };
-
-            try {
-                // 3. Récupération du SHA s'il est manquant
-                let sha = currentSha;
-                if (!sha) {
-                    const getRes = await fetch(url, { headers: authHeaders });
-                    if (getRes.ok) {
-                        sha = (await getRes.json()).sha;
-                    } else if (getRes.status === 404) {
-                        sha = null; // Nouveau fichier
-                    } else {
-                        return { success: false, error: friendlyErrors[getRes.status] || `Erreur HTTP ${getRes.status}` };
-                    }
-                }
-
-                // 4. Envoi (PUT)
-                const body = { message: `SocialSync Hub — mise à jour du ${new Date().toLocaleString('fr-FR')}`, content };
-                if (sha) body.sha = sha;
-                let res = await fetch(url, { method: 'PUT', headers: putHeaders, body: JSON.stringify(body) });
-
-                // 5. En cas de conflit (fichier modifié ailleurs) : on récupère le SHA à jour et on réessaie UNE fois
-                if (res.status === 409 || res.status === 422) {
-                    const getRes = await fetch(url, { headers: authHeaders });
-                    if (getRes.ok) {
-                        body.sha = (await getRes.json()).sha;
-                    } else if (getRes.status === 404) {
-                        delete body.sha; // Le fichier a été supprimé entre-temps : création
-                    }
-                    res = await fetch(url, { method: 'PUT', headers: putHeaders, body: JSON.stringify(body) });
-                }
-
-                if (res.ok) {
-                    const resData = await res.json();
-                    if (resData.content && resData.content.sha) currentSha = resData.content.sha;
-                    return { success: true, localOnly: false };
-                }
-
-                const errData = await res.json().catch(() => ({}));
-                return { success: false, error: errData.message || friendlyErrors[res.status] || `Erreur HTTP ${res.status}` };
-            } catch (err) {
-                console.error("Erreur d'écriture GitHub API:", err);
-                return { success: false, error: 'Erreur réseau (connexion interrompue ?)' };
-            }
-        }
-
-        // ============================================================
-        // GESTION DES PROJETS
-        // ============================================================
-        async function saveProject() {
-            const titleInput = document.getElementById('videoTitle');
-            const launchDateVal = dateInput ? dateInput.value : '';
-            const title = titleInput.value.trim();
-
-            if (!title || !launchDateVal) {
-                showToast("Veuillez remplir le titre et la date (J0).", WARN_ICON);
-                return;
-            }
-
-            const seo = getSeoData();
-            const saveBtn = document.getElementById('saveBtn');
-            saveBtn.disabled = true;
-            saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sauvegarde en cours…';
-
-            try {
-                if (currentEditProjectId) {
-                    const index = projects.findIndex(p => p.id === currentEditProjectId);
-                    if (index !== -1) {
-                        projects[index] = { ...projects[index], title, launchDate: launchDateVal, seo, updatedAt: new Date().toISOString() };
-                    }
-                } else {
-                    projects.unshift({
-                        id: Date.now().toString(),
-                        title,
-                        launchDate: launchDateVal,
-                        seo,
-                        createdAt: new Date().toISOString()
-                    });
-                }
-
-                const syncResult = await saveProjectsData();
-
+            const r = await fetchRemoteFile(true);
+            if (r.ok && !r.empty) {
                 renderProjectsList();
                 refreshCalendar();
-                titleInput.value = '';
-                clearSeoFields();
-                renderGrid();
-
-                if (syncResult.localOnly) {
-                    showToast("Projet enregistré localement (GitHub non configuré).", WARN_ICON);
-                } else if (syncResult.success) {
-                    showToast("Projet sauvegardé et synchronisé sur GitHub !");
-                } else {
-                    showToast(`Enregistré en local — échec GitHub : ${syncResult.error}`, WARN_ICON);
-                }
-            } finally {
-                currentEditProjectId = null;
-                saveBtn.disabled = false;
-                saveBtn.innerHTML = DEFAULT_SAVE_LABEL;
+                updateSavedCountBadge();
+                showToast(`Synchro réussie : ${projects.length} projet(s) chargé(s) ✅`);
+            } else if (r.ok && r.empty) {
+                showToast('Aucun fichier distant — il sera créé à la première sauvegarde', WARN_ICON);
+            } else {
+                showToast('Échec de la synchro GitHub (' + r.reason + ')', WARN_ICON);
             }
         }
 
-        async function deleteProject(id) {
-            if (!confirm("Voulez-vous vraiment supprimer ce projet ?")) return;
-            projects = projects.filter(p => p.id !== id);
+        // ============================================================
+        // PROJETS : SAUVEGARDE / ÉDITION / SUPPRESSION
+        // ============================================================
+        async function saveProject() {
+            if (!Array.isArray(projects)) projects = []; // ✅ FIX 4 : garde-fou avant tout .push()
+            const title = (document.getElementById('videoTitle')?.value || '').trim();
+            const launchDate = dateInput ? dateInput.value : '';
+            if (!title || !launchDate) {
+                showToast('Titre et Date Lancement YT sont obligatoires', WARN_ICON);
+                return;
+            }
+            const seo = getSeoData();
+
+            if (currentEditProjectId) {
+                const idx = projects.findIndex(p => p.id === currentEditProjectId);
+                if (idx > -1) {
+                    projects[idx] = { ...projects[idx], title, launchDate, seo, updatedAt: new Date().toISOString() };
+                }
+            } else {
+                projects.push({ // ✅ ne peut plus planter grâce au FIX 1 + FIX 4
+                    id: 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+                    title,
+                    launchDate,
+                    seo,
+                    createdAt: new Date().toISOString()
+                });
+            }
+
+            saveLocalProjects();
+
+            const btn = document.getElementById('saveBtn');
+            const cfg = getGhConfig();
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ' + (cfg ? 'Envoi vers GitHub...' : 'Enregistrement...');
+            }
+
+            try {
+                if (cfg) {
+                    await pushRemoteFile(`SocialSync: ${currentEditProjectId ? 'MAJ' : 'ajout'} "${title}"`);
+                    showToast('Projet sauvegardé sur GitHub ✅');
+                } else {
+                    showToast('Projet enregistré localement (GitHub non configuré)', WARN_ICON);
+                }
+            } catch (e) {
+                showToast('Sauvegarde locale OK, mais GitHub a refusé : ' + e.message, WARN_ICON);
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = DEFAULT_SAVE_LABEL;
+                }
+            }
+
+            resetPlannerForm();
             renderProjectsList();
             refreshCalendar();
-            const syncResult = await saveProjectsData();
-            if (syncResult.localOnly) showToast("Projet supprimé en local.");
-            else if (syncResult.success) showToast("Projet supprimé et synchronisé sur GitHub !");
-            else showToast(`Supprimé en local — échec GitHub : ${syncResult.error}`, WARN_ICON);
+            updateSavedCountBadge();
         }
 
         function editProject(id) {
             const p = projects.find(x => x.id === id);
             if (!p) return;
-            currentEditProjectId = id;
-            document.getElementById('videoTitle').value = p.title || '';
-            if (dateInput) dateInput.value = p.launchDate || '';
-            loadSeoData(p.seo || {});
-            renderGrid();
-            document.getElementById('saveBtn').innerHTML = '<i class="fa-solid fa-rotate"></i> Mettre à jour le projet';
+            currentEditProjectId = p.id;
+            const t = document.getElementById('videoTitle');
+            if (t) t.value = p.title || '';
+            if (dateInput) dateInput.value = p.launchDate || new Date().toISOString().split('T')[0];
+            loadSeoData(p.seo);
+            const btn = document.getElementById('saveBtn');
+            if (btn) btn.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> Mettre à jour dans GitHub';
             switchTab('planner');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            showToast('Projet chargé pour modification');
         }
 
+        async function deleteProject(id) {
+            if (!Array.isArray(projects)) projects = [];
+            const p = projects.find(x => x.id === id);
+            if (!p) return;
+            if (!confirm(`Supprimer définitivement "${p.title}" ?`)) return;
+            projects = projects.filter(x => x.id !== id);
+            saveLocalProjects();
+            if (currentEditProjectId === id) resetPlannerForm();
+            renderProjectsList();
+            refreshCalendar();
+            updateSavedCountBadge();
+            const cfg = getGhConfig();
+            if (cfg) {
+                try {
+                    await pushRemoteFile(`SocialSync: suppression "${p.title}"`);
+                    showToast('Projet supprimé (GitHub synchronisé) ✅');
+                } catch (e) {
+                    showToast('Supprimé localement, mais synchro GitHub échouée : ' + e.message, WARN_ICON);
+                }
+            } else {
+                showToast('Projet supprimé localement', WARN_ICON);
+            }
+        }
+
+        // ============================================================
+        // LISTE DES PROJETS & VUE SEO
+        // ============================================================
         function renderProjectsList() {
-            const badge = document.getElementById('savedCountBadge');
-            if (badge) badge.textContent = projects.length;
-
-            const listEl = document.getElementById('projectsList');
-            if (!listEl) return;
-
-            if (projects.length === 0) {
-                listEl.innerHTML = '<div class="text-center text-slate-500 py-10 text-xs">Aucun projet enregistré.</div>';
+            const list = document.getElementById('projectsList');
+            if (!list) return;
+            if (!Array.isArray(projects) || !projects.length) { // ✅ FIX : garde-fou supplémentaire
+                list.innerHTML = `<div class="text-center py-10 text-slate-500 text-xs space-y-3">
+                    <i class="fa-solid fa-inbox text-3xl text-slate-700 block"></i>
+                    <p>Aucun projet enregistré.<br>Créez votre première programmation dans le Planificateur.</p>
+                </div>`;
                 return;
             }
-
-            listEl.innerHTML = projects.map(p => {
-                const formattedDate = p.launchDate ? p.launchDate.split('-').reverse().join('/') : '';
-                return `
-                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-3.5 flex items-center justify-between gap-3 group hover:border-slate-700 transition">
-                        <div class="min-w-0 flex-1">
-                            <h4 class="font-bold text-sm text-white truncate mb-1">${escapeHtml(p.title || 'Sans titre')}</h4>
-                            <div class="text-[11px] text-slate-400 flex items-center gap-1.5">
-                                <i class="fa-regular fa-clock text-indigo-400"></i>
-                                <span>J0 (YT): ${formattedDate}</span>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-1.5 shrink-0">
-                            ${p.seo ? `<button onclick="openSeoView('${p.id}')" class="p-2.5 bg-slate-800 hover:bg-fuchsia-950/50 hover:text-fuchsia-400 text-slate-400 rounded-lg transition text-xs" title="Voir Package SEO"><i class="fa-solid fa-wand-magic-sparkles"></i></button>` : ''}
-                            <button onclick="editProject('${p.id}')" class="p-2.5 bg-slate-800 hover:bg-indigo-600/30 hover:text-indigo-400 text-slate-300 rounded-lg transition text-xs" title="Modifier le projet"><i class="fa-solid fa-pen"></i></button>
-                            <button onclick="deleteProject('${p.id}')" class="p-2.5 bg-slate-800 hover:bg-rose-950/50 hover:text-rose-400 text-slate-400 rounded-lg transition text-xs" title="Supprimer le projet"><i class="fa-solid fa-trash-can"></i></button>
-                        </div>
-                    </div>`;
-            }).join('');
+            const sorted = [...projects].sort((a, b) => (a.launchDate || '').localeCompare(b.launchDate || ''));
+            list.innerHTML = sorted.map(p => `
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 hover:border-indigo-500/50 transition space-y-2">
+                    <div class="flex items-start justify-between gap-2">
+                        <h4 class="font-bold text-sm text-white leading-snug">${escapeHtml(p.title)}</h4>
+                        <span class="text-[10px] bg-indigo-500/10 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-full whitespace-nowrap">${escapeHtml((p.launchDate || '').split('-').reverse().join('/'))}</span>
+                    </div>
+                    <div class="flex items-center gap-2.5 text-base">
+                        ${platformsConfig.map(pl => `<i class="${pl.icon} text-slate-400" title="${escapeHtml(pl.name)}"></i>`).join('')}
+                    </div>
+                    <div class="flex items-center gap-1.5 pt-2 border-t border-slate-800">
+                        <button onclick="openSeoView('${p.id}')" class="flex-1 px-2 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-[10px] font-semibold transition"><i class="fa-solid fa-eye"></i> SEO</button>
+                        <button onclick="editProject('${p.id}')" class="flex-1 px-2 py-1.5 bg-indigo-600/80 hover:bg-indigo-500 text-white rounded-lg text-[10px] font-semibold transition"><i class="fa-solid fa-pen"></i> Éditer</button>
+                        <button onclick="deleteProject('${p.id}')" class="px-2.5 py-1.5 bg-red-600/20 hover:bg-red-600/40 text-red-400 border border-red-500/30 rounded-lg text-[10px] font-semibold transition"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                </div>`).join('');
         }
 
         function openSeoView(id) {
-            const proj = projects.find(p => p.id === id);
-            if (!proj || !proj.seo) return;
-            const modal = document.getElementById('seoViewModal');
-            const content = document.getElementById('seoViewContent');
-
-            let html = `<h3 class="text-lg font-bold text-white mb-4"><i class="fa-solid fa-wand-magic-sparkles text-fuchsia-400 mr-2"></i>Package SEO - ${escapeHtml(proj.title)}</h3>`;
-            if (proj.seo.playlist) {
-                html += `<div class="mb-4 bg-slate-950 p-3 rounded-xl border border-slate-800"><span class="text-xs font-semibold text-slate-400 block mb-1">Playlist</span><p class="text-sm text-white font-medium">${escapeHtml(proj.seo.playlist)}</p></div>`;
-            }
-            for (const [platId, cfg] of Object.entries(seoFieldsConfig)) {
-                const platData = proj.seo[platId];
-                if (!platData) continue;
-                if (!Object.values(platData).some(v => v)) continue;
-                const platInfo = platformsConfig.find(p => p.id === platId);
-                html += `<div class="mb-4 bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3"><div class="flex items-center gap-2 font-bold text-sm text-white"><i class="${platInfo ? platInfo.icon : ''}"></i> ${cfg.label}</div>`;
-                for (const [field, val] of Object.entries(platData)) {
-                    if (!val) continue;
-                    html += `<div><span class="text-[11px] font-semibold text-slate-400 block mb-1">${escapeHtml(field)}</span><pre class="bg-slate-900 border border-slate-800 p-2.5 rounded-lg text-xs text-slate-200 whitespace-pre-wrap font-sans">${escapeHtml(val)}</pre></div>`;
-                }
-                html += `</div>`;
-            }
-            content.innerHTML = html;
-            modal.classList.remove('hidden');
+            const p = projects.find(x => x.id === id);
+            if (!p) return;
+            const container = document.getElementById('seoViewContent');
+            if (!container) return;
+            let html = `<div class="space-y-5">
+                <div>
+                    <h3 class="text-xl font-bold text-white flex items-center gap-2"><i class="fa-solid fa-video text-indigo-400"></i> ${escapeHtml(p.title)}</h3>
+                    <p class="text-xs text-slate-400 mt-1.5"><i class="fa-regular fa-calendar mr-1"></i>Lancement YT : ${new Date((p.launchDate || '') + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                    ${p.seo?.playlist ? `<p class="text-xs text-fuchsia-300 mt-1"><i class="fa-solid fa-list mr-1"></i>Playlist : ${escapeHtml(p.seo.playlist)}</p>` : ''}
+                </div>`;
+            platformsConfig.forEach(plat => {
+                const data = (p.seo && p.seo[plat.id]) || {};
+                const entries = Object.entries(data).filter(([, v]) => v && String(v).trim());
+                html += `
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-4">
+                        <div class="flex items-center gap-2 mb-3">
+                            <i class="${plat.icon} text-sm text-slate-200"></i>
+                            <span class="font-bold text-xs text-white">${seoFieldsConfig[plat.id].label}</span>
+                            <span class="text-[10px] text-slate-500 ml-auto">J+${plat.dayOffset} · ${plat.timeSlot}</span>
+                        </div>
+                        ${entries.length ? entries.map(([f, v]) => `
+                            <div class="mb-2.5 last:mb-0">
+                                <p class="text-[10px] font-semibold text-slate-400 uppercase">${escapeHtml(f)}</p>
+                                <p class="text-xs text-slate-200 whitespace-pre-wrap mt-0.5">${escapeHtml(v)}</p>
+                            </div>`).join('') : '<p class="text-xs text-slate-500 italic">Aucune donnée SEO</p>'}
+                    </div>`;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+            document.getElementById('seoViewModal').classList.remove('hidden');
         }
 
         function closeSeoView() {
@@ -951,57 +1027,52 @@
         }
 
         // ============================================================
-        // ONGLETS & CALENDRIER
+        // NAVIGATION ONGLETS
         // ============================================================
         function switchTab(tab) {
-            const plannerSec = document.getElementById('tabPlanner');
-            const calendarSec = document.getElementById('tabCalendar');
-            const btnPlanner = document.getElementById('tabBtnPlanner');
-            const btnCalendar = document.getElementById('tabBtnCalendar');
-
-            if (tab === 'planner') {
-                plannerSec.classList.remove('hidden');
-                calendarSec.classList.add('hidden');
-                btnPlanner.className = "px-3.5 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-2 bg-indigo-600 text-white shadow-md";
-                btnCalendar.className = "px-3.5 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-2 text-slate-400 hover:text-white";
-            } else {
-                plannerSec.classList.add('hidden');
-                calendarSec.classList.remove('hidden');
-                btnCalendar.className = "px-3.5 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-2 bg-indigo-600 text-white shadow-md";
-                btnPlanner.className = "px-3.5 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-2 text-slate-400 hover:text-white";
-                if (!calendar) initCalendar();
-                else calendar.render();
-                renderProjectsList();
-            }
+            const isPlanner = tab === 'planner';
+            document.getElementById('tabPlanner').classList.toggle('hidden', !isPlanner);
+            document.getElementById('tabCalendar').classList.toggle('hidden', isPlanner);
+            const on = ['bg-indigo-600', 'text-white', 'shadow-md'];
+            const off = ['text-slate-400', 'hover:text-white'];
+            const bp = document.getElementById('tabBtnPlanner');
+            const bc = document.getElementById('tabBtnCalendar');
+            if (isPlanner) { bp.classList.add(...on); bp.classList.remove(...off); bc.classList.remove(...on); bc.classList.add(...off); }
+            else { bc.classList.add(...on); bc.classList.remove(...off); bp.classList.remove(...on); bp.classList.add(...off); }
+            if (!isPlanner && calendar) refreshCalendar();
         }
 
-        // Dates calculées en local (pas d'UTC) -> plus de décalage d'un jour
-        function localDateStr(d) {
-            const pad = n => String(n).padStart(2, '0');
-            return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+        // ============================================================
+        // CALENDRIER
+        // ============================================================
+        function fmtDateISO(d) {
+            const p = n => String(n).padStart(2, '0');
+            return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
         }
 
-        function generateCalendarEvents() {
-            const events = [];
-            projects.forEach(p => {
-                if (!p.launchDate) return;
-                const baseDate = new Date(p.launchDate + 'T00:00:00');
-                platformsConfig.forEach(plat => {
-                    const d = new Date(baseDate);
-                    d.setDate(d.getDate() + plat.dayOffset);
-                    const dateStr = localDateStr(d);
-                    events.push({
-                        id: `${p.id}_${plat.id}`,
-                        title: `${plat.name} — ${p.title}`,
-                        start: `${dateStr}T${plat.startTime}:00`,
-                        end: `${dateStr}T${plat.endTime}:00`,
-                        backgroundColor: plat.calendarColor,
-                        borderColor: plat.calendarColor,
-                        extendedProps: { projectId: p.id, platform: plat.name }
+        function getCalendarEvents(info, successCallback, failureCallback) {
+            try {
+                const events = [];
+                (Array.isArray(projects) ? projects : []).forEach(p => { // ✅ FIX : garde-fou
+                    platformsConfig.forEach(plat => {
+                        const d = new Date((p.launchDate || '') + 'T00:00:00');
+                        if (isNaN(d)) return;
+                        d.setDate(d.getDate() + plat.dayOffset);
+                        const iso = fmtDateISO(d);
+                        events.push({
+                            id: p.id + '::' + plat.id,
+                            title: `${plat.name} — ${p.title}`,
+                            start: `${iso}T${plat.startTime}`,
+                            end: `${iso}T${plat.endTime}`,
+                            backgroundColor: plat.calendarColor,
+                            extendedProps: { projectId: p.id }
+                        });
                     });
                 });
-            });
-            return events;
+                successCallback(events);
+            } catch (e) {
+                failureCallback(e);
+            }
         }
 
         function initCalendar() {
@@ -1011,181 +1082,114 @@
                 initialView: 'dayGridMonth',
                 locale: 'fr',
                 height: 'auto',
-                headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listWeek' },
-                eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
-                events: (info, successCallback) => successCallback(generateCalendarEvents()),
-                eventClick: (info) => {
-                    const proj = projects.find(p => p.id === info.event.extendedProps.projectId);
-                    if (proj && proj.seo) openSeoView(proj.id);
-                    else showToast(info.event.title, 'fa-solid fa-circle-info');
-                }
+                firstDay: 1,
+                headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,listMonth' },
+                events: getCalendarEvents,
+                eventClick: (info) => openSeoView(info.event.extendedProps.projectId)
             });
             calendar.render();
         }
 
         // ============================================================
-        // EXPORTS
+        // EXPORT / IMPORT / COPIE
         // ============================================================
-        function copyPlanningText() {
-            const title = document.getElementById('videoTitle').value.trim();
-            const baseVal = dateInput ? dateInput.value : '';
-            if (!title || !baseVal) {
-                showToast("Remplissez le titre et la date (J0) d'abord.", WARN_ICON);
+        async function copyPlanningText() {
+            const title = (document.getElementById('videoTitle')?.value || '').trim();
+            const baseDateVal = dateInput ? dateInput.value : '';
+            if (!title || !baseDateVal) {
+                showToast('Renseignez le titre et la date de lancement', WARN_ICON);
                 return;
             }
-            const base = new Date(baseVal + 'T00:00:00');
-            let text = `PLANNING — ${title}\nLancement YouTube (J0) : ${base.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}\n\n`;
+            const baseDate = new Date(baseDateVal + 'T00:00:00');
+            let text = `🎬 ${title}\n📅 Lancement YouTube (J0) : ${baseDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}\n`;
             platformsConfig.forEach(p => {
-                const d = new Date(base);
+                const d = new Date(baseDate);
                 d.setDate(d.getDate() + p.dayOffset);
-                text += `- ${p.name} (J+${p.dayOffset}) : ${d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} | ${p.timeSlot} | KPI: ${p.kpi}\n`;
+                text += `\n▸ ${p.name} (J+${p.dayOffset})\n   ${d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} — ${p.timeSlot}\n   KPI : ${p.kpi} — ${p.strategy}\n`;
             });
-            copyToClipboard(text)
-                .then(() => showToast('Planning copié dans le presse-papiers !'))
-                .catch(() => showToast('Copie impossible dans ce navigateur.', WARN_ICON));
+            try {
+                await copyToClipboard(text);
+                showToast('Planning copié dans le presse-papiers ✅');
+            } catch (e) {
+                showToast('Impossible de copier automatiquement', WARN_ICON);
+            }
         }
 
         function icsEscape(s) {
             return String(s).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
         }
-        function icsDate(d) {
-            const pad = n => String(n).padStart(2, '0');
-            return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
+
+        function icsLocal(d) {
+            const p = n => String(n).padStart(2, '0');
+            return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}T${p(d.getHours())}${p(d.getMinutes())}00`;
         }
 
         function exportICalendar() {
-            if (!projects.length) {
-                showToast('Aucun projet enregistré à exporter.', WARN_ICON);
+            const title = (document.getElementById('videoTitle')?.value || '').trim();
+            const baseDateVal = dateInput ? dateInput.value : '';
+            if (!title || !baseDateVal) {
+                showToast('Renseignez le titre et la date de lancement', WARN_ICON);
                 return;
             }
+            const baseDate = new Date(baseDateVal + 'T00:00:00');
+            const stamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
             let ics = 'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//SocialSync Hub//FR\r\nCALSCALE:GREGORIAN\r\n';
-            projects.forEach(p => {
-                if (!p.launchDate) return;
-                const base = new Date(p.launchDate + 'T00:00:00');
-                platformsConfig.forEach(plat => {
-                    const d = new Date(base);
-                    d.setDate(d.getDate() + plat.dayOffset);
-                    const [sh, sm] = plat.startTime.split(':');
-                    const [eh, em] = plat.endTime.split(':');
-                    const start = new Date(d); start.setHours(parseInt(sh, 10), parseInt(sm, 10), 0, 0);
-                    const end = new Date(d); end.setHours(parseInt(eh, 10), parseInt(em, 10), 0, 0);
-                    ics += 'BEGIN:VEVENT\r\n';
-                    ics += `UID:${p.id}-${plat.id}@socialsync-hub\r\n`;
-                    ics += `DTSTAMP:${icsDate(new Date())}\r\n`;
-                    ics += `DTSTART:${icsDate(start)}\r\n`;
-                    ics += `DTEND:${icsDate(end)}\r\n`;
-                    ics += `SUMMARY:${icsEscape(plat.name + ' — ' + p.title)}\r\n`;
-                    ics += `DESCRIPTION:${icsEscape('KPI: ' + plat.kpi + ' | ' + plat.strategy)}\r\n`;
-                    ics += 'END:VEVENT\r\n';
-                });
+            platformsConfig.forEach((p, i) => {
+                const d = new Date(baseDate);
+                d.setDate(d.getDate() + p.dayOffset);
+                const [sh, sm] = p.startTime.split(':');
+                const [eh, em] = p.endTime.split(':');
+                const start = new Date(d); start.setHours(+sh, +sm, 0, 0);
+                const end = new Date(d); end.setHours(+eh, +em, 0, 0);
+                ics += 'BEGIN:VEVENT\r\n';
+                ics += `UID:${Date.now()}-${i}@socialsync-hub\r\n`;
+                ics += `DTSTAMP:${stamp}\r\n`;
+                ics += `DTSTART:${icsLocal(start)}\r\nDTEND:${icsLocal(end)}\r\n`;
+                ics += `SUMMARY:${icsEscape(p.name + ' — ' + title)}\r\n`;
+                ics += `DESCRIPTION:${icsEscape('KPI : ' + p.kpi + '\n' + p.strategy)}\r\n`;
+                ics += 'END:VEVENT\r\n';
             });
-            ics += 'END:VCALENDAR';
-            downloadBlob(ics, 'socialsync-planning.ics', 'text/calendar;charset=utf-8');
-            showToast('Fichier .ICS exporté !');
+            ics += 'END:VCALENDAR\r\n';
+            downloadBlob(ics, `planning-socialsync-${baseDateVal}.ics`, 'text/calendar;charset=utf-8');
+            showToast('Fichier .ICS exporté ✅');
         }
 
         function exportAllData() {
-            if (!projects.length) {
-                showToast('Aucune donnée à exporter.', WARN_ICON);
+            if (!Array.isArray(projects) || !projects.length) {
+                showToast('Aucune donnée à exporter', WARN_ICON);
                 return;
             }
-            downloadBlob(JSON.stringify(projects, null, 2), `socialsync-backup-${new Date().toISOString().split('T')[0]}.json`, 'application/json');
-            showToast('Sauvegarde JSON exportée !');
+            downloadBlob(JSON.stringify(projects, null, 2), `socialsync-export-${new Date().toISOString().split('T')[0]}.json`, 'application/json');
+            showToast('Export JSON téléchargé ✅');
         }
 
         async function importAllData(event) {
             const file = event.target.files && event.target.files[0];
             if (!file) return;
             try {
-                const data = JSON.parse(await file.text());
-                if (!Array.isArray(data)) throw new Error('format invalide');
-                const map = new Map(projects.map(p => [p.id, p]));
-                data.forEach(p => { if (p && p.id) map.set(p.id, p); });
-                projects = Array.from(map.values());
-                const r = await saveProjectsData();
+                const text = await file.text();
+                projects = normalizeProjects(JSON.parse(text)); // ✅ FIX 4 : import sécurisé
+                saveLocalProjects();
                 renderProjectsList();
                 refreshCalendar();
-                showToast(`Import réussi (${data.length} projet(s)).${r.success && !r.localOnly ? ' Synchronisé sur GitHub.' : ''}`);
+                updateSavedCountBadge();
+                const cfg = getGhConfig();
+                if (cfg) {
+                    try {
+                        await pushRemoteFile('SocialSync: import JSON');
+                        showToast(`Import appliqué et poussé sur GitHub ✅ (${projects.length} projets)`);
+                    } catch (e) {
+                        showToast('Import local OK, mais push GitHub échoué : ' + e.message, WARN_ICON);
+                    }
+                } else {
+                    showToast(`Import local réussi (${projects.length} projets) — configurez GitHub pour synchroniser`, WARN_ICON);
+                }
             } catch (e) {
-                showToast('Fichier JSON invalide.', WARN_ICON);
+                showToast('Fichier JSON invalide', WARN_ICON);
             } finally {
                 event.target.value = '';
             }
         }
-        async function saveProject() {
-    const btn = document.getElementById('saveBtn');
-    const title = document.getElementById('videoTitle').value;
-    const date = document.getElementById('launchDate').value;
-    
-    if (!title || !date) {
-        showToast("Titre et date obligatoires", WARN_ICON);
-        return;
-    }
-
-    // Récupération de la configuration (à adapter selon comment vous stockez le token)
-    const token = document.getElementById('ghToken').value;
-    const owner = document.getElementById('ghUsername').value;
-    const repo = document.getElementById('ghRepo').value;
-
-    if (!token || !owner || !repo) {
-        showToast("Veuillez configurer GitHub d'abord", WARN_ICON);
-        openConfigModal();
-        return;
-    }
-
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sauvegarde...';
-
-    try {
-        // 1. Ajouter le nouveau projet à votre liste
-        const newProject = {
-            id: Date.now().toString(),
-            title: title,
-            launchDate: date,
-            seo: getSeoData()
-        };
-        projects.push(newProject);
-
-        // 2. Préparer le contenu pour GitHub
-        const jsonContent = JSON.stringify(projects, null, 2);
-        const encodedContent = utf8ToBase64(jsonContent);
-
-        // 3. Envoyer la requête à GitHub
-        const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${FILE_PATH}`, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                message: `Ajout du projet: ${title}`,
-                content: encodedContent,
-                sha: currentSha // Indispensable pour mettre à jour un fichier existant
-            })
-        });
-
-        if (!response.ok) {
-            const errData = await response.json();
-            throw new Error(errData.message || "Erreur de sauvegarde");
-        }
-
-        const data = await response.json();
-        currentSha = data.content.sha; // Mise à jour du SHA pour la prochaine sauvegarde
-        
-        // Sauvegarde locale en backup
-        localStorage.setItem('socialsync_projects', jsonContent);
-        
-        showToast("Projet sauvegardé sur GitHub !");
-        renderProjectsList(); // Mettre à jour l'interface
-
-    } catch (error) {
-        console.error(error);
-        showToast(`Erreur : ${error.message}`, WARN_ICON);
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = DEFAULT_SAVE_LABEL;
-    }
-}
     </script>
 </body>
 </html>
