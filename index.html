@@ -601,13 +601,34 @@
             document.getElementById('configModal').classList.add('hidden');
         }
 
+        // --- CORRECTION SAUVEGARDE GITHUB & LOCAL ---
         async function saveProjectsData() {
             localStorage.setItem('socialsync_projects', JSON.stringify(projects));
             const conf = getGitHubConfig();
-            if (!conf.username || !conf.repo || !conf.token) return;
+            
+            // Si GitHub n'est pas configuré, on conserve uniquement en local
+            if (!conf.username || !conf.repo || !conf.token) {
+                return { success: true, localOnly: true };
+            }
 
             try {
                 const url = `https://api.github.com/repos/${conf.username}/${conf.repo}/contents/${FILE_PATH}`;
+                
+                // 1. Récupération automatique du SHA s'il est manquant
+                if (!currentSha) {
+                    const getRes = await fetch(url, {
+                        headers: {
+                            'Authorization': `Bearer ${conf.token}`,
+                            'Accept': 'application/vnd.github.v3+json'
+                        }
+                    });
+                    if (getRes.ok) {
+                        const getData = await getRes.json();
+                        currentSha = getData.sha;
+                    }
+                }
+
+                // 2. Encodage UTF-8 propre
                 const contentEncoded = btoa(unescape(encodeURIComponent(JSON.stringify(projects, null, 2))));
                 const body = {
                     message: `Mise à jour des projets via SocialSync Hub`,
@@ -615,6 +636,7 @@
                 };
                 if (currentSha) body.sha = currentSha;
 
+                // 3. Envoi vers GitHub
                 const res = await fetch(url, {
                     method: 'PUT',
                     headers: {
@@ -630,9 +652,14 @@
                     if (resData.content && resData.content.sha) {
                         currentSha = resData.content.sha;
                     }
+                    return { success: true, localOnly: false };
+                } else {
+                    const errData = await res.json().catch(() => ({}));
+                    return { success: false, error: errData.message || `Erreur HTTP ${res.status}` };
                 }
             } catch (err) {
-                console.error("Erreur d'écriture sur GitHub API:", err);
+                console.error("Erreur d'écriture GitHub API:", err);
+                return { success: false, error: "Erreur réseau / connexion" };
             }
         }
 
@@ -643,7 +670,7 @@
             const launchDate = dateInputEl.value;
 
             if (!title || !launchDate) {
-                showToast("Veuillez remplir le titre et la date de lancement.");
+                showToast("Veuillez remplir le titre et la date (J0).", "fa-solid fa-triangle-exclamation");
                 return;
             }
 
@@ -667,7 +694,7 @@
                 projects.unshift(newProj);
             }
 
-            await saveProjectsData();
+            const syncResult = await saveProjectsData();
             renderProjectsList();
             if (calendar) {
                 calendar.removeAllEvents();
@@ -676,19 +703,15 @@
 
             titleInput.value = '';
             clearSeoFields();
-            showToast("Projet sauvegardé avec succès !");
-        }
 
-        function editProject(id) {
-            const proj = projects.find(p => p.id === id);
-            if (!proj) return;
-            currentEditProjectId = id;
-            document.getElementById('videoTitle').value = proj.title || '';
-            document.getElementById('launchDate').value = proj.launchDate || '';
-            if (proj.seo) loadSeoData(proj.seo);
-            document.getElementById('saveBtn').innerHTML = '<i class="fa-solid fa-pen-to-square"></i> Valider';
-            switchTab('planner');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            // Rétroaction précise
+            if (syncResult.localOnly) {
+                showToast("Sauvegardé en local (GitHub non configuré).", "fa-solid fa-triangle-exclamation");
+            } else if (syncResult.success) {
+                showToast("Projet sauvegardé et synchronisé sur GitHub !");
+            } else {
+                showToast(`Sauvegardé en local (Échec GitHub : ${syncResult.error})`, "fa-solid fa-triangle-exclamation");
+            }
         }
 
         async function deleteProject(id) {
@@ -699,8 +722,14 @@
                 calendar.removeAllEvents();
                 calendar.addEventSource(generateCalendarEvents());
             }
-            await saveProjectsData();
-            showToast("Projet supprimé avec succès !");
+            const syncResult = await saveProjectsData();
+            if (syncResult.success && !syncResult.localOnly) {
+                showToast("Projet supprimé et synchronisé sur GitHub !");
+            } else if (syncResult.localOnly) {
+                showToast("Projet supprimé en local.");
+            } else {
+                showToast(`Supprimé en local (Échec GitHub : ${syncResult.error})`, "fa-solid fa-triangle-exclamation");
+            }
         }
 
         function renderProjectsList() {
