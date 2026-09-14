@@ -19,8 +19,10 @@
         .fc-col-header-cell-cushion, .fc-daygrid-day-number { color: #cbd5e1 !important; text-decoration: none !important; }
         .fc-event { border: none !important; cursor: pointer; }
         .fc-daygrid-event-harness { margin-bottom: 4px !important; }
+        /* 🆕 Style des événements marqués "publié" */
+        .fc-event-published .fc-event-main, .fc-event-published .fc-list-event-title { text-decoration: line-through; opacity: 0.7; }
     </style>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💡🍿</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍿</text></svg>">
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col">
 
@@ -129,7 +131,7 @@
                     <h2 class="text-xl font-bold text-white flex items-center gap-2">
                         <i class="fa-solid fa-calendar-check text-indigo-400"></i> Suivi & Planning Global
                     </h2>
-                    <p class="text-xs text-slate-400 mt-1">Synchronisé avec votre dépôt GitHub.</p>
+                    <p class="text-xs text-slate-400 mt-1">Synchronisé avec votre dépôt GitHub. Cliquez sur un événement pour cocher "Publié".</p>
                 </div>
                 <div class="flex items-center gap-3 flex-wrap">
                     <button onclick="exportAllData()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold transition flex items-center gap-2">
@@ -265,6 +267,7 @@
         let calendar = null;
         let currentEditProjectId = null;
         let toastTimer = null;
+        let currentSeoViewPlat = null; // 🆕 plateforme filtrée dans la vue SEO (null = toutes)
 
         const FILE_PATH = 'data/publications.json';
         const GH_CONFIG_KEY = 'socialsync_gh_config';
@@ -339,8 +342,7 @@
         }
 
         // ============================================================
-        // ✅ FIX : NORMALISATION — garantit que projects est TOUJOURS un tableau
-        // (cause racine du bug "projects.push is not a function")
+        // NORMALISATION — garantit que projects est TOUJOURS un tableau
         // ============================================================
         function normalizeProjects(data) {
             if (Array.isArray(data)) return data;                              // déjà un tableau ✓
@@ -522,7 +524,7 @@
 
         // ============================================================
         // IMPORT PACKAGE SEO
-        // 🔄 v3 : parser INSENSIBLE à l'indentation et au formatage du copier-coller
+        // Parser INSENSIBLE à l'indentation et au formatage du copier-coller
         // ============================================================
         const seoSectionAliases = { 'youtube': 'yt', 'tiktok': 'tiktok', 'instagram': 'ig', 'facebook': 'fb', 'pinterest': 'pin' };
 
@@ -565,7 +567,7 @@
             return null;
         }
 
-        // 🔄 NOUVEAU : normalise une ligne quelle que soit l'indentation / le formatage
+        // Normalise une ligne quelle que soit l'indentation / le formatage
         function cleanLine(raw) {
             let s = String(raw ?? '')
                 .replace(/\u00A0/g, ' ')                 // espaces insécables (copier-coller web)
@@ -579,7 +581,7 @@
             return s;
         }
 
-        // 🔄 NOUVEAU : retire l'indentation commune d'un bloc multi-lignes
+        // Retire l'indentation commune d'un bloc multi-lignes
         function dedentLines(lines) {
             const nonEmpty = lines.filter(l => l.trim());
             if (!nonEmpty.length) return '';
@@ -842,7 +844,7 @@
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 const json = await res.json();
                 const parsed = JSON.parse(base64ToUtf8(json.content));
-                projects = normalizeProjects(parsed); // ✅ FIX : jamais d'objet brut dans projects
+                projects = normalizeProjects(parsed);
                 if (!Array.isArray(projects)) projects = [];
                 currentSha = json.sha;
                 return { ok: true };
@@ -931,7 +933,7 @@
         // PROJETS : SAUVEGARDE / ÉDITION / SUPPRESSION
         // ============================================================
         async function saveProject() {
-            if (!Array.isArray(projects)) projects = []; // ✅ FIX : garde-fou avant tout .push()
+            if (!Array.isArray(projects)) projects = [];
             const title = (document.getElementById('videoTitle')?.value || '').trim();
             const launchDate = dateInput ? dateInput.value : '';
             if (!title || !launchDate) {
@@ -951,6 +953,7 @@
                     title,
                     launchDate,
                     seo,
+                    published: {}, // 🆕 statut de publication par plateforme { yt: true, ig: false, ... }
                     createdAt: new Date().toISOString()
                 });
             }
@@ -1025,6 +1028,39 @@
         }
 
         // ============================================================
+        // STATUT "PUBLIÉ" PAR PLATEFORME 🆕
+        // ============================================================
+        function isPublished(p, platId) {
+            return !!(p && p.published && p.published[platId]);
+        }
+
+        async function togglePublished(projectId, platId, checked) {
+            const p = projects.find(x => x.id === projectId);
+            if (!p) return;
+            if (!p.published || typeof p.published !== 'object') p.published = {};
+            p.published[platId] = checked;
+            saveLocalProjects();
+            refreshCalendar(); // met à jour le visuel (✅ + barré) sur le calendrier
+
+            // Mise à jour du label dans le modal sans le fermer
+            const lbl = document.getElementById(`publbl_${projectId}_${platId}`);
+            if (lbl) {
+                lbl.textContent = checked ? 'Publié ✓' : 'Marquer publié';
+                lbl.classList.toggle('text-emerald-400', checked);
+                lbl.classList.toggle('text-slate-400', !checked);
+            }
+
+            const cfg = getGhConfig();
+            if (cfg) {
+                try {
+                    await pushRemoteFile(`SocialSync: ${platId.toUpperCase()} marqué ${checked ? 'publié' : 'non publié'} — "${p.title}"`);
+                } catch (e) {
+                    showToast('Statut enregistré localement, mais synchro GitHub échouée : ' + e.message, WARN_ICON);
+                }
+            }
+        }
+
+        // ============================================================
         // LISTE DES PROJETS & VUE SEO
         // ============================================================
         function renderProjectsList() {
@@ -1045,7 +1081,7 @@
                         <span class="text-[10px] bg-indigo-500/10 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-full whitespace-nowrap">${escapeHtml((p.launchDate || '').split('-').reverse().join('/'))}</span>
                     </div>
                     <div class="flex items-center gap-2.5 text-base">
-                        ${platformsConfig.map(pl => `<i class="${pl.icon} text-slate-400" title="${escapeHtml(pl.name)}"></i>`).join('')}
+                        ${platformsConfig.map(pl => `<i class="${pl.icon} ${isPublished(p, pl.id) ? 'text-emerald-400' : 'text-slate-400'}" title="${escapeHtml(pl.name)}${isPublished(p, pl.id) ? ' — publié ✓' : ''}"></i>`).join('')}
                     </div>
                     <div class="flex items-center gap-1.5 pt-2 border-t border-slate-800">
                         <button onclick="openSeoView('${p.id}')" class="flex-1 px-2 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-[10px] font-semibold transition"><i class="fa-solid fa-eye"></i> SEO</button>
@@ -1055,26 +1091,38 @@
                 </div>`).join('');
         }
 
-        function openSeoView(id) {
+        // 🆕 openSeoView(id, platId) : si platId fourni → affiche UNIQUEMENT le SEO de cette plateforme
+        function openSeoView(id, platId = null) {
             const p = projects.find(x => x.id === id);
             if (!p) return;
+            currentSeoViewPlat = platId;
             const container = document.getElementById('seoViewContent');
             if (!container) return;
+
+            const plats = platId ? platformsConfig.filter(x => x.id === platId) : platformsConfig;
+
             let html = `<div class="space-y-5">
                 <div>
-                    <h3 class="text-xl font-bold text-white flex items-center gap-2"><i class="fa-solid fa-video text-indigo-400"></i> ${escapeHtml(p.title)}</h3>
+                    <h3 class="text-xl font-bold text-white flex items-center gap-2 flex-wrap"><i class="fa-solid fa-video text-indigo-400"></i> ${escapeHtml(p.title)}</h3>
                     <p class="text-xs text-slate-400 mt-1.5"><i class="fa-regular fa-calendar mr-1"></i>Lancement YT : ${new Date((p.launchDate || '') + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
                     ${p.seo?.playlist ? `<p class="text-xs text-fuchsia-300 mt-1"><i class="fa-solid fa-list mr-1"></i>Playlist : ${escapeHtml(p.seo.playlist)}</p>` : ''}
+                    ${platId ? `<button onclick="openSeoView('${p.id}')" class="mt-3 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-[10px] font-semibold transition inline-flex items-center gap-1.5"><i class="fa-solid fa-arrow-left"></i> Voir toutes les plateformes</button>` : ''}
                 </div>`;
-            platformsConfig.forEach(plat => {
+
+            plats.forEach(plat => {
                 const data = (p.seo && p.seo[plat.id]) || {};
                 const entries = Object.entries(data).filter(([, v]) => v && String(v).trim());
+                const pub = isPublished(p, plat.id);
                 html += `
-                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-4">
-                        <div class="flex items-center gap-2 mb-3">
+                    <div class="bg-slate-950 border ${pub ? 'border-emerald-500/40' : 'border-slate-800'} rounded-xl p-4">
+                        <div class="flex items-center gap-2 mb-3 flex-wrap">
                             <i class="${plat.icon} text-sm text-slate-200"></i>
                             <span class="font-bold text-xs text-white">${seoFieldsConfig[plat.id].label}</span>
-                            <span class="text-[10px] text-slate-500 ml-auto">J+${plat.dayOffset} · ${plat.timeSlot}</span>
+                            <span class="text-[10px] text-slate-500">J+${plat.dayOffset} · ${plat.timeSlot}</span>
+                            <label class="ml-auto flex items-center gap-1.5 cursor-pointer select-none bg-slate-900 border ${pub ? 'border-emerald-500/50' : 'border-slate-700'} rounded-full px-2.5 py-1 hover:border-emerald-500/60 transition" title="Cocher une fois la publication effectuée">
+                                <input type="checkbox" ${pub ? 'checked' : ''} onchange="togglePublished('${p.id}','${plat.id}', this.checked)" class="accent-emerald-500 w-3.5 h-3.5 cursor-pointer">
+                                <span id="publbl_${p.id}_${plat.id}" class="text-[10px] font-semibold ${pub ? 'text-emerald-400' : 'text-slate-400'}">${pub ? 'Publié ✓' : 'Marquer publié'}</span>
+                            </label>
                         </div>
                         ${entries.length ? entries.map(([f, v]) => `
                             <div class="mb-2.5 last:mb-0">
@@ -1089,6 +1137,7 @@
         }
 
         function closeSeoView() {
+            currentSeoViewPlat = null;
             document.getElementById('seoViewModal').classList.add('hidden');
         }
 
@@ -1125,13 +1174,15 @@
                         if (isNaN(d)) return;
                         d.setDate(d.getDate() + plat.dayOffset);
                         const iso = fmtDateISO(d);
+                        const pub = isPublished(p, plat.id); // 🆕
                         events.push({
                             id: p.id + '::' + plat.id,
-                            title: `${plat.name} — ${p.title}`,
+                            title: (pub ? '✅ ' : '') + `${plat.name} — ${p.title}`, // 🆕 préfixe ✅ si publié
                             start: `${iso}T${plat.startTime}`,
                             end: `${iso}T${plat.endTime}`,
                             backgroundColor: plat.calendarColor,
-                            extendedProps: { projectId: p.id }
+                            classNames: pub ? ['fc-event-published'] : [], // 🆕 texte barré si publié
+                            extendedProps: { projectId: p.id, platId: plat.id }
                         });
                     });
                 });
@@ -1151,7 +1202,11 @@
                 firstDay: 1,
                 headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,listMonth' },
                 events: getCalendarEvents,
-                eventClick: (info) => openSeoView(info.event.extendedProps.projectId)
+                // 🆕 clic sur un événement → vue SEO de CETTE plateforme uniquement
+                eventClick: (info) => {
+                    const [pid, plat] = String(info.event.id).split('::');
+                    openSeoView(pid, plat || null);
+                }
             });
             calendar.render();
         }
@@ -1234,7 +1289,7 @@
             if (!file) return;
             try {
                 const text = await file.text();
-                projects = normalizeProjects(JSON.parse(text)); // ✅ FIX : import sécurisé
+                projects = normalizeProjects(JSON.parse(text));
                 saveLocalProjects();
                 renderProjectsList();
                 refreshCalendar();
