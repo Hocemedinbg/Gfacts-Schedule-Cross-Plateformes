@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-09-14T07:05:55.017Z",
+  "lastUpdated": "2026-09-14T07:05:59.217Z",
   "projects": [
     {
       "id": "1789369537322",
@@ -40,7 +40,8 @@
         }
       },
       "publishedStatus": {
-        "yt": false
+        "yt": false,
+        "tiktok": true
       }
     }
   ]
