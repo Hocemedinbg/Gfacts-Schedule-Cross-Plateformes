@@ -200,11 +200,11 @@
                 <div class="bg-fuchsia-950/50 border border-fuchsia-800/50 p-3 rounded-xl text-fuchsia-400"><i class="fa-solid fa-wand-magic-sparkles text-xl"></i></div>
                 <div>
                     <h3 class="font-bold text-lg text-white">Import Automatique Package SEO</h3>
-                    <p class="text-xs text-slate-400">Collez votre texte brut ou bloc de code SEO pour remplir automatiquement tous les champs.</p>
+                    <p class="text-xs text-slate-400">Collez votre texte (blocs ```text, Markdown, indentation libre) : tout est reconnu automatiquement.</p>
                 </div>
             </div>
             <div>
-                <textarea id="seoBulkInput" oninput="previewSeoPackage()" rows="8" placeholder="Collez ici votre texte SEO..." class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-xs text-slate-100 focus:outline-none focus:border-fuchsia-500 resize-y font-mono"></textarea>
+                <textarea id="seoBulkInput" oninput="previewSeoPackage()" rows="8" placeholder="Collez ici votre texte SEO (indentation libre)..." class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-xs text-slate-100 focus:outline-none focus:border-fuchsia-500 resize-y font-mono"></textarea>
             </div>
             <div id="seoImportStatus" class="text-xs min-h-[20px]"></div>
             <div class="pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3">
@@ -339,7 +339,7 @@
         }
 
         // ============================================================
-        // ✅ FIX 1 : NORMALISATION — garantit que projects est TOUJOURS un tableau
+        // ✅ FIX : NORMALISATION — garantit que projects est TOUJOURS un tableau
         // (cause racine du bug "projects.push is not a function")
         // ============================================================
         function normalizeProjects(data) {
@@ -351,7 +351,6 @@
             return []; // tout le reste → tableau vide
         }
 
-        // ✅ FIX 2 : chargement local sécurisé
         function loadLocalProjects() {
             try {
                 projects = normalizeProjects(JSON.parse(localStorage.getItem('socialsync_projects') || '[]'));
@@ -378,18 +377,18 @@
         // INITIALISATION
         // ============================================================
         window.addEventListener('DOMContentLoaded', () => {
-            loadLocalProjects();          // On affiche d'abord le local (jamais d'écran vide)
+            loadLocalProjects();
             loadGitHubConfigInputs();
             renderGrid();
             renderSeoFields();
             renderProjectsList();
-            initCalendar();               // ⚠️ requis pour l'onglet Calendrier
+            initCalendar();
             updateSavedCountBadge();
             if (dateInput) {
                 dateInput.value = new Date().toISOString().split('T')[0];
                 dateInput.addEventListener('change', renderGrid);
             }
-            checkGitHubConnectionAndLoad(); // Puis synchro silencieuse avec GitHub
+            checkGitHubConnectionAndLoad();
         });
 
         // ============================================================
@@ -523,10 +522,10 @@
 
         // ============================================================
         // IMPORT PACKAGE SEO
+        // 🔄 v3 : parser INSENSIBLE à l'indentation et au formatage du copier-coller
         // ============================================================
         const seoSectionAliases = { 'youtube': 'yt', 'tiktok': 'tiktok', 'instagram': 'ig', 'facebook': 'fb', 'pinterest': 'pin' };
 
-        // ⚠️ PARTIE RECONSTRUITE (le fichier fourni était tronqué à partir d'ici)
         function normKey(s) {
             return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
         }
@@ -566,53 +565,120 @@
             return null;
         }
 
+        // 🔄 NOUVEAU : normalise une ligne quelle que soit l'indentation / le formatage
+        function cleanLine(raw) {
+            let s = String(raw ?? '')
+                .replace(/\u00A0/g, ' ')                 // espaces insécables (copier-coller web)
+                .replace(/[\u200B-\u200D\uFEFF]/g, '')   // caractères invisibles (zero-width, BOM)
+                .replace(/\r/g, '')
+                .trim();
+            // retire les décorations Markdown : titres ##, puces -, *, •, >, numérotation 1.
+            s = s.replace(/^(#{1,6}\s+|[-*•>]\s+|\d+[.)]\s+)/, '').trim();
+            // retire le gras/italique Markdown englobant : **texte**, *texte*, ***texte***
+            s = s.replace(/^\*{1,3}(?=\S)/, '').replace(/(?<=\S)\*{1,3}$/, '').trim();
+            return s;
+        }
+
+        // 🔄 NOUVEAU : retire l'indentation commune d'un bloc multi-lignes
+        function dedentLines(lines) {
+            const nonEmpty = lines.filter(l => l.trim());
+            if (!nonEmpty.length) return '';
+            const minIndent = Math.min(...nonEmpty.map(l => (l.match(/^[ \t]*/) || [''])[0].length));
+            return lines.map(l => l.slice(minIndent)).join('\n').trim();
+        }
+
         function parseSeoBulkText(text) {
             const result = { playlist: '', sections: {} };
-            const sectionKeys = {};
-            for (const [name, id] of Object.entries(seoSectionAliases)) sectionKeys[normKey(name)] = id;
-            Object.assign(sectionKeys, {
-                'yt': 'yt', 'youtubeshorts': 'yt',
-                'ig': 'ig', 'insta': 'ig', 'reels': 'ig', 'reelsinstagram': 'ig',
-                'fb': 'fb',
-                'pin': 'pin'
-            });
+
+            // Noms de section acceptés -> id plateforme ('playlist' = cas spécial)
+            const sectionKeys = {
+                'playlist': 'playlist', 'playlists': 'playlist',
+                'yt': 'yt', 'youtube': 'yt', 'youtubeshorts': 'yt',
+                'tiktok': 'tiktok',
+                'ig': 'ig', 'instagram': 'ig', 'insta': 'ig', 'reels': 'ig', 'reelsinstagram': 'ig', 'instagramreels': 'ig',
+                'fb': 'fb', 'facebook': 'fb', 'facebookreels': 'fb',
+                'pin': 'pin', 'pinterest': 'pin'
+            };
 
             const lines = String(text || '').split(/\r?\n/);
-            let currentPlat = null;
-            let pendingLabel = null; // { platId, field } en attente de valeur sur la ligne suivante
+            let currentPlat = null;   // 'playlist' | 'yt' | 'tiktok' | 'ig' | 'fb' | 'pin'
+            let pendingField = null;  // champ en attente de sa valeur
+            let inFence = false;      // capture d'un bloc ```text ... ```
+            let fenceBuffer = [];
 
             for (const raw of lines) {
-                const line = raw.trim();
+                // --- 1) Capture multi-lignes DANS un bloc de code (contenu brut préservé) ---
+                if (inFence) {
+                    if (/^`{3,}\s*$/.test(String(raw).trim())) {   // ligne ``` (indentation tolérée) = fermeture
+                        inFence = false;
+                        const value = dedentLines(fenceBuffer);    // retire l'indentation commune
+                        if (value) {
+                            if (currentPlat === 'playlist') {
+                                result.playlist = value;
+                            } else if (currentPlat && pendingField) {
+                                (result.sections[currentPlat] = result.sections[currentPlat] || {})[pendingField] = value;
+                            }
+                        }
+                        pendingField = null;
+                        fenceBuffer = [];
+                    } else {
+                        fenceBuffer.push(String(raw).replace(/\r/g, ''));
+                    }
+                    continue;
+                }
+
+                const line = cleanLine(raw);
                 if (!line) continue;
+
+                // --- 2) Ouverture de bloc : ```, ```text, ```markdown... (indentation tolérée) ---
+                if (/^`{3,}/.test(line)) {
+                    inFence = true;
+                    fenceBuffer = [];
+                    continue;
+                }
+
                 const norm = normKey(line);
 
-                // 1) En-tête de section ?
-                if (sectionKeys[norm]) { currentPlat = sectionKeys[norm]; pendingLabel = null; continue; }
+                // --- 3) En-tête de section (Playlist, YouTube, TikTok, Instagram, Facebook, Pinterest) ---
+                if (sectionKeys[norm]) {
+                    currentPlat = sectionKeys[norm];
+                    pendingField = (currentPlat === 'playlist') ? 'playlist' : null;
+                    continue;
+                }
 
-                // 2) Playlist globale ?
-                const plMatch = line.match(/^playlist\s*[:：\-–—]\s*(.+)$/i);
-                if (plMatch) { result.playlist = plMatch[1].trim(); pendingLabel = null; continue; }
-
-                // 3) "Label: valeur" ?
+                // --- 4) Format "Label: valeur" sur une seule ligne ---
                 const kv = line.match(/^([^:：]{2,40}?)\s*[:：]\s*(.*)$/);
-                if (currentPlat && kv) {
+                if (currentPlat && currentPlat !== 'playlist' && kv) {
                     const field = resolveSeoField(currentPlat, kv[1]);
                     if (field) {
-                        const val = kv[2].trim();
-                        if (val) {
-                            (result.sections[currentPlat] = result.sections[currentPlat] || {})[field] = val;
-                            pendingLabel = null;
+                        if (kv[2].trim()) {
+                            (result.sections[currentPlat] = result.sections[currentPlat] || {})[field] = kv[2].trim();
+                            pendingField = null;
                         } else {
-                            pendingLabel = { platId: currentPlat, field };
+                            pendingField = field; // valeur sur la ligne suivante
                         }
                         continue;
                     }
                 }
 
-                // 4) Valeur sur la ligne suivante pour un label seul
-                if (pendingLabel) {
-                    (result.sections[pendingLabel.platId] = result.sections[pendingLabel.platId] || {})[pendingLabel.field] = line;
-                    pendingLabel = null;
+                // --- 5) Nom de champ seul (Script Start, Title, Description, Pin Title...) ---
+                if (currentPlat && currentPlat !== 'playlist') {
+                    const field = resolveSeoField(currentPlat, line);
+                    if (field) {
+                        pendingField = field;
+                        continue;
+                    }
+                }
+
+                // --- 6) Fallback : valeur "nue" juste après un nom de champ (sans bloc ```) ---
+                if (pendingField) {
+                    const rawVal = String(raw ?? '').replace(/\u00A0/g, ' ').trim();
+                    if (currentPlat === 'playlist') {
+                        result.playlist = rawVal;
+                    } else if (currentPlat) {
+                        (result.sections[currentPlat] = result.sections[currentPlat] || {})[pendingField] = rawVal;
+                    }
+                    pendingField = null;
                 }
             }
             return result;
@@ -640,7 +706,7 @@
             const plats = Object.keys(parsed.sections).filter(k => Object.keys(parsed.sections[k]).length);
             const fieldCount = plats.reduce((n, k) => n + Object.keys(parsed.sections[k]).length, 0);
             if (!plats.length && !parsed.playlist) {
-                status.innerHTML = '<span class="text-amber-400"><i class="fa-solid fa-triangle-exclamation"></i> Aucun champ reconnu. Structure attendue : une ligne "YouTube", "TikTok"... puis des lignes "Titre: ...", "Description: ..."</span>';
+                status.innerHTML = '<span class="text-amber-400"><i class="fa-solid fa-triangle-exclamation"></i> Aucun champ reconnu. Structure attendue : une ligne "Playlist"/"YouTube"/"TikTok"... puis des noms de champs (Title, Description...) suivis de blocs de code ``` ```</span>';
             } else {
                 const names = plats.map(id => seoFieldsConfig[id].label).join(', ');
                 status.innerHTML = `<span class="text-emerald-400"><i class="fa-solid fa-circle-check"></i> ${plats.length} plateforme(s) détectée(s)${names ? ' : ' + escapeHtml(names) : ''} — ${fieldCount} champ(s) rempli(s)${parsed.playlist ? ' + Playlist ✓' : ''}</span>`;
@@ -776,7 +842,7 @@
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 const json = await res.json();
                 const parsed = JSON.parse(base64ToUtf8(json.content));
-                projects = normalizeProjects(parsed); // ✅ FIX 3 : jamais d'objet brut dans projects
+                projects = normalizeProjects(parsed); // ✅ FIX : jamais d'objet brut dans projects
                 if (!Array.isArray(projects)) projects = [];
                 currentSha = json.sha;
                 return { ok: true };
@@ -865,7 +931,7 @@
         // PROJETS : SAUVEGARDE / ÉDITION / SUPPRESSION
         // ============================================================
         async function saveProject() {
-            if (!Array.isArray(projects)) projects = []; // ✅ FIX 4 : garde-fou avant tout .push()
+            if (!Array.isArray(projects)) projects = []; // ✅ FIX : garde-fou avant tout .push()
             const title = (document.getElementById('videoTitle')?.value || '').trim();
             const launchDate = dateInput ? dateInput.value : '';
             if (!title || !launchDate) {
@@ -880,7 +946,7 @@
                     projects[idx] = { ...projects[idx], title, launchDate, seo, updatedAt: new Date().toISOString() };
                 }
             } else {
-                projects.push({ // ✅ ne peut plus planter grâce au FIX 1 + FIX 4
+                projects.push({
                     id: 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
                     title,
                     launchDate,
@@ -964,7 +1030,7 @@
         function renderProjectsList() {
             const list = document.getElementById('projectsList');
             if (!list) return;
-            if (!Array.isArray(projects) || !projects.length) { // ✅ FIX : garde-fou supplémentaire
+            if (!Array.isArray(projects) || !projects.length) {
                 list.innerHTML = `<div class="text-center py-10 text-slate-500 text-xs space-y-3">
                     <i class="fa-solid fa-inbox text-3xl text-slate-700 block"></i>
                     <p>Aucun projet enregistré.<br>Créez votre première programmation dans le Planificateur.</p>
@@ -1053,7 +1119,7 @@
         function getCalendarEvents(info, successCallback, failureCallback) {
             try {
                 const events = [];
-                (Array.isArray(projects) ? projects : []).forEach(p => { // ✅ FIX : garde-fou
+                (Array.isArray(projects) ? projects : []).forEach(p => {
                     platformsConfig.forEach(plat => {
                         const d = new Date((p.launchDate || '') + 'T00:00:00');
                         if (isNaN(d)) return;
@@ -1168,7 +1234,7 @@
             if (!file) return;
             try {
                 const text = await file.text();
-                projects = normalizeProjects(JSON.parse(text)); // ✅ FIX 4 : import sécurisé
+                projects = normalizeProjects(JSON.parse(text)); // ✅ FIX : import sécurisé
                 saveLocalProjects();
                 renderProjectsList();
                 refreshCalendar();
