@@ -1,898 +1,953 @@
 <!DOCTYPE html>
 <html lang="fr" class="dark">
 <head>
-   <meta charset="UTF-8">
-   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-   <title>SocialSync Hub - Synchro GitHub</title>
-   
-   <script src="https://cdn.tailwindcss.com"></script>
-   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SocialSync Hub - Synchro GitHub</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
 
-   <style>
-       ::-webkit-scrollbar { width: 8px; height: 8px; }
-       ::-webkit-scrollbar-track { background: #0f172a; }
-       ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-       .fc { --fc-border-color: #334155; --fc-page-bg-color: transparent; }
-       .fc-theme-standard td, .fc-theme-standard th { border-color: #334155 !important; }
-       .fc-col-header-cell-cushion, .fc-daygrid-day-number { color: #cbd5e1 !important; text-decoration: none !important; }
-       .fc-event { border: none !important; cursor: pointer; background: transparent; }
-       .fc-daygrid-event-harness { margin-bottom: 4px !important; }
-   </style>
+    <style>
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        .fc { --fc-border-color: #334155; --fc-page-bg-color: transparent; }
+        .fc-theme-standard td, .fc-theme-standard th { border-color: #334155 !important; }
+        .fc-col-header-cell-cushion, .fc-daygrid-day-number { color: #cbd5e1 !important; text-decoration: none !important; }
+        .fc-event { border: none !important; cursor: pointer; background: transparent; }
+        .fc-daygrid-event-harness { margin-bottom: 4px !important; }
+    </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col">
 
-   <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-50">
-       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-           <div class="flex items-center justify-between h-16">
-               <div class="flex items-center gap-3">
-                   <div class="bg-gradient-to-tr from-indigo-600 to-pink-500 p-2.5 rounded-xl shadow-lg">
-                       <i class="fa-solid fa-share-nodes text-white text-lg"></i>
-                   </div>
-                   <div>
-                       <span class="font-bold text-lg bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent block">SocialSync Hub</span>
-                       <span class="text-xs text-slate-400">Synchro GitHub API Active</span>
-                   </div>
-               </div>
-               <div class="flex items-center gap-3">
-                   <nav class="flex space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
-                       <button id="tabBtnPlanner" onclick="switchTab('planner')" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-2 bg-indigo-600 text-white shadow-md">
-                           <i class="fa-solid fa-pen-to-square"></i><span>Planificateur</span>
-                       </button>
-                       <button id="tabBtnCalendar" onclick="switchTab('calendar')" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-2 text-slate-400 hover:text-white">
-                           <i class="fa-solid fa-calendar-days"></i><span>Calendrier</span>
-                           <span id="savedCountBadge" class="bg-slate-800 text-indigo-400 text-[10px] px-2 py-0.5 rounded-full border border-slate-700">0</span>
-                       </button>
-                   </nav>
-               </div>
-           </div>
-       </div>
-   </header>
+    <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <div class="bg-gradient-to-tr from-indigo-600 to-pink-500 p-2.5 rounded-xl shadow-lg">
+                        <i class="fa-solid fa-share-nodes text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <span class="font-bold text-lg bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent block">SocialSync Hub</span>
+                        <span class="text-xs text-slate-400">Synchro GitHub API Active</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="openConfigModal()" class="p-2 text-slate-400 hover:text-white bg-slate-950 border border-slate-800 rounded-xl transition" title="Configuration GitHub">
+                        <i class="fa-brands fa-github text-lg"></i>
+                    </button>
+                    <nav class="flex space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
+                        <button id="tabBtnPlanner" onclick="switchTab('planner')" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-2 bg-indigo-600 text-white shadow-md">
+                            <i class="fa-solid fa-pen-to-square"></i><span>Planificateur</span>
+                        </button>
+                        <button id="tabBtnCalendar" onclick="switchTab('calendar')" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-2 text-slate-400 hover:text-white">
+                            <i class="fa-solid fa-calendar-days"></i><span>Calendrier</span>
+                            <span id="savedCountBadge" class="bg-slate-800 text-indigo-400 text-[10px] px-2 py-0.5 rounded-full border border-slate-700">0</span>
+                        </button>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </header>
 
-   <main class="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
 
-       <!-- ONGLET 1 : PLANIFICATEUR -->
-       <section id="tabPlanner" class="space-y-6">
-           <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
-               <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
-                   <div>
-                       <h2 class="text-xl font-bold text-white flex items-center gap-2">
-                           <i class="fa-solid fa-rocket text-indigo-400"></i> Nouvelle Programmation
-                       </h2>
-                       <p class="text-xs text-slate-400 mt-0.5">Saisissez la date YT pour générer les créneaux multi-plateformes.</p>
-                   </div>
-                   <div class="flex flex-wrap items-center gap-3">
-                       <div>
-                           <label class="block text-xs font-semibold text-slate-400 mb-1">Titre de la vidéo <span class="text-red-400">*</span></label>
-                           <input type="text" id="videoTitle" placeholder="Ex: 5 Astuces Secrètes..." class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 w-64">
-                       </div>
-                       <div>
-                           <label class="block text-xs font-semibold text-slate-400 mb-1">Date Lancement YT (J0) <span class="text-red-400">*</span></label>
-                           <input type="date" id="launchDate" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
-                       </div>
-                   </div>
-               </div>
+        <!-- ONGLET 1 : PLANIFICATEUR -->
+        <section id="tabPlanner" class="space-y-6">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+                    <div>
+                        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-rocket text-indigo-400"></i> Nouvelle Programmation
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-0.5">Saisissez la date YT pour générer les créneaux multi-plateformes.</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 mb-1">Titre de la vidéo <span class="text-red-400">*</span></label>
+                            <input type="text" id="videoTitle" placeholder="Ex: 5 Astuces Secrètes..." class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 w-64">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 mb-1">Date Lancement YT (J0) <span class="text-red-400">*</span></label>
+                            <input type="date" id="launchDate" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+                        </div>
+                    </div>
+                </div>
 
-               <!-- SECTION PACKAGE SEO -->
-               <div>
-                   <div class="flex items-center justify-between mb-4">
-                       <h3 class="font-bold text-white flex items-center gap-2">
-                           <i class="fa-solid fa-magnifying-glass-chart text-fuchsia-400"></i> Package SEO Complet
-                       </h3>
-                       <div class="flex items-center gap-2">
-                           <button type="button" onclick="openSeoImportModal()" class="px-3 py-1.5 bg-gradient-to-r from-fuchsia-600 to-purple-600 hover:from-fuchsia-500 hover:to-purple-500 text-white rounded-lg text-xs font-medium transition flex items-center gap-1.5 shadow-md">
-                               <i class="fa-solid fa-wand-magic-sparkles text-[10px]"></i> <span>Import auto</span>
-                           </button>
-                           <button type="button" onclick="toggleSeoSection()" id="seoToggleBtn" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium transition flex items-center gap-1.5">
-                               <i class="fa-solid fa-chevron-down text-[10px]"></i> <span>Afficher</span>
-                           </button>
-                       </div>
-                   </div>
+                <!-- SECTION PACKAGE SEO -->
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-magnifying-glass-chart text-fuchsia-400"></i> Package SEO Complet
+                        </h3>
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="openSeoImportModal()" class="px-3 py-1.5 bg-gradient-to-r from-fuchsia-600 to-purple-600 hover:from-fuchsia-500 hover:to-purple-500 text-white rounded-lg text-xs font-medium transition flex items-center gap-1.5 shadow-md">
+                                <i class="fa-solid fa-wand-magic-sparkles text-[10px]"></i> <span>Import auto</span>
+                            </button>
+                            <button type="button" onclick="toggleSeoSection()" id="seoToggleBtn" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-chevron-down text-[10px]"></i> <span>Afficher</span>
+                            </button>
+                        </div>
+                    </div>
 
-                   <div id="seoSection" class="hidden space-y-4">
-                       <div>
-                           <label class="block text-xs font-semibold text-slate-400 mb-1">Playlist</label>
-                           <input type="text" id="seoPlaylist" placeholder="Ex: True Crime & Dark History" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-fuchsia-500">
-                       </div>
+                    <div id="seoSection" class="hidden space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 mb-1">Playlist</label>
+                            <input type="text" id="seoPlaylist" placeholder="Ex: True Crime & Dark History" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-fuchsia-500">
+                        </div>
 
-                       <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="seoFieldsContainer"></div>
-                   </div>
-               </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="seoFieldsContainer"></div>
+                    </div>
+                </div>
 
-               <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-800 pt-5">
-                   <div class="flex gap-2">
-                       <button onclick="copyPlanningText()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium transition flex items-center gap-2">
-                           <i class="fa-regular fa-copy"></i> Copier texte
-                       </button>
-                       <button onclick="exportICalendar()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium transition flex items-center gap-2">
-                           <i class="fa-regular fa-calendar-plus"></i> Export .ICS
-                       </button>
-                   </div>
-                   <button onclick="saveProject()" id="saveBtn" class="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold rounded-xl text-sm transition shadow-lg shadow-emerald-900/30 flex items-center gap-2">
-                       <i class="fa-solid fa-cloud-arrow-up"></i> Sauvegarder dans GitHub
-                   </button>
-               </div>
-           </div>
+                <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-800 pt-5">
+                    <div class="flex gap-2">
+                        <button onclick="copyPlanningText()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium transition flex items-center gap-2">
+                            <i class="fa-regular fa-copy"></i> Copier texte
+                        </button>
+                        <button onclick="exportICalendar()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium transition flex items-center gap-2">
+                            <i class="fa-regular fa-calendar-plus"></i> Export .ICS
+                        </button>
+                    </div>
+                    <button onclick="saveProject()" id="saveBtn" class="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold rounded-xl text-sm transition shadow-lg shadow-emerald-900/30 flex items-center gap-2">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Sauvegarder dans GitHub
+                    </button>
+                </div>
+            </div>
 
-           <div id="scheduleGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
-       </section>
+            <div id="scheduleGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+        </section>
 
-       <!-- ONGLET 2 : CALENDRIER & SUIVI -->
-       <section id="tabCalendar" class="hidden space-y-6">
-           <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
-               <div>
-                   <h2 class="text-xl font-bold text-white flex items-center gap-2">
-                       <i class="fa-solid fa-calendar-check text-indigo-400"></i> Suivi & Planning Global
-                   </h2>
-                   <p class="text-xs text-slate-400 mt-1">Synchronisé en temps réel avec votre dépôt GitHub.</p>
-               </div>
-               <div class="flex items-center gap-3 flex-wrap">
-                   <button onclick="exportAllData()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold transition flex items-center gap-2">
-                       <i class="fa-solid fa-download"></i> Exporter tout (JSON)
-                   </button>
-                   <label class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold transition flex items-center gap-2 cursor-pointer">
-                       <i class="fa-solid fa-upload"></i> Importer JSON
-                       <input type="file" accept=".json" onchange="importAllData(event)" class="hidden">
-                   </label>
-                   <button onclick="syncFromGitHub()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold transition flex items-center gap-2 shadow-md">
-                       <i class="fa-solid fa-rotate"></i> Forcer la synchro GitHub
-                   </button>
-               </div>
-           </div>
+        <!-- ONGLET 2 : CALENDRIER & SUIVI -->
+        <section id="tabCalendar" class="hidden space-y-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
+                <div>
+                    <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-calendar-check text-indigo-400"></i> Suivi & Planning Global
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-1">Synchronisé en temps réel avec votre dépôt GitHub.</p>
+                </div>
+                <div class="flex items-center gap-3 flex-wrap">
+                    <button onclick="exportAllData()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold transition flex items-center gap-2">
+                        <i class="fa-solid fa-download"></i> Exporter tout (JSON)
+                    </button>
+                    <label class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold transition flex items-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-upload"></i> Importer JSON
+                        <input type="file" accept=".json" onchange="importAllData(event)" class="hidden">
+                    </label>
+                    <button onclick="syncFromGitHub()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold transition flex items-center gap-2 shadow-md">
+                        <i class="fa-solid fa-rotate"></i> Forcer la synchro GitHub
+                    </button>
+                </div>
+            </div>
 
-           <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-               <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
-                   <div id="calendar"></div>
-               </div>
-               <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col h-[650px]">
-                   <h3 class="font-bold text-lg text-white mb-4 flex items-center justify-between">
-                       <span><i class="fa-solid fa-list-check text-indigo-400 mr-2"></i>Projets Enregistrés</span>
-                   </h3>
-                   <div id="projectsList" class="flex-grow overflow-y-auto space-y-4 pr-1"></div>
-               </div>
-           </div>
-       </section>
-   </main>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+                    <div id="calendar"></div>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col h-[650px]">
+                    <h3 class="font-bold text-lg text-white mb-4 flex items-center justify-between">
+                        <span><i class="fa-solid fa-list-check text-indigo-400 mr-2"></i>Projets Enregistrés</span>
+                    </h3>
+                    <div id="projectsList" class="flex-grow overflow-y-auto space-y-4 pr-1"></div>
+                </div>
+            </div>
+        </section>
+    </main>
 
-   <!-- MODAL DE CONFIGURATION GITHUB -->
-   <div id="configModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-       <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl relative">
-           <button onclick="closeConfigModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-           <div class="flex items-center gap-3">
-               <div class="bg-slate-800 p-3 rounded-xl text-white"><i class="fa-brands fa-github text-2xl"></i></div>
-               <div>
-                   <h3 class="font-bold text-lg text-white">Configuration GitHub API</h3>
-                   <p class="text-xs text-slate-400">Connectez l'application à votre dépôt.</p>
-               </div>
-           </div>
-           <div class="space-y-4 text-xs">
-               <div>
-                   <label class="block font-semibold text-slate-300 mb-1">Nom d'utilisateur GitHub</label>
-                   <input type="text" id="ghUsername" placeholder="ex: mon-pseudo" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500">
-               </div>
-               <div>
-                   <label class="block font-semibold text-slate-300 mb-1">Nom du Dépôt (Repository)</label>
-                   <input type="text" id="ghRepo" placeholder="ex: socialsync-hub" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500">
-               </div>
-               <div>
-                   <label class="block font-semibold text-slate-300 mb-1">GitHub Personal Access Token (PAT)</label>
-                   <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500">
-                   <p class="text-[10px] text-slate-500 mt-1">Nécessite le droit <code class="text-indigo-400">repo</code> ou <code class="text-indigo-400">contents:write</code>.</p>
-               </div>
-           </div>
-           <div class="pt-3 border-t border-slate-800 flex justify-end gap-3">
-               <button onclick="closeConfigModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg text-xs font-semibold hover:bg-slate-700">Annuler</button>
-               <button onclick="saveGitHubConfig()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-500 shadow-lg shadow-indigo-900/40">Tester & Enregistrer</button>
-           </div>
-       </div>
-   </div>
+    <!-- MODAL DE CONFIGURATION GITHUB -->
+    <div id="configModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl relative">
+            <button onclick="closeConfigModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <div class="flex items-center gap-3">
+                <div class="bg-slate-800 p-3 rounded-xl text-white"><i class="fa-brands fa-github text-2xl"></i></div>
+                <div>
+                    <h3 class="font-bold text-lg text-white">Configuration GitHub API</h3>
+                    <p class="text-xs text-slate-400">Connectez l'application à votre dépôt.</p>
+                </div>
+            </div>
+            <div class="space-y-4 text-xs">
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Nom d'utilisateur GitHub</label>
+                    <input type="text" id="ghUsername" placeholder="ex: mon-pseudo" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Nom du Dépôt (Repository)</label>
+                    <input type="text" id="ghRepo" placeholder="ex: socialsync-hub" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">GitHub Personal Access Token (PAT)</label>
+                    <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500">
+                    <p class="text-[10px] text-slate-500 mt-1">Nécessite le droit <code class="text-indigo-400">repo</code> ou <code class="text-indigo-400">contents:write</code>.</p>
+                </div>
+            </div>
+            <div class="pt-3 border-t border-slate-800 flex justify-end gap-3">
+                <button onclick="closeConfigModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg text-xs font-semibold hover:bg-slate-700">Annuler</button>
+                <button onclick="saveGitHubConfig()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-500 shadow-lg shadow-indigo-900/40">Tester & Enregistrer</button>
+            </div>
+        </div>
+    </div>
 
-   <!-- MODAL IMPORT SEO -->
-   <div id="seoImportModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-       <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl relative">
-           <button onclick="closeSeoImportModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-           <div class="flex items-center gap-3">
-               <div class="bg-fuchsia-950/50 border border-fuchsia-800/50 p-3 rounded-xl text-fuchsia-400"><i class="fa-solid fa-wand-magic-sparkles text-xl"></i></div>
-               <div>
-                   <h3 class="font-bold text-lg text-white">Import Automatique Package SEO</h3>
-                   <p class="text-xs text-slate-400">Collez votre texte brut ou bloc de code SEO pour remplir automatiquement tous les champs.</p>
-               </div>
-           </div>
-           <div>
-               <textarea id="seoBulkInput" oninput="previewSeoPackage()" rows="8" placeholder="Collez ici votre texte SEO..." class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-xs text-slate-100 focus:outline-none focus:border-fuchsia-500 resize-y font-mono"></textarea>
-           </div>
-           <div id="seoImportStatus" class="text-xs min-h-[20px]"></div>
-           <div class="pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3">
-               <div class="flex gap-2">
-                   <button onclick="pasteSeoFromClipboard()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium transition flex items-center gap-1.5">
-                       <i class="fa-regular fa-clipboard"></i> Coller
-                   </button>
-                   <button onclick="clearSeoImportInput()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium transition flex items-center gap-1.5">
-                       <i class="fa-solid fa-eraser"></i> Vider
-                   </button>
-               </div>
-               <div class="flex gap-2">
-                   <button onclick="closeSeoImportModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg text-xs font-semibold hover:bg-slate-700">Annuler</button>
-                   <button onclick="applySeoPackage()" class="px-4 py-2 bg-gradient-to-r from-fuchsia-600 to-purple-600 hover:from-fuchsia-500 hover:to-purple-500 text-white rounded-lg text-xs font-semibold shadow-lg">Appliquer le Package</button>
-               </div>
-           </div>
-       </div>
-   </div>
+    <!-- MODAL IMPORT SEO -->
+    <div id="seoImportModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl relative">
+            <button onclick="closeSeoImportModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <div class="flex items-center gap-3">
+                <div class="bg-fuchsia-950/50 border border-fuchsia-800/50 p-3 rounded-xl text-fuchsia-400"><i class="fa-solid fa-wand-magic-sparkles text-xl"></i></div>
+                <div>
+                    <h3 class="font-bold text-lg text-white">Import Automatique Package SEO</h3>
+                    <p class="text-xs text-slate-400">Collez votre texte brut ou bloc de code SEO pour remplir automatiquement tous les champs.</p>
+                </div>
+            </div>
+            <div>
+                <textarea id="seoBulkInput" oninput="previewSeoPackage()" rows="8" placeholder="Collez ici votre texte SEO..." class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-xs text-slate-100 focus:outline-none focus:border-fuchsia-500 resize-y font-mono"></textarea>
+            </div>
+            <div id="seoImportStatus" class="text-xs min-h-[20px]"></div>
+            <div class="pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex gap-2">
+                    <button onclick="pasteSeoFromClipboard()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium transition flex items-center gap-1.5">
+                        <i class="fa-regular fa-clipboard"></i> Coller
+                    </button>
+                    <button onclick="clearSeoImportInput()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-eraser"></i> Vider
+                    </button>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="closeSeoImportModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg text-xs font-semibold hover:bg-slate-700">Annuler</button>
+                    <button onclick="applySeoPackage()" class="px-4 py-2 bg-gradient-to-r from-fuchsia-600 to-purple-600 hover:from-fuchsia-500 hover:to-purple-500 text-white rounded-lg text-xs font-semibold shadow-lg">Appliquer le Package</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-   <!-- MODAL VUE SEO (MISE A JOUR) -->
-   <div id="seoViewModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-       <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl relative overflow-hidden">
-           <button onclick="closeSeoView()" class="absolute top-4 right-4 text-slate-400 hover:text-white z-10 bg-slate-900/80 rounded-full p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
-           <div id="seoViewContent" class="overflow-y-auto p-6 flex-grow"></div>
-       </div>
-   </div>
+    <!-- MODAL VUE SEO -->
+    <div id="seoViewModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl relative overflow-hidden">
+            <button onclick="closeSeoView()" class="absolute top-4 right-4 text-slate-400 hover:text-white z-10 bg-slate-900/80 rounded-full p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <div id="seoViewContent" class="overflow-y-auto p-6 flex-grow"></div>
+        </div>
+    </div>
 
-   <div id="toast" class="fixed bottom-5 right-5 bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-2xl transition-all duration-300 opacity-0 translate-y-10 pointer-events-none flex items-center gap-3 z-50">
-       <i id="toastIcon" class="fa-solid fa-circle-check text-xl"></i>
-       <span id="toastMsg" class="text-sm font-semibold">Action réussie !</span>
-   </div>
+    <div id="toast" class="fixed bottom-5 right-5 bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-2xl transition-all duration-300 opacity-0 translate-y-10 pointer-events-none flex items-center gap-3 z-50">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-xl"></i>
+        <span id="toastMsg" class="text-sm font-semibold">Action réussie !</span>
+    </div>
 
-   <script>
-       const platformsConfig = [
-           { id: 'yt', name: 'YouTube Shorts', icon: 'fa-brands fa-youtube', color: 'from-red-600/20 to-red-900/10 border-red-500/40', badgeColor: 'bg-red-500/20 text-red-400 border-red-500/30', calendarColor: '#ef4444', dayOffset: 0, timeSlot: '16h00 - 17h00', startTime: '16:00', endTime: '17:00', kpi: 'CTR & Abonnés', strategy: 'Point de départ. Fin d\'après-midi.' },
-           { id: 'pin', name: 'Pinterest (Pin YT)', icon: 'fa-brands fa-pinterest', color: 'from-rose-600/20 to-rose-900/10 border-rose-500/40', badgeColor: 'bg-rose-500/20 text-rose-400 border-rose-500/30', calendarColor: '#e11d48', dayOffset: 0, timeSlot: '18h00 - 20h00', startTime: '18:00', endTime: '20:00', kpi: 'Saves & Trafic', strategy: 'Épingle avec lien direct YT.' },
-           { id: 'tiktok', name: 'TikTok', icon: 'fa-brands fa-tiktok', color: 'from-cyan-600/20 to-slate-900/10 border-cyan-500/40', badgeColor: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30', calendarColor: '#06b6d4', dayOffset: 0, timeSlot: '19h00 - 21h00', startTime: '19:00', endTime: '21:00', kpi: 'Rétention (>70%)', strategy: 'Accroche 2s, audio tendance.' },
-           { id: 'fb', name: 'Facebook Reels', icon: 'fa-brands fa-facebook', color: 'from-blue-600/20 to-blue-900/10 border-blue-500/40', badgeColor: 'bg-blue-500/20 text-blue-400 border-blue-500/30', calendarColor: '#3b82f6', dayOffset: 1, timeSlot: '11h30 - 13h30', startTime: '11:30', endTime: '13:30', kpi: 'Commentaires', strategy: 'Pause déjeuner. Poser question.' },
-           { id: 'ig', name: 'Instagram Reels', icon: 'fa-brands fa-instagram', color: 'from-fuchsia-600/20 to-fuchsia-900/10 border-fuchsia-500/40', badgeColor: 'bg-fuchsia-500/20 text-fuchsia-400 border-fuchsia-500/30', calendarColor: '#d946ef', dayOffset: 1, timeSlot: '18h30 - 20h30', startTime: '18:30', endTime: '20:30', kpi: 'Partages DM & Saves', strategy: 'Usage détente du soir.' }
-       ];
+    <script>
+        const platformsConfig = [
+            { id: 'yt', name: 'YouTube Shorts', icon: 'fa-brands fa-youtube', color: 'from-red-600/20 to-red-900/10 border-red-500/40', badgeColor: 'bg-red-500/20 text-red-400 border-red-500/30', calendarColor: '#ef4444', dayOffset: 0, timeSlot: '16h00 - 17h00', startTime: '16:00', endTime: '17:00', kpi: 'CTR & Abonnés', strategy: 'Point de départ. Fin d\'après-midi.' },
+            { id: 'pin', name: 'Pinterest (Pin YT)', icon: 'fa-brands fa-pinterest', color: 'from-rose-600/20 to-rose-900/10 border-rose-500/40', badgeColor: 'bg-rose-500/20 text-rose-400 border-rose-500/30', calendarColor: '#e11d48', dayOffset: 0, timeSlot: '18h00 - 20h00', startTime: '18:00', endTime: '20:00', kpi: 'Saves & Trafic', strategy: 'Épingle avec lien direct YT.' },
+            { id: 'tiktok', name: 'TikTok', icon: 'fa-brands fa-tiktok', color: 'from-cyan-600/20 to-slate-900/10 border-cyan-500/40', badgeColor: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30', calendarColor: '#06b6d4', dayOffset: 0, timeSlot: '19h00 - 21h00', startTime: '19:00', endTime: '21:00', kpi: 'Rétention (>70%)', strategy: 'Accroche 2s, audio tendance.' },
+            { id: 'fb', name: 'Facebook Reels', icon: 'fa-brands fa-facebook', color: 'from-blue-600/20 to-blue-900/10 border-blue-500/40', badgeColor: 'bg-blue-500/20 text-blue-400 border-blue-500/30', calendarColor: '#3b82f6', dayOffset: 1, timeSlot: '11h30 - 13h30', startTime: '11:30', endTime: '13:30', kpi: 'Commentaires', strategy: 'Pause déjeuner. Poser question.' },
+            { id: 'ig', name: 'Instagram Reels', icon: 'fa-brands fa-instagram', color: 'from-fuchsia-600/20 to-fuchsia-900/10 border-fuchsia-500/40', badgeColor: 'bg-fuchsia-500/20 text-fuchsia-400 border-fuchsia-500/30', calendarColor: '#d946ef', dayOffset: 1, timeSlot: '18h30 - 20h30', startTime: '18:30', endTime: '20:30', kpi: 'Partages DM & Saves', strategy: 'Usage détente du soir.' }
+        ];
 
-       const seoFieldsConfig = {
-           yt: { label: 'YouTube', fields: ['Script Start', 'Title', 'Description', 'Tags', 'Pinned Comment'] },
-           tiktok: { label: 'TikTok', fields: ['Script Start', 'Title/Caption', 'Hook', 'Hashtags'] },
-           ig: { label: 'Instagram', fields: ['Script Start', 'Caption', 'Hashtags', 'Call To Action'] },
-           fb: { label: 'Facebook', fields: ['Script Start', 'Post copy', 'Hashtags', 'Engagement Question'] },
-           pin: { label: 'Pinterest', fields: ['Script Start', 'Pin Title', 'Pin Description', 'Hashtags'] }
-       };
+        const seoFieldsConfig = {
+            yt: { label: 'YouTube', fields: ['Script Start', 'Title', 'Description', 'Tags', 'Pinned Comment'] },
+            tiktok: { label: 'TikTok', fields: ['Script Start', 'Title/Caption', 'Hook', 'Hashtags'] },
+            ig: { label: 'Instagram', fields: ['Script Start', 'Caption', 'Hashtags', 'Call To Action'] },
+            fb: { label: 'Facebook', fields: ['Script Start', 'Post copy', 'Hashtags', 'Engagement Question'] },
+            pin: { label: 'Pinterest', fields: ['Script Start', 'Pin Title', 'Pin Description', 'Hashtags'] }
+        };
 
-       let projects = [];
-       let currentSha = null;
-       let calendar = null;
-       let currentEditProjectId = null;
+        let projects = [];
+        let currentSha = null;
+        let calendar = null;
+        let currentEditProjectId = null;
 
-       const FILE_PATH = 'data/publications.json';
-       const dateInput = document.getElementById('launchDate');
-       dateInput.value = new Date().toISOString().split('T')[0];
+        const FILE_PATH = 'data/publications.json';
+        const dateInput = document.getElementById('launchDate');
+        if (dateInput) {
+            dateInput.value = new Date().toISOString().split('T')[0];
+        }
 
-       window.addEventListener('DOMContentLoaded', () => {
-           loadGitHubConfigInputs();
-           checkGitHubConnectionAndLoad();
-           renderGrid();
-           renderSeoFields();
-           if (dateInput) {
-               dateInput.addEventListener('change', renderGrid);
-           }
-       });
+        window.addEventListener('DOMContentLoaded', () => {
+            loadGitHubConfigInputs();
+            checkGitHubConnectionAndLoad();
+            renderGrid();
+            renderSeoFields();
+            if (dateInput) {
+                dateInput.addEventListener('change', renderGrid);
+            }
+        });
 
-       function renderSeoFields() {
-           const container = document.getElementById('seoFieldsContainer');
-           container.innerHTML = '';
-           for (const [platId, config] of Object.entries(seoFieldsConfig)) {
-               const platInfo = platformsConfig.find(p => p.id === platId);
-               let fieldsHtml = config.fields.map(f => `
-                   <div class="mb-2">
-                       <label class="block text-[10px] font-semibold text-slate-400 mb-0.5">${f}</label>
-                       <textarea id="seo_${platId}_${f.replace(/[\s\/]/g, '_')}" rows="2" placeholder="${f}..." class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-fuchsia-500 resize-y"></textarea>
-                   </div>
-               `).join('');
-               container.innerHTML += `
-                   <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
-                       <div class="flex items-center gap-2 mb-2">
-                           <i class="${platInfo.icon} text-sm text-slate-200"></i>
-                           <span class="font-bold text-xs text-white">${config.label}</span>
-                       </div>
-                       ${fieldsHtml}
-                   </div>
-               `;
-           }
-       }
+        function renderGrid() {
+            const grid = document.getElementById('scheduleGrid');
+            if (!grid) return;
+            grid.innerHTML = '';
+            const baseDateVal = dateInput ? dateInput.value : new Date().toISOString().split('T')[0];
+            const baseDate = baseDateVal ? new Date(baseDateVal) : new Date();
 
-       function toggleSeoSection() {
-           const section = document.getElementById('seoSection');
-           const btn = document.getElementById('seoToggleBtn');
-           if (section.classList.contains('hidden')) {
-               section.classList.remove('hidden');
-               btn.innerHTML = '<i class="fa-solid fa-chevron-up text-[10px]"></i> <span>Masquer</span>';
-           } else {
-               section.classList.add('hidden');
-               btn.innerHTML = '<i class="fa-solid fa-chevron-down text-[10px]"></i> <span>Afficher</span>';
-           }
-       }
+            platformsConfig.forEach(p => {
+                const d = new Date(baseDate);
+                d.setDate(d.getDate() + p.dayOffset);
+                const formattedDate = d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
 
-       function getSeoData() {
-           const seo = { playlist: document.getElementById('seoPlaylist').value.trim() };
-           for (const [platId, config] of Object.entries(seoFieldsConfig)) {
-               seo[platId] = {};
-               config.fields.forEach(f => {
-                   const el = document.getElementById(`seo_${platId}_${f.replace(/[\s\/]/g, '_')}`);
-                   seo[platId][f] = el ? el.value : '';
-               });
-           }
-           return seo;
-       }
+                grid.innerHTML += `
+                    <div class="bg-gradient-to-br ${p.color} border rounded-2xl p-5 shadow-lg flex flex-col justify-between space-y-4">
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2.5">
+                                    <i class="${p.icon} text-xl text-white"></i>
+                                    <span class="font-bold text-sm text-white">${p.name}</span>
+                                </div>
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border ${p.badgeColor}">
+                                    J+${p.dayOffset}
+                                </span>
+                            </div>
+                            <div class="text-xs text-slate-300 flex items-center justify-between border-t border-b border-slate-800/60 py-2">
+                                <span class="capitalize"><i class="fa-regular fa-calendar text-slate-400 mr-1"></i> ${formattedDate}</span>
+                                <span class="font-semibold text-white"><i class="fa-regular fa-clock text-slate-400 mr-1"></i> ${p.timeSlot}</span>
+                            </div>
+                            <p class="text-xs text-slate-400 leading-relaxed">${p.strategy}</p>
+                        </div>
+                        <div class="pt-2 border-t border-slate-800/40 flex items-center justify-between text-[11px] text-slate-400">
+                            <span>KPI Cible:</span>
+                            <span class="font-semibold text-indigo-300">${p.kpi}</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
 
-       function loadSeoData(seo) {
-           if (!seo) return;
-           document.getElementById('seoPlaylist').value = seo.playlist || '';
-           for (const [platId, config] of Object.entries(seoFieldsConfig)) {
-               config.fields.forEach(f => {
-                   const el = document.getElementById(`seo_${platId}_${f.replace(/[\s\/]/g, '_')}`);
-                   if (el && seo[platId]) el.value = seo[platId][f] || '';
-               });
-           }
-           const section = document.getElementById('seoSection');
-           if (seo.playlist || Object.values(seo).some(v => typeof v === 'object' && Object.values(v).some(t => t))) {
-               section.classList.remove('hidden');
-               document.getElementById('seoToggleBtn').innerHTML = '<i class="fa-solid fa-chevron-up text-[10px]"></i> <span>Masquer</span>';
-           }
-       }
+        function renderSeoFields() {
+            const container = document.getElementById('seoFieldsContainer');
+            if (!container) return;
+            container.innerHTML = '';
+            for (const [platId, config] of Object.entries(seoFieldsConfig)) {
+                const platInfo = platformsConfig.find(p => p.id === platId);
+                let fieldsHtml = config.fields.map(f => `
+                    <div class="mb-2">
+                        <label class="block text-[10px] font-semibold text-slate-400 mb-0.5">${f}</label>
+                        <textarea id="seo_${platId}_${f.replace(/[\s\/]/g, '_')}" rows="2" placeholder="${f}..." class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-fuchsia-500 resize-y"></textarea>
+                    </div>
+                `).join('');
+                container.innerHTML += `
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i class="${platInfo.icon} text-sm text-slate-200"></i>
+                            <span class="font-bold text-xs text-white">${config.label}</span>
+                        </div>
+                        ${fieldsHtml}
+                    </div>
+                `;
+            }
+        }
 
-       function clearSeoFields() {
-           document.getElementById('seoPlaylist').value = '';
-           for (const [platId, config] of Object.entries(seoFieldsConfig)) {
-               config.fields.forEach(f => {
-                   const el = document.getElementById(`seo_${platId}_${f.replace(/[\s\/]/g, '_')}`);
-                   if (el) el.value = '';
-               });
-           }
-       }
+        function toggleSeoSection() {
+            const section = document.getElementById('seoSection');
+            const btn = document.getElementById('seoToggleBtn');
+            if (!section || !btn) return;
+            if (section.classList.contains('hidden')) {
+                section.classList.remove('hidden');
+                btn.innerHTML = '<i class="fa-solid fa-chevron-up text-[10px]"></i> <span>Masquer</span>';
+            } else {
+                section.classList.add('hidden');
+                btn.innerHTML = '<i class="fa-solid fa-chevron-down text-[10px]"></i> <span>Afficher</span>';
+            }
+        }
 
-       // --- IMPORT PACKAGE SEO ---
-       const seoSectionAliases = { 'youtube': 'yt', 'tiktok': 'tiktok', 'instagram': 'ig', 'facebook': 'fb', 'pinterest': 'pin' };
-       const seoFieldAliases = {
-           'playlist': '__PLAYLIST__',
-           'script start': 'Script Start', 'script': 'Script Start',
-           'title': 'Title', 'description': 'Description',
-           'tags': 'Tags', 'tag': 'Tags',
-           'pinned comment': 'Pinned Comment', 'pinned': 'Pinned Comment',
-           'title/caption': 'Title/Caption', 'title / caption': 'Title/Caption',
-           'hook': 'Hook',
-           'hashtags': 'Hashtags', 'hashtag': 'Hashtags',
-           'caption': 'Caption',
-           'call to action': 'Call To Action', 'cta': 'Call To Action',
-           'post copy': 'Post copy', 'post': 'Post copy',
-           'engagement question': 'Engagement Question',
-           'pin title': 'Pin Title', 'pin description': 'Pin Description'
-       };
-       function normSeoLine(s) { return s.toLowerCase().replace(/[*_#`~>]/g, '').replace(/\s+/g, ' ').trim(); }
+        function getSeoData() {
+            const seo = { playlist: document.getElementById('seoPlaylist').value.trim() };
+            for (const [platId, config] of Object.entries(seoFieldsConfig)) {
+                seo[platId] = {};
+                config.fields.forEach(f => {
+                    const el = document.getElementById(`seo_${platId}_${f.replace(/[\s\/]/g, '_')}`);
+                    seo[platId][f] = el ? el.value : '';
+                });
+            }
+            return seo;
+        }
 
-       function parseSeoPackage(rawText) {
-           const parsed = { playlist: '', yt: {}, tiktok: {}, ig: {}, fb: {}, pin: {} };
-           let currentSection = null;
+        function loadSeoData(seo) {
+            if (!seo) return;
+            document.getElementById('seoPlaylist').value = seo.playlist || '';
+            for (const [platId, config] of Object.entries(seoFieldsConfig)) {
+                config.fields.forEach(f => {
+                    const el = document.getElementById(`seo_${platId}_${f.replace(/[\s\/]/g, '_')}`);
+                    if (el && seo[platId]) el.value = seo[platId][f] || '';
+                });
+            }
+            const section = document.getElementById('seoSection');
+            if (seo.playlist || Object.values(seo).some(v => typeof v === 'object' && Object.values(v).some(t => t))) {
+                if (section) section.classList.remove('hidden');
+                const btn = document.getElementById('seoToggleBtn');
+                if (btn) btn.innerHTML = '<i class="fa-solid fa-chevron-up text-[10px]"></i> <span>Masquer</span>';
+            }
+        }
 
-           const blockRegex = /```[\w+-]*[^\S\r\n]*\r?\n([\s\S]*?)```/g;
-           let match, lastIndex = 0, foundBlocks = false;
-           const entries = [];
-           while ((match = blockRegex.exec(rawText)) !== null) {
-               foundBlocks = true;
-               const lines = rawText.slice(lastIndex, match.index).split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-               let label = null;
-               for (const line of lines) {
-                   const n = normSeoLine(line);
-                   if (seoSectionAliases[n]) { currentSection = seoSectionAliases[n]; label = null; }
-                   else if (seoFieldAliases[n]) { label = seoFieldAliases[n]; }
-               }
-               entries.push({ section: currentSection, label, content: match[1].trim() });
-               lastIndex = blockRegex.lastIndex;
-           }
-           if (foundBlocks) {
-               entries.forEach(e => {
-                   if (!e.label) return;
-                   if (e.label === '__PLAYLIST__') parsed.playlist = e.content;
-                   else if (e.section) parsed[e.section][e.label] = e.content;
-               });
-               return parsed;
-           }
+        function clearSeoFields() {
+            document.getElementById('seoPlaylist').value = '';
+            for (const [platId, config] of Object.entries(seoFieldsConfig)) {
+                config.fields.forEach(f => {
+                    const el = document.getElementById(`seo_${platId}_${f.replace(/[\s\/]/g, '_')}`);
+                    if (el) el.value = '';
+                });
+            }
+        }
 
-           let pendingField = null;
-           const flushPending = () => {
-               if (!pendingField) return;
-               const content = pendingField.buffer.join('\n').trim();
-               if (pendingField.label === '__PLAYLIST__') parsed.playlist = content;
-               else if (pendingField.section) parsed[pendingField.section][pendingField.label] = content;
-               pendingField = null;
-           };
-           rawText.split(/\r?\n/).forEach(rawLine => {
-               const n = normSeoLine(rawLine);
-               if (seoSectionAliases[n]) { flushPending(); currentSection = seoSectionAliases[n]; }
-               else if (seoFieldAliases[n]) { flushPending(); pendingField = { section: currentSection, label: seoFieldAliases[n], buffer: [] }; }
-               else if (pendingField) pendingField.buffer.push(rawLine);
-           });
-           flushPending();
-           return parsed;
-       }
+        // --- IMPORT PACKAGE SEO ---
+        const seoSectionAliases = { 'youtube': 'yt', 'tiktok': 'tiktok', 'instagram': 'ig', 'facebook': 'fb', 'pinterest': 'pin' };
+        const seoFieldAliases = {
+            'playlist': '__PLAYLIST__',
+            'script start': 'Script Start', 'script': 'Script Start',
+            'title': 'Title', 'description': 'Description',
+            'tags': 'Tags', 'tag': 'Tags',
+            'pinned comment': 'Pinned Comment', 'pinned': 'Pinned Comment',
+            'title/caption': 'Title/Caption', 'title / caption': 'Title/Caption',
+            'hook': 'Hook',
+            'hashtags': 'Hashtags', 'hashtag': 'Hashtags',
+            'caption': 'Caption',
+            'call to action': 'Call To Action', 'cta': 'Call To Action',
+            'post copy': 'Post copy', 'post': 'Post copy',
+            'engagement question': 'Engagement Question',
+            'pin title': 'Pin Title', 'pin description': 'Pin Description'
+        };
+        function normSeoLine(s) { return s.toLowerCase().replace(/[*_#`~>]/g, '').replace(/\s+/g, ' ').trim(); }
 
-       function flashSeoField(el) {
-           el.classList.add('border-fuchsia-500', 'ring-1', 'ring-fuchsia-500/50');
-           setTimeout(() => el.classList.remove('border-fuchsia-500', 'ring-1', 'ring-fuchsia-500/50'), 1600);
-       }
+        function parseSeoPackage(rawText) {
+            const parsed = { playlist: '', yt: {}, tiktok: {}, ig: {}, fb: {}, pin: {} };
+            let currentSection = null;
 
-       function applyParsedSeo(parsed) {
-           let filled = 0;
-           if (parsed.playlist) {
-               const el = document.getElementById('seoPlaylist');
-               el.value = parsed.playlist; flashSeoField(el); filled++;
-           }
-           for (const [platId, config] of Object.entries(seoFieldsConfig)) {
-               const platData = parsed[platId] || {};
-               const keys = Object.keys(platData);
-               if (!keys.length) continue;
-               config.fields.forEach(f => {
-                   const el = document.getElementById(`seo_${platId}_${f.replace(/[\s\/]/g, '_')}`);
-                   if (!el) return;
-                   const target = f.toLowerCase();
-                   let key = keys.find(k => k.toLowerCase() === target);
-                   if (!key) {
-                       const base = target.split('/')[0].trim();
-                       key = keys.find(k => k.toLowerCase() === base || k.toLowerCase().includes(base));
-                   }
-                   if (key && platData[key]) { el.value = platData[key]; flashSeoField(el); filled++; }
-               });
-           }
-           return filled;
-       }
+            const blockRegex = /```[\w+-]*[^\S\r\n]*\r?\n([\s\S]*?)```/g;
+            let match, lastIndex = 0, foundBlocks = false;
+            const entries = [];
+            while ((match = blockRegex.exec(rawText)) !== null) {
+                foundBlocks = true;
+                const lines = rawText.slice(lastIndex, match.index).split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+                let label = null;
+                for (const line of lines) {
+                    const n = normSeoLine(line);
+                    if (seoSectionAliases[n]) { currentSection = seoSectionAliases[n]; label = null; }
+                    else if (seoFieldAliases[n]) { label = seoFieldAliases[n]; }
+                }
+                entries.push({ section: currentSection, label, content: match[1].trim() });
+                lastIndex = blockRegex.lastIndex;
+            }
+            if (foundBlocks) {
+                entries.forEach(e => {
+                    if (!e.label) return;
+                    if (e.label === '__PLAYLIST__') parsed.playlist = e.content;
+                    else if (e.section) parsed[e.section][e.label] = e.content;
+                });
+                return parsed;
+            }
 
-       function openSeoImportModal() {
-           document.getElementById('seoImportModal').classList.remove('hidden');
-           const section = document.getElementById('seoSection');
-           if (section.classList.contains('hidden')) toggleSeoSection();
-           setTimeout(() => document.getElementById('seoBulkInput').focus(), 60);
-       }
-       function closeSeoImportModal() { document.getElementById('seoImportModal').classList.add('hidden'); }
-       function clearSeoImportInput() {
-           document.getElementById('seoBulkInput').value = '';
-           document.getElementById('seoImportStatus').innerHTML = '';
-       }
-       async function pasteSeoFromClipboard() {
-           try {
-               const text = await navigator.clipboard.readText();
-               if (text) { document.getElementById('seoBulkInput').value = text; previewSeoPackage(); }
-               else showToast("Le presse-papiers est vide.");
-           } catch (e) { showToast("Collage bloqué par le navigateur — utilisez Ctrl+V."); }
-       }
-       function previewSeoPackage() {
-           const raw = document.getElementById('seoBulkInput').value;
-           const statusEl = document.getElementById('seoImportStatus');
-           if (!raw.trim()) { statusEl.innerHTML = ''; return; }
-           const parsed = parseSeoPackage(raw);
-           let count = (parsed.playlist ? 1 : 0);
-           const secs = parsed.playlist ? ['Playlist'] : [];
-           for (const [platId, cfg] of Object.entries(seoFieldsConfig)) {
-               const n = Object.keys(parsed[platId] || {}).length;
-               if (n) { count += n; secs.push(cfg.label); }
-           }
-           statusEl.innerHTML = count
-               ? `<span class="text-emerald-400 font-semibold"><i class="fa-solid fa-circle-check"></i> ${count} champ(s) détecté(s) :</span> <span class="text-slate-300">${secs.join(' · ')}</span>`
-               : `<span class="text-amber-400"><i class="fa-solid fa-triangle-exclamation"></i> Aucun champ reconnu pour le moment…</span>`;
-       }
-       function applySeoPackage() {
-           const raw = document.getElementById('seoBulkInput').value;
-           if (!raw.trim()) { showToast("Collez d'abord le package SEO."); return; }
-           const filled = applyParsedSeo(parseSeoPackage(raw));
-           if (filled === 0) { showToast("Format non reconnu — vérifiez le package collé."); return; }
-           closeSeoImportModal();
-           clearSeoImportInput();
-           showToast(`${filled} champ(s) SEO rempli(s) automatiquement !`);
-       }
+            let pendingField = null;
+            const flushPending = () => {
+                if (!pendingField) return;
+                const content = pendingField.buffer.join('\n').trim();
+                if (pendingField.label === '__PLAYLIST__') parsed.playlist = content;
+                else if (pendingField.section) parsed[pendingField.section][pendingField.label] = content;
+                pendingField = null;
+            };
+            rawText.split(/\r?\n/).forEach(rawLine => {
+                const n = normSeoLine(rawLine);
+                if (seoSectionAliases[n]) { flushPending(); currentSection = seoSectionAliases[n]; }
+                else if (seoFieldAliases[n]) { flushPending(); pendingField = { section: currentSection, label: seoFieldAliases[n], buffer: [] }; }
+                else if (pendingField) pendingField.buffer.push(rawLine);
+            });
+            flushPending();
+            return parsed;
+        }
 
-       // --- GITHUB API ET LOCALSTORAGE ---
-       function getGitHubConfig() {
-           return { username: localStorage.getItem('gh_user') || '', repo: localStorage.getItem('gh_repo') || '', token: localStorage.getItem('gh_token') || '' };
-       }
-       function loadGitHubConfigInputs() {
-           const conf = getGitHubConfig();
-           document.getElementById('ghUsername').value = conf.username;
-           document.getElementById('ghRepo').value = conf.repo;
-           document.getElementById('ghToken').value = conf.token;
-       }
-       
-       function checkGitHubConnectionAndLoad() {
-           const conf = getGitHubConfig();
-           if (!conf.username || !conf.repo || !conf.token) {
-               document.getElementById('configModal').classList.remove('hidden');
-           } else {
-               syncFromGitHub(true); // Load silent at startup
-           }
-       }
-       
-       function closeConfigModal() {
-           document.getElementById('configModal').classList.add('hidden');
-       }
-       
-       async function saveGitHubConfig() {
-           const u = document.getElementById('ghUsername').value.trim();
-           const r = document.getElementById('ghRepo').value.trim();
-           const t = document.getElementById('ghToken').value.trim();
-           
-           if (!u || !r || !t) return showToast("Veuillez remplir tous les champs GitHub", false);
-           
-           localStorage.setItem('gh_user', u);
-           localStorage.setItem('gh_repo', r);
-           localStorage.setItem('gh_token', t);
-           
-           closeConfigModal();
-           showToast("Configuration GitHub enregistrée !");
-           syncFromGitHub();
-       }
+        function flashSeoField(el) {
+            el.classList.add('border-fuchsia-500', 'ring-1', 'ring-fuchsia-500/50');
+            setTimeout(() => el.classList.remove('border-fuchsia-500', 'ring-1', 'ring-fuchsia-500/50'), 1600);
+        }
 
-       // --- FONCTIONS DE BASE ---
-       function switchTab(tabId) {
-           document.getElementById('tabPlanner').classList.add('hidden');
-           document.getElementById('tabCalendar').classList.add('hidden');
-           document.getElementById('tabBtnPlanner').classList.remove('bg-indigo-600', 'text-white', 'shadow-md');
-           document.getElementById('tabBtnPlanner').classList.add('text-slate-400');
-           document.getElementById('tabBtnCalendar').classList.remove('bg-indigo-600', 'text-white', 'shadow-md');
-           document.getElementById('tabBtnCalendar').classList.add('text-slate-400');
-           
-           if (tabId === 'planner') {
-               document.getElementById('tabPlanner').classList.remove('hidden');
-               document.getElementById('tabBtnPlanner').classList.remove('text-slate-400');
-               document.getElementById('tabBtnPlanner').classList.add('bg-indigo-600', 'text-white', 'shadow-md');
-           } else {
-               document.getElementById('tabCalendar').classList.remove('hidden');
-               document.getElementById('tabBtnCalendar').classList.remove('text-slate-400');
-               document.getElementById('tabBtnCalendar').classList.add('bg-indigo-600', 'text-white', 'shadow-md');
-               initCalendar();
-               updateProjectsList();
-           }
-       }
-       
-       function showToast(msg, success = true) {
-           const toast = document.getElementById('toast');
-           document.getElementById('toastMsg').innerText = msg;
-           toast.classList.remove('opacity-0', 'translate-y-10');
-           setTimeout(() => { toast.classList.add('opacity-0', 'translate-y-10'); }, 3000);
-       }
-       
-       function renderGrid() {
-           const launchDate = new Date(document.getElementById('launchDate').value);
-           const grid = document.getElementById('scheduleGrid');
-           grid.innerHTML = '';
-           
-           platformsConfig.forEach(plat => {
-               const pDate = new Date(launchDate);
-               pDate.setDate(launchDate.getDate() + plat.dayOffset);
-               const displayDate = pDate.toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: 'short' });
-               
-               grid.innerHTML += `
-                   <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col justify-between hover:border-slate-700 transition">
-                       <div class="flex items-center gap-3 mb-4">
-                           <div class="bg-gradient-to-br ${plat.color} p-2.5 rounded-lg border">
-                               <i class="${plat.icon} text-lg text-white"></i>
-                           </div>
-                           <div>
-                               <h4 class="font-bold text-white text-sm">${plat.name}</h4>
-                               <p class="text-xs text-slate-400 mt-0.5">${plat.kpi}</p>
-                           </div>
-                       </div>
-                       <div class="space-y-2">
-                           <div class="flex items-center justify-between text-xs bg-slate-950 p-2 rounded-lg border border-slate-800">
-                               <span class="text-slate-400"><i class="fa-regular fa-calendar mr-1"></i> Date</span>
-                               <span class="font-semibold text-white uppercase">${displayDate}</span>
-                           </div>
-                           <div class="flex items-center justify-between text-xs bg-slate-950 p-2 rounded-lg border border-slate-800">
-                               <span class="text-slate-400"><i class="fa-regular fa-clock mr-1"></i> Heure</span>
-                               <span class="font-semibold text-white">${plat.timeSlot}</span>
-                           </div>
-                       </div>
-                   </div>
-               `;
-           });
-       }
-       
-       // --- CALENDRIER AVEC CASES À COCHER ---
-       function getCalendarEvents() {
-           let events = [];
-           projects.forEach(project => {
-               const baseDate = new Date(project.launchDate);
-               
-               platformsConfig.forEach(plat => {
-                   const pDate = new Date(baseDate);
-                   pDate.setDate(baseDate.getDate() + plat.dayOffset);
-                   
-                   const isPublished = project.publishedStatus && project.publishedStatus[plat.id] ? true : false;
-                   
-                   events.push({
-                       id: project.id + '_' + plat.id,
-                       title: `${plat.name}: ${project.title}`,
-                       start: pDate.toISOString().split('T')[0] + 'T' + plat.startTime + ':00',
-                       end: pDate.toISOString().split('T')[0] + 'T' + plat.endTime + ':00',
-                       backgroundColor: plat.calendarColor,
-                       extendedProps: {
-                           projectId: project.id,
-                           platformId: plat.id,
-                           timeSlot: plat.timeSlot,
-                           isPublished: isPublished
-                       }
-                   });
-               });
-           });
-           return events;
-       }
+        function applyParsedSeo(parsed) {
+            let filled = 0;
+            if (parsed.playlist) {
+                const el = document.getElementById('seoPlaylist');
+                if (el) { el.value = parsed.playlist; flashSeoField(el); filled++; }
+            }
+            for (const [platId, config] of Object.entries(seoFieldsConfig)) {
+                const platData = parsed[platId] || {};
+                const keys = Object.keys(platData);
+                if (!keys.length) continue;
+                config.fields.forEach(f => {
+                    const el = document.getElementById(`seo_${platId}_${f.replace(/[\s\/]/g, '_')}`);
+                    if (!el) return;
+                    const target = f.toLowerCase();
+                    let key = keys.find(k => k.toLowerCase() === target);
+                    if (!key) {
+                        const base = target.split('/')[0].trim();
+                        key = keys.find(k => k.toLowerCase() === base || k.toLowerCase().includes(base));
+                    }
+                    if (key && platData[key]) { el.value = platData[key]; flashSeoField(el); filled++; }
+                });
+            }
+            return filled;
+        }
 
-       function initCalendar() {
-           const calendarEl = document.getElementById('calendar');
-           if (!calendarEl || calendar) {
-               if (calendar) calendar.render();
-               return;
-           }
-           
-           calendar = new FullCalendar.Calendar(calendarEl, {
-               initialView: 'dayGridMonth',
-               headerToolbar: {
-                   left: 'prev,next today',
-                   center: 'title',
-                   right: 'dayGridMonth,timeGridWeek'
-               },
-               locale: 'fr',
-               height: 650,
-               events: getCalendarEvents(),
-               
-               // Événement déclenché lors du clic sur l'événement complet (hors checkbox)
-               eventClick: function(info) {
-                   const props = info.event.extendedProps;
-                   openSeoView(props.projectId, props.platformId);
-               },
-               
-               eventContent: function(arg) {
-                   const props = arg.event.extendedProps;
-                   const isChecked = props.isPublished ? 'checked' : '';
-                   const viewType = arg.view.type;
-                   
-                   let html = `
-                       <div class="fc-event-main-frame flex items-start gap-1.5 p-1 w-full h-full cursor-pointer pointer-events-auto shadow-sm" style="background-color: ${arg.event.backgroundColor}; color: #fff; border-radius: 3px;">
-                           <input type="checkbox" ${isChecked} 
-                                  onclick="togglePublishStatus(event, '${props.projectId}', '${props.platformId}')" 
-                                  class="mt-[2px] w-3 h-3 rounded border-white/40 bg-black/20 text-white cursor-pointer pointer-events-auto shrink-0 accent-emerald-500">
-                           <div class="flex flex-col overflow-hidden leading-tight">
-                               <span class="truncate font-semibold text-[10px]">${arg.event.title}</span>
-                               ${viewType === 'timeGridWeek' ? `<span class="text-[9px] opacity-80 truncate">${props.timeSlot}</span>` : ''}
-                           </div>
-                       </div>
-                   `;
-                   return { html: html };
-               }
-           });
-           calendar.render();
-       }
+        function openSeoImportModal() {
+            document.getElementById('seoImportModal').classList.remove('hidden');
+            const section = document.getElementById('seoSection');
+            if (section && section.classList.contains('hidden')) toggleSeoSection();
+            setTimeout(() => document.getElementById('seoBulkInput').focus(), 60);
+        }
+        function closeSeoImportModal() { document.getElementById('seoImportModal').classList.add('hidden'); }
+        function clearSeoImportInput() {
+            document.getElementById('seoBulkInput').value = '';
+            document.getElementById('seoImportStatus').innerHTML = '';
+        }
+        async function pasteSeoFromClipboard() {
+            try {
+                const text = await navigator.clipboard.readText();
+                if (text) { document.getElementById('seoBulkInput').value = text; previewSeoPackage(); }
+                else showToast("Le presse-papiers est vide.");
+            } catch (e) { showToast("Collage bloqué par le navigateur — utilisez Ctrl+V."); }
+        }
+        function previewSeoPackage() {
+            const raw = document.getElementById('seoBulkInput').value;
+            const statusEl = document.getElementById('seoImportStatus');
+            if (!raw.trim()) { statusEl.innerHTML = ''; return; }
+            const parsed = parseSeoPackage(raw);
+            let count = (parsed.playlist ? 1 : 0);
+            const secs = parsed.playlist ? ['Playlist'] : [];
+            for (const [platId, cfg] of Object.entries(seoFieldsConfig)) {
+                const n = Object.keys(parsed[platId] || {}).length;
+                if (n) { count += n; secs.push(cfg.label); }
+            }
+            statusEl.innerHTML = count
+                ? `<span class="text-emerald-400 font-semibold"><i class="fa-solid fa-circle-check"></i> ${count} champ(s) détecté(s) :</span> <span class="text-slate-300">${secs.join(' · ')}</span>`
+                : `<span class="text-amber-400"><i class="fa-solid fa-triangle-exclamation"></i> Aucun champ reconnu pour le moment…</span>`;
+        }
+        function applySeoPackage() {
+            const raw = document.getElementById('seoBulkInput').value;
+            if (!raw.trim()) { showToast("Collez d'abord le package SEO."); return; }
+            const filled = applyParsedSeo(parseSeoPackage(raw));
+            if (filled === 0) { showToast("Format non reconnu — vérifiez le package collé."); return; }
+            closeSeoImportModal();
+            clearSeoImportInput();
+            showToast(`${filled} champ(s) SEO rempli(s) automatiquement !`);
+        }
 
-       // Gestion du clic sur la checkbox
-       window.togglePublishStatus = function(e, projectId, platformId) {
-           e.stopPropagation(); // Indispensable : empêche de déclencher "eventClick" du calendrier
-           const isChecked = e.target.checked;
-           
-           const projIndex = projects.findIndex(p => p.id === projectId);
-           if (projIndex > -1) {
-               if (!projects[projIndex].publishedStatus) {
-                   projects[projIndex].publishedStatus = {};
-               }
-               projects[projIndex].publishedStatus[platformId] = isChecked;
-               saveToGitHub(true);
-           }
-       };
+        // --- GITHUB API ET LOCALSTORAGE ---
+        function getGitHubConfig() {
+            return {
+                username: localStorage.getItem('gh_user') || '',
+                repo: localStorage.getItem('gh_repo') || '',
+                token: localStorage.getItem('gh_token') || ''
+            };
+        }
+        function loadGitHubConfigInputs() {
+            const conf = getGitHubConfig();
+            document.getElementById('ghUsername').value = conf.username;
+            document.getElementById('ghRepo').value = conf.repo;
+            document.getElementById('ghToken').value = conf.token;
+        }
 
-       // --- GESTION DE LA VUE SEO DEPUIS LE CALENDRIER ---
-       
-       // Petite fonction utilitaire pour échapper le HTML basique
-       function escapeHtml(unsafe) {
-           return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-       }
+        async function checkGitHubConnectionAndLoad() {
+            const conf = getGitHubConfig();
+            if (conf.username && conf.repo && conf.token) {
+                try {
+                    const url = `https://api.github.com/repos/${conf.username}/${conf.repo}/contents/${FILE_PATH}`;
+                    const res = await fetch(url, {
+                        headers: {
+                            'Authorization': `Bearer ${conf.token}`,
+                            'Accept': 'application/vnd.github.v3+json'
+                        }
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        currentSha = data.sha;
+                        const contentDecoded = decodeURIComponent(escape(atob(data.content.replace(/\s/g, ''))));
+                        projects = JSON.parse(contentDecoded);
+                        localStorage.setItem('socialsync_projects', JSON.stringify(projects));
+                    } else if (res.status === 404) {
+                        projects = JSON.parse(localStorage.getItem('socialsync_projects') || '[]');
+                    }
+                } catch (e) {
+                    console.error("Erreur synchro GitHub:", e);
+                    projects = JSON.parse(localStorage.getItem('socialsync_projects') || '[]');
+                }
+            } else {
+                projects = JSON.parse(localStorage.getItem('socialsync_projects') || '[]');
+            }
+            renderProjectsList();
+            if (calendar) {
+                calendar.removeAllEvents();
+                calendar.addEventSource(generateCalendarEvents());
+            }
+        }
 
-       function openSeoView(projectId, platformId) {
-           const project = projects.find(p => p.id === projectId);
-           if (!project) return;
-           
-           const platInfo = platformsConfig.find(p => p.id === platformId);
-           const seoData = (project.seo && project.seo[platformId]) ? project.seo[platformId] : {};
-           const platConfig = seoFieldsConfig[platformId];
-           
-           let html = `
-               <div class="flex items-center gap-4 mb-6 border-b border-slate-800 pb-5">
-                   <div class="bg-gradient-to-br ${platInfo.color} p-3.5 rounded-xl border flex-shrink-0">
-                       <i class="${platInfo.icon} text-2xl text-white"></i>
-                   </div>
-                   <div>
-                       <h3 class="font-bold text-xl text-white leading-tight">${platInfo.name}</h3>
-                       <p class="text-sm text-slate-400 mt-1"><i class="fa-solid fa-film text-indigo-400 mr-1"></i> ${project.title}</p>
-                   </div>
-               </div>
-               <div class="space-y-4">
-           `;
-           
-           if (project.seo && project.seo.playlist) {
-               html += `
-                   <div class="group relative">
-                       <div class="flex justify-between items-end mb-1">
-                           <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Playlist</span>
-                           <button onclick="copyFieldContent(this)" class="text-[10px] bg-slate-800 px-2 py-1 rounded-md text-indigo-400 hover:text-indigo-300 opacity-0 group-hover:opacity-100 transition shadow"><i class="fa-regular fa-copy"></i> Copier</button>
-                       </div>
-                       <div class="seo-content-box bg-slate-950 border border-slate-800 rounded-xl p-3.5 text-sm text-slate-200">${escapeHtml(project.seo.playlist)}</div>
-                   </div>
-               `;
-           }
+        function saveGitHubConfig() {
+            const u = document.getElementById('ghUsername').value.trim();
+            const r = document.getElementById('ghRepo').value.trim();
+            const t = document.getElementById('ghToken').value.trim();
+            localStorage.setItem('gh_user', u);
+            localStorage.setItem('gh_repo', r);
+            localStorage.setItem('gh_token', t);
+            closeConfigModal();
+            checkGitHubConnectionAndLoad();
+            showToast("Configuration GitHub enregistrée !");
+        }
 
-           platConfig.fields.forEach(f => {
-               const rawValue = seoData[f];
-               const displayValue = rawValue ? escapeHtml(rawValue) : '<span class="text-slate-600 italic">Non renseigné</span>';
-               
-               html += `
-                   <div class="group relative">
-                       <div class="flex justify-between items-end mb-1">
-                           <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider">${f}</span>
-                           ${rawValue ? `<button onclick="copyFieldContent(this)" class="text-[10px] bg-slate-800 px-2 py-1 rounded-md text-indigo-400 hover:text-indigo-300 opacity-0 group-hover:opacity-100 transition shadow"><i class="fa-regular fa-copy"></i> Copier</button>` : ''}
-                       </div>
-                       <div class="seo-content-box bg-slate-950 border border-slate-800 rounded-xl p-3.5 text-sm text-slate-200 whitespace-pre-wrap font-sans">${displayValue}</div>
-                   </div>
-               `;
-           });
-           
-           html += `</div>`;
-           
-           document.getElementById('seoViewContent').innerHTML = html;
-           document.getElementById('seoViewModal').classList.remove('hidden');
-       }
-       
-       function closeSeoView() {
-           document.getElementById('seoViewModal').classList.add('hidden');
-       }
+        function syncFromGitHub() {
+            checkGitHubConnectionAndLoad();
+            showToast("Synchronisation GitHub lancée !");
+        }
 
-       // Fonction pour copier le contenu d'une box spécifique (appelée depuis la modale SEO)
-       window.copyFieldContent = function(btn) {
-           const contentBox = btn.closest('.group').querySelector('.seo-content-box');
-           const textToCopy = contentBox.innerText; // Prend le texte brut, sans les balises HTML éventuelles
-           
-           navigator.clipboard.writeText(textToCopy).then(() => {
-               const originalHtml = btn.innerHTML;
-               btn.innerHTML = '<i class="fa-solid fa-check"></i> Copié !';
-               btn.classList.replace('text-indigo-400', 'text-emerald-400');
-               
-               setTimeout(() => {
-                   btn.innerHTML = originalHtml;
-                   btn.classList.replace('text-emerald-400', 'text-indigo-400');
-               }, 2000);
-           }).catch(() => showToast("Erreur lors de la copie.", false));
-       };
+        function openConfigModal() {
+            loadGitHubConfigInputs();
+            document.getElementById('configModal').classList.remove('hidden');
+        }
 
-       function updateProjectsList() {
-           const list = document.getElementById('projectsList');
-           document.getElementById('savedCountBadge').innerText = projects.length;
-           list.innerHTML = '';
-           
-           const sortedProjects = [...projects].sort((a, b) => new Date(b.launchDate) - new Date(a.launchDate));
-           
-           sortedProjects.forEach(proj => {
-               const d = new Date(proj.launchDate).toLocaleDateString('fr-FR');
-               list.innerHTML += `
-                   <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-3">
-                       <div class="flex justify-between items-start gap-2">
-                           <div>
-                               <h4 class="font-bold text-white text-sm">${proj.title}</h4>
-                               <p class="text-[10px] text-slate-400"><i class="fa-regular fa-clock"></i> J0 (YT): ${d}</p>
-                           </div>
-                           <button onclick="editProject('${proj.id}')" class="text-xs bg-slate-800 hover:bg-slate-700 px-2 py-1 rounded text-slate-300 transition"><i class="fa-solid fa-pen"></i></button>
-                       </div>
-                   </div>
-               `;
-           });
-       }
-       
-       function editProject(id) {
-           const p = projects.find(x => x.id === id);
-           if (!p) return;
-           currentEditProjectId = id;
-           document.getElementById('videoTitle').value = p.title;
-           document.getElementById('launchDate').value = p.launchDate;
-           loadSeoData(p.seo);
-           switchTab('planner');
-           renderGrid();
-           document.getElementById('saveBtn').innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Mettre à jour le projet';
-       }
+        function closeConfigModal() {
+            document.getElementById('configModal').classList.add('hidden');
+        }
 
-       async function syncFromGitHub(silent = false) {
-           const conf = getGitHubConfig();
-           if (!conf.token) return;
-           
-           try {
-               const res = await fetch(`https://api.github.com/repos/${conf.username}/${conf.repo}/contents/${FILE_PATH}`, {
-                   headers: { 'Authorization': `token ${conf.token}`, 'Accept': 'application/vnd.github.v3+json' }
-               });
-               
-               if (res.ok) {
-                   const data = await res.json();
-                   currentSha = data.sha;
-                   const content = JSON.parse(decodeURIComponent(escape(atob(data.content))));
-                   projects = content.projects || [];
-                   if (!silent) showToast("Synchronisation GitHub réussie !");
-                   
-                   if (calendar) {
-                       calendar.removeAllEvents();
-                       calendar.addEventSource(getCalendarEvents());
-                   }
-                   updateProjectsList();
-               } else if (res.status === 404) {
-                   projects = [];
-                   if (!silent) showToast("Fichier non trouvé. Un nouveau sera créé.");
-               }
-           } catch (e) {
-               console.error(e);
-               if (!silent) showToast("Erreur de synchronisation GitHub", false);
-           }
-       }
+        async function saveProjectsData() {
+            localStorage.setItem('socialsync_projects', JSON.stringify(projects));
+            const conf = getGitHubConfig();
+            if (!conf.username || !conf.repo || !conf.token) return;
 
-       async function saveToGitHub(silent = false) {
-           const conf = getGitHubConfig();
-           if (!conf.token) {
-               checkGitHubConnectionAndLoad();
-               return;
-           }
-           
-           const dataToSave = {
-               lastUpdated: new Date().toISOString(),
-               projects: projects
-           };
-           
-           const contentEncoded = btoa(unescape(encodeURIComponent(JSON.stringify(dataToSave, null, 2))));
-           
-           const body = {
-               message: currentSha ? "Mise à jour des planifications (via SocialSync Hub)" : "Création fichier de planification",
-               content: contentEncoded
-           };
-           
-           if (currentSha) body.sha = currentSha;
-           
-           try {
-               const res = await fetch(`https://api.github.com/repos/${conf.username}/${conf.repo}/contents/${FILE_PATH}`, {
-                   method: 'PUT',
-                   headers: { 'Authorization': `token ${conf.token}`, 'Content-Type': 'application/json' },
-                   body: JSON.stringify(body)
-               });
-               
-               if (res.ok) {
-                   const data = await res.json();
-                   currentSha = data.content.sha;
-                   if (!silent) showToast("Sauvegardé dans GitHub !");
-               }
-           } catch (e) {
-               if (!silent) showToast("Erreur lors de la sauvegarde", false);
-           }
-       }
+            try {
+                const url = `https://api.github.com/repos/${conf.username}/${conf.repo}/contents/${FILE_PATH}`;
+                const contentEncoded = btoa(unescape(encodeURIComponent(JSON.stringify(projects, null, 2))));
+                const body = {
+                    message: `Mise à jour des projets via SocialSync Hub`,
+                    content: contentEncoded
+                };
+                if (currentSha) body.sha = currentSha;
 
-       function saveProject() {
-           const title = document.getElementById('videoTitle').value.trim();
-           const lDate = document.getElementById('launchDate').value;
-           
-           if (!title || !lDate) {
-               showToast("Titre et Date YT sont obligatoires", false);
-               return;
-           }
-           
-           const projectData = {
-               id: currentEditProjectId || Date.now().toString(),
-               title: title,
-               launchDate: lDate,
-               seo: getSeoData(),
-               publishedStatus: currentEditProjectId ? (projects.find(p => p.id === currentEditProjectId)?.publishedStatus || {}) : {}
-           };
-           
-           if (currentEditProjectId) {
-               const idx = projects.findIndex(p => p.id === currentEditProjectId);
-               if (idx > -1) projects[idx] = projectData;
-           } else {
-               projects.push(projectData);
-           }
-           
-           currentEditProjectId = null;
-           document.getElementById('videoTitle').value = '';
-           clearSeoFields();
-           document.getElementById('saveBtn').innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Sauvegarder dans GitHub';
-           
-           saveToGitHub();
-       }
+                const res = await fetch(url, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${conf.token}`,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/vnd.github.v3+json'
+                    },
+                    body: JSON.stringify(body)
+                });
 
-   </script>
+                if (res.ok) {
+                    const resData = await res.json();
+                    if (resData.content && resData.content.sha) {
+                        currentSha = resData.content.sha;
+                    }
+                }
+            } catch (err) {
+                console.error("Erreur d'écriture sur GitHub API:", err);
+            }
+        }
+
+        async function saveProject() {
+            const titleInput = document.getElementById('videoTitle');
+            const dateInputEl = document.getElementById('launchDate');
+            const title = titleInput.value.trim();
+            const launchDate = dateInputEl.value;
+
+            if (!title || !launchDate) {
+                showToast("Veuillez remplir le titre et la date de lancement.");
+                return;
+            }
+
+            const seo = getSeoData();
+
+            if (currentEditProjectId) {
+                const index = projects.findIndex(p => p.id === currentEditProjectId);
+                if (index !== -1) {
+                    projects[index] = { ...projects[index], title, launchDate, seo, updatedAt: new Date().toISOString() };
+                }
+                currentEditProjectId = null;
+                document.getElementById('saveBtn').innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Sauvegarder dans GitHub';
+            } else {
+                const newProj = {
+                    id: Date.now().toString(),
+                    title,
+                    launchDate,
+                    seo,
+                    createdAt: new Date().toISOString()
+                };
+                projects.unshift(newProj);
+            }
+
+            await saveProjectsData();
+            renderProjectsList();
+            if (calendar) {
+                calendar.removeAllEvents();
+                calendar.addEventSource(generateCalendarEvents());
+            }
+
+            titleInput.value = '';
+            clearSeoFields();
+            showToast("Projet sauvegardé avec succès !");
+        }
+
+        function editProject(id) {
+            const proj = projects.find(p => p.id === id);
+            if (!proj) return;
+            currentEditProjectId = id;
+            document.getElementById('videoTitle').value = proj.title || '';
+            document.getElementById('launchDate').value = proj.launchDate || '';
+            if (proj.seo) loadSeoData(proj.seo);
+            document.getElementById('saveBtn').innerHTML = '<i class="fa-solid fa-pen-to-square"></i> Valider';
+            switchTab('planner');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        async function deleteProject(id) {
+            if (!confirm("Voulez-vous vraiment supprimer ce projet ?")) return;
+            projects = projects.filter(p => p.id !== id);
+            renderProjectsList();
+            if (calendar) {
+                calendar.removeAllEvents();
+                calendar.addEventSource(generateCalendarEvents());
+            }
+            await saveProjectsData();
+            showToast("Projet supprimé avec succès !");
+        }
+
+        function renderProjectsList() {
+            const badge = document.getElementById('savedCountBadge');
+            if (badge) badge.textContent = projects.length;
+
+            const listEl = document.getElementById('projectsList');
+            if (!listEl) return;
+
+            if (projects.length === 0) {
+                listEl.innerHTML = '<div class="text-center text-slate-500 py-10 text-xs">Aucun projet enregistré.</div>';
+                return;
+            }
+
+            listEl.innerHTML = projects.map(p => {
+                const formattedDate = p.launchDate ? p.launchDate.split('-').reverse().join('/') : '';
+                return `
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-3.5 flex items-center justify-between gap-3 group hover:border-slate-700 transition">
+                        <div class="min-w-0 flex-1">
+                            <h4 class="font-bold text-sm text-white truncate mb-1">${escapeHtml(p.title || 'Sans titre')}</h4>
+                            <div class="text-[11px] text-slate-400 flex items-center gap-1.5">
+                                <i class="fa-regular fa-clock text-indigo-400"></i>
+                                <span>J0 (YT): ${formattedDate}</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            ${p.seo ? `<button onclick="openSeoView('${p.id}')" class="p-2.5 bg-slate-800 hover:bg-fuchsia-950/50 hover:text-fuchsia-400 text-slate-400 rounded-lg transition text-xs" title="Voir Package SEO"><i class="fa-solid fa-wand-magic-sparkles"></i></button>` : ''}
+                            <button onclick="editProject('${p.id}')" class="p-2.5 bg-slate-800 hover:bg-indigo-600/30 hover:text-indigo-400 text-slate-300 rounded-lg transition text-xs" title="Modifier le projet">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button onclick="deleteProject('${p.id}')" class="p-2.5 bg-slate-800 hover:bg-rose-950/50 hover:text-rose-400 text-slate-400 rounded-lg transition text-xs" title="Supprimer le projet">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openSeoView(id) {
+            const proj = projects.find(p => p.id === id);
+            if (!proj || !proj.seo) return;
+            const modal = document.getElementById('seoViewModal');
+            const content = document.getElementById('seoViewContent');
+            
+            let html = `<h3 class="text-lg font-bold text-white mb-4"><i class="fa-solid fa-wand-magic-sparkles text-fuchsia-400 mr-2"></i>Package SEO - ${escapeHtml(proj.title)}</h3>`;
+            if (proj.seo.playlist) {
+                html += `<div class="mb-4 bg-slate-950 p-3 rounded-xl border border-slate-800"><span class="text-xs font-semibold text-slate-400 block mb-1">Playlist</span><p class="text-sm text-white font-medium">${escapeHtml(proj.seo.playlist)}</p></div>`;
+            }
+            for (const [platId, cfg] of Object.entries(seoFieldsConfig)) {
+                const platData = proj.seo[platId];
+                if (!platData) continue;
+                const hasValues = Object.values(platData).some(v => v);
+                if (!hasValues) continue;
+                const platInfo = platformsConfig.find(p => p.id === platId);
+                html += `<div class="mb-4 bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3"><div class="flex items-center gap-2 font-bold text-sm text-white"><i class="${platInfo.icon}"></i> ${cfg.label}</div>`;
+                for (const [field, val] of Object.entries(platData)) {
+                    if (!val) continue;
+                    html += `<div><span class="text-[11px] font-semibold text-slate-400 block mb-1">${field}</span><pre class="bg-slate-900 border border-slate-800 p-2.5 rounded-lg text-xs text-slate-200 whitespace-pre-wrap font-sans">${escapeHtml(val)}</pre></div>`;
+                }
+                html += `</div>`;
+            }
+            content.innerHTML = html;
+            modal.classList.remove('hidden');
+        }
+
+        function closeSeoView() {
+            document.getElementById('seoViewModal').classList.add('hidden');
+        }
+
+        function switchTab(tab) {
+            const plannerSec = document.getElementById('tabPlanner');
+            const calendarSec = document.getElementById('tabCalendar');
+            const btnPlanner = document.getElementById('tabBtnPlanner');
+            const btnCalendar = document.getElementById('tabBtnCalendar');
+
+            if (tab === 'planner') {
+                plannerSec.classList.remove('hidden');
+                calendarSec.classList.add('hidden');
+                btnPlanner.className = "px-3.5 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-2 bg-indigo-600 text-white shadow-md";
+                btnCalendar.className = "px-3.5 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-2 text-slate-400 hover:text-white";
+            } else {
+                plannerSec.classList.add('hidden');
+                calendarSec.classList.remove('hidden');
+                btnCalendar.className = "px-3.5 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-2 bg-indigo-600 text-white shadow-md";
+                btnPlanner.className = "px-3.5 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-2 text-slate-400 hover:text-white";
+                
+                if (!calendar) {
+                    initCalendar();
+                } else {
+                    calendar.render();
+                }
+                renderProjectsList();
+            }
+        }
+
+        function generateCalendarEvents() {
+            const events = [];
+            projects.forEach(p => {
+                if (!p.launchDate) return;
+                const baseDate = new Date(p.launchDate);
+                platformsConfig.forEach(plat => {
+                    const d = new Date(baseDate);
+                    d.setDate(d.getDate() + plat.dayOffset);
+                    const dateStr = d.toISOString().split('T')[0];
+                    events.push({
+                        id: `${p.id}_${plat.id}`,
+                        title: `[${plat.name}] ${p.title}`,
+                        start: `${dateStr}T${plat.startTime}:00`,
+                        end: `${dateStr}T${plat.endTime}:00`,
+                        backgroundColor: plat.calendarColor,
+                        borderColor: plat.calendarColor,
+                        extendedProps: { projectId: p.id, platform: plat }
+                    });
+                });
+            });
+            return events;
+        }
+
+        function initCalendar() {
+            const calendarEl = document.getElementById('calendar');
+            if (!calendarEl) return;
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek'
+                },
+                locale: 'fr',
+                buttonText: {
+                    today: "Aujourd'hui",
+                    month: 'Mois',
+                    week: 'Semaine'
+                },
+                events: generateCalendarEvents(),
+                eventClick: function(info) {
+                    const projId = info.event.extendedProps.projectId;
+                    if (projId) editProject(projId);
+                }
+            });
+            calendar.render();
+        }
+
+        function copyPlanningText() {
+            const title = document.getElementById('videoTitle').value || 'Vidéo Sans Titre';
+            const dateVal = document.getElementById('launchDate').value;
+            if (!dateVal) { showToast("Veuillez sélectionner une date."); return; }
+            const baseDate = new Date(dateVal);
+            let text = `📅 PLANNING DE PUBLICATION - ${title.toUpperCase()}\n\n`;
+            platformsConfig.forEach(p => {
+                const d = new Date(baseDate);
+                d.setDate(d.getDate() + p.dayOffset);
+                const dateStr = d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+                text += `• ${p.name} (J+${p.dayOffset}) : ${dateStr} @ ${p.timeSlot}\n`;
+            });
+            navigator.clipboard.writeText(text);
+            showToast("Planning copié dans le presse-papiers !");
+        }
+
+        function exportICalendar() {
+            const title = document.getElementById('videoTitle').value || 'Vidéo';
+            const dateVal = document.getElementById('launchDate').value;
+            if (!dateVal) { showToast("Veuillez sélectionner une date."); return; }
+            const baseDate = new Date(dateVal);
+            let ics = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//SocialSync Hub//FR\n";
+            platformsConfig.forEach(p => {
+                const d = new Date(baseDate);
+                d.setDate(d.getDate() + p.dayOffset);
+                const yyyy = d.getFullYear();
+                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                const dd = String(d.getDate()).padStart(2, '0');
+                const startStr = `${yyyy}${mm}${dd}T${p.startTime.replace(':', '')}00`;
+                const endStr = `${yyyy}${mm}${dd}T${p.endTime.replace(':', '')}00`;
+                ics += "BEGIN:VEVENT\n";
+                ics += `SUMMARY:[${p.name}] ${title}\n`;
+                ics += `DTSTART:${startStr}\n`;
+                ics += `DTEND:${endStr}\n`;
+                ics += `DESCRIPTION:Stratégie: ${p.strategy} | KPI: ${p.kpi}\n`;
+                ics += "END:VEVENT\n";
+            });
+            ics += "END:VCALENDAR";
+            const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `planning_${title.replace(/\s+/g, '_')}.ics`;
+            link.click();
+            showToast("Fichier .ICS téléchargé !");
+        }
+
+        function exportAllData() {
+            const blob = new Blob([JSON.stringify(projects, null, 2)], { type: 'application/json' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `socialsync_backup_${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            showToast("Sauvegarde JSON exportée !");
+        }
+
+        function importAllData(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                try {
+                    const imported = JSON.parse(event.target.result);
+                    if (Array.isArray(imported)) {
+                        projects = imported;
+                        await saveProjectsData();
+                        renderProjectsList();
+                        if (calendar) {
+                            calendar.removeAllEvents();
+                            calendar.addEventSource(generateCalendarEvents());
+                        }
+                        showToast("Projets importés avec succès !");
+                    } else {
+                        showToast("Format JSON invalide.");
+                    }
+                } catch (err) {
+                    showToast("Erreur lors de la lecture du fichier JSON.");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function showToast(msg, iconClass = 'fa-solid fa-circle-check') {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMsg');
+            const toastIcon = document.getElementById('toastIcon');
+            if (!toast || !toastMsg) return;
+            toastMsg.textContent = msg;
+            if (toastIcon) toastIcon.className = iconClass + ' text-xl';
+            toast.classList.remove('opacity-0', 'translate-y-10', 'pointer-events-none');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-10', 'pointer-events-none');
+            }, 3000);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+    </script>
 </body>
 </html>
