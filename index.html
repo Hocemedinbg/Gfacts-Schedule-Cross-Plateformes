@@ -16,7 +16,8 @@
        .fc { --fc-border-color: #334155; --fc-page-bg-color: transparent; }
        .fc-theme-standard td, .fc-theme-standard th { border-color: #334155 !important; }
        .fc-col-header-cell-cushion, .fc-daygrid-day-number { color: #cbd5e1 !important; text-decoration: none !important; }
-       .fc-event { border: none !important; cursor: pointer; }
+       .fc-event { border: none !important; cursor: pointer; background: transparent; } /* Fond transparent pour laisser notre custom HTML gérer la couleur */
+       .fc-daygrid-event-harness { margin-bottom: 4px !important; }
    </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col">
@@ -267,7 +268,6 @@
            }
        });
 
-       // --- SEO FIELDS RENDERING ---
        function renderSeoFields() {
            const container = document.getElementById('seoFieldsContainer');
            container.innerHTML = '';
@@ -479,7 +479,7 @@
            showToast(`${filled} champ(s) SEO rempli(s) automatiquement !`);
        }
 
-       // --- GITHUB API ---
+       // --- GITHUB API ET LOCALSTORAGE ---
        function getGitHubConfig() {
            return { username: localStorage.getItem('gh_user') || '', repo: localStorage.getItem('gh_repo') || '', token: localStorage.getItem('gh_token') || '' };
        }
@@ -489,451 +489,331 @@
            document.getElementById('ghRepo').value = conf.repo;
            document.getElementById('ghToken').value = conf.token;
        }
-       function saveGitHubConfig() {
-           const user = document.getElementById('ghUsername').value.trim();
-           const repo = document.getElementById('ghRepo').value.trim();
-           const token = document.getElementById('ghToken').value.trim();
-           if (!user || !repo || !token) { alert("Veuillez remplir tous les champs."); return; }
-           localStorage.setItem('gh_user', user);
-           localStorage.setItem('gh_repo', repo);
-           localStorage.setItem('gh_token', token);
-           closeConfigModal();
-           checkGitHubConnectionAndLoad();
-       }
-       async function checkGitHubConnectionAndLoad() {
-           const conf = getGitHubConfig();
-           if (!conf.username || !conf.repo || !conf.token) return;
-           try {
-               await syncFromGitHub();
-           } catch (err) {
-               console.error("Erreur Connexion GitHub:", err);
-           }
-       }
-       async function syncFromGitHub() {
-           const conf = getGitHubConfig();
-           if (!conf.username || !conf.repo || !conf.token) return;
-           const url = `https://api.github.com/repos/${conf.username}/${conf.repo}/contents/${FILE_PATH}`;
-           try {
-               const res = await fetch(url, { headers: { 'Authorization': `token ${conf.token}`, 'Accept': 'application/vnd.github.v3+json' } });
-               if (res.status === 404) { projects = []; currentSha = null; }
-               else if (res.ok) {
-                   const data = await res.json();
-                   currentSha = data.sha;
-                   const content = decodeURIComponent(escape(atob(data.content)));
-                   projects = JSON.parse(content);
-               }
-               updateSavedCount();
-               renderProjectsList();
-               if (calendar) updateCalendarEvents();
-           } catch (err) {
-               console.error("Erreur sync GitHub:", err);
-           }
-       }
-
-       function openConfigModal() { document.getElementById('configModal').classList.remove('hidden'); }
-       function closeConfigModal() { document.getElementById('configModal').classList.add('hidden'); }
-
-       function switchTab(tab) {
-           const tabPlanner = document.getElementById('tabPlanner');
-           const tabCalendar = document.getElementById('tabCalendar');
-           const btnPlanner = document.getElementById('tabBtnPlanner');
-           const btnCalendar = document.getElementById('tabBtnCalendar');
-
-           if (tab === 'planner') {
-               tabPlanner.classList.remove('hidden');
-               tabCalendar.classList.add('hidden');
-               btnPlanner.className = "px-3.5 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-2 bg-indigo-600 text-white shadow-md";
-               btnCalendar.className = "px-3.5 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-2 text-slate-400 hover:text-white";
-           } else {
-               tabPlanner.classList.add('hidden');
-               tabCalendar.classList.remove('hidden');
-               btnCalendar.className = "px-3.5 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-2 bg-indigo-600 text-white shadow-md";
-               btnPlanner.className = "px-3.5 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-2 text-slate-400 hover:text-white";
-               if (!calendar) {
-                   initCalendar();
-               } else {
-                   calendar.render();
-                   updateCalendarEvents();
-               }
-           }
-       }
-
-       function renderGrid() {
-           const grid = document.getElementById('scheduleGrid');
-           if (!grid) return;
-           const launchDateVal = document.getElementById('launchDate').value;
-           const baseDate = launchDateVal ? new Date(launchDateVal) : new Date();
-
-           grid.innerHTML = platformsConfig.map(p => {
-               const pDate = new Date(baseDate);
-               pDate.setDate(pDate.getDate() + p.dayOffset);
-               const dateStr = pDate.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
-
-               return `
-                   <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col justify-between hover:border-slate-700 transition">
-                       <div>
-                           <div class="flex items-center justify-between mb-3">
-                               <div class="flex items-center gap-2.5">
-                                   <div class="w-8 h-8 rounded-xl bg-gradient-to-br ${p.color} flex items-center justify-center border border-slate-700">
-                                       <i class="${p.icon} text-slate-200 text-sm"></i>
-                                   </div>
-                                   <div>
-                                       <h4 class="font-bold text-sm text-white">${p.name}</h4>
-                                       <span class="text-[10px] text-slate-400">J+${p.dayOffset} — ${dateStr}</span>
-                                   </div>
-                               </div>
-                               <span class="px-2.5 py-1 rounded-full text-[10px] font-bold border ${p.badgeColor}">${p.timeSlot}</span>
-                           </div>
-                           <div class="space-y-2 text-xs text-slate-300 mt-4 bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
-                               <p><strong class="text-slate-400">KPI principal :</strong> ${p.kpi}</p>
-                               <p><strong class="text-slate-400">Stratégie :</strong> ${p.strategy}</p>
-                           </div>
-                       </div>
-                   </div>
-               `;
-           }).join('');
-       }
-
-       async function saveProject() {
-           const title = document.getElementById('videoTitle').value.trim();
-           const launchDate = document.getElementById('launchDate').value;
-
-           if (!title) {
-               showToast("Veuillez saisir un titre pour la vidéo.", "fa-solid fa-triangle-exclamation");
-               return;
-           }
-
+       
+       function checkGitHubConnectionAndLoad() {
            const conf = getGitHubConfig();
            if (!conf.username || !conf.repo || !conf.token) {
-               showToast("Veuillez configurer vos identifiants GitHub.", "fa-solid fa-triangle-exclamation");
-               openConfigModal();
-               return;
-           }
-
-           const seoData = getSeoData();
-           const projectData = {
-               id: currentEditProjectId || Date.now().toString(),
-               title: title,
-               launchDate: launchDate,
-               seo: seoData,
-               updatedAt: new Date().toISOString()
-           };
-
-           if (currentEditProjectId) {
-               const idx = projects.findIndex(p => p.id === currentEditProjectId);
-               if (idx !== -1) projects[idx] = projectData;
-               currentEditProjectId = null;
+               document.getElementById('configModal').classList.remove('hidden');
            } else {
-               projects.push(projectData);
-           }
-
-           const saveBtn = document.getElementById('saveBtn');
-           saveBtn.disabled = true;
-           saveBtn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> Sauvegarde...';
-
-           try {
-               const contentEncoded = btoa(unescape(encodeURIComponent(JSON.stringify(projects, null, 2))));
-               const url = `https://api.github.com/repos/${conf.username}/${conf.repo}/contents/${FILE_PATH}`;
-               
-               const bodyData = {
-                   message: `Mise à jour projet: ${title}`,
-                   content: contentEncoded
-               };
-               if (currentSha) bodyData.sha = currentSha;
-
-               const res = await fetch(url, {
-                   method: 'PUT',
-                   headers: {
-                       'Authorization': `token ${conf.token}`,
-                       'Content-Type': 'application/json',
-                       'Accept': 'application/vnd.github.v3+json'
-                   },
-                   body: JSON.stringify(bodyData)
-               });
-
-               if (res.ok) {
-                   const resData = await res.json();
-                   currentSha = resData.content.sha;
-                   showToast("Projet sauvegardé dans GitHub avec succès !");
-                   document.getElementById('videoTitle').value = '';
-                   clearSeoFields();
-                   updateSavedCount();
-                   renderProjectsList();
-                   if (calendar) updateCalendarEvents();
-               } else {
-                   const errData = await res.json();
-                   showToast("Erreur lors de la sauvegarde: " + (errData.message || res.status), "fa-solid fa-triangle-exclamation");
-               }
-           } catch (err) {
-               showToast("Erreur de connexion à GitHub", "fa-solid fa-triangle-exclamation");
-           } finally {
-               saveBtn.disabled = false;
-               saveBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Sauvegarder dans GitHub';
+               syncFromGitHub(true); // Load silent at startup
            }
        }
-
-       function updateSavedCount() {
-           const badge = document.getElementById('savedCountBadge');
-           if (badge) badge.innerText = projects.length;
+       
+       function closeConfigModal() {
+           document.getElementById('configModal').classList.add('hidden');
        }
-
-       function renderProjectsList() {
-           const container = document.getElementById('projectsList');
-           if (!container) return;
-           if (projects.length === 0) {
-               container.innerHTML = '<p class="text-xs text-slate-500 text-center py-8">Aucun projet enregistré pour le moment.</p>';
-               return;
-           }
-
-           container.innerHTML = projects.map(p => `
-               <div class="bg-slate-950 border border-slate-800 rounded-xl p-3.5 space-y-2">
-                   <div class="flex items-center justify-between">
-                       <h4 class="font-bold text-xs text-white truncate max-w-[180px]">${p.title}</h4>
-                       <span class="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">${p.launchDate}</span>
-                   </div>
-                   <div class="flex items-center gap-1.5 pt-1 border-t border-slate-800/80">
-                       <button onclick="openSeoView('${p.id}')" class="px-2 py-1 bg-fuchsia-950/60 hover:bg-fuchsia-900/60 text-fuchsia-300 border border-fuchsia-800/50 rounded text-[10px] font-medium transition flex items-center gap-1">
-                           <i class="fa-solid fa-eye text-[9px]"></i> SEO
-                       </button>
-                       <button onclick="editProject('${p.id}')" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[10px] font-medium transition flex items-center gap-1">
-                           <i class="fa-solid fa-pen text-[9px]"></i> Modifier
-                       </button>
-                       <button onclick="deleteProject('${p.id}')" class="px-2 py-1 bg-red-950/60 hover:bg-red-900/60 text-red-300 border border-red-800/50 rounded text-[10px] font-medium transition flex items-center gap-1 ml-auto">
-                           <i class="fa-solid fa-trash text-[9px]"></i> Supprimer
-                       </button>
-                   </div>
-               </div>
-           `).join('');
-       }
-
-       function openSeoView(id) {
-           const p = projects.find(item => item.id === id);
-           if (!p || !p.seo) return;
-           const content = document.getElementById('seoViewContent');
+       
+       async function saveGitHubConfig() {
+           const u = document.getElementById('ghUsername').value.trim();
+           const r = document.getElementById('ghRepo').value.trim();
+           const t = document.getElementById('ghToken').value.trim();
            
-           let html = `<h3 class="font-bold text-lg text-white mb-1">${p.title}</h3>`;
-           html += `<p class="text-xs text-slate-400 mb-4">Date de lancement YT : <span class="text-indigo-400">${p.launchDate}</span></p>`;
-           if (p.seo.playlist) {
-               html += `<div class="mb-4 bg-slate-950 p-3 rounded-xl border border-slate-800"><span class="text-xs font-bold text-fuchsia-400">Playlist :</span> <span class="text-xs text-slate-200">${p.seo.playlist}</span></div>`;
+           if (!u || !r || !t) return showToast("Veuillez remplir tous les champs GitHub", false);
+           
+           localStorage.setItem('gh_user', u);
+           localStorage.setItem('gh_repo', r);
+           localStorage.setItem('gh_token', t);
+           
+           closeConfigModal();
+           showToast("Configuration GitHub enregistrée !");
+           syncFromGitHub();
+       }
+
+       // --- FONCTIONS DE BASE ---
+       function switchTab(tabId) {
+           document.getElementById('tabPlanner').classList.add('hidden');
+           document.getElementById('tabCalendar').classList.add('hidden');
+           document.getElementById('tabBtnPlanner').classList.remove('bg-indigo-600', 'text-white', 'shadow-md');
+           document.getElementById('tabBtnPlanner').classList.add('text-slate-400');
+           document.getElementById('tabBtnCalendar').classList.remove('bg-indigo-600', 'text-white', 'shadow-md');
+           document.getElementById('tabBtnCalendar').classList.add('text-slate-400');
+           
+           if (tabId === 'planner') {
+               document.getElementById('tabPlanner').classList.remove('hidden');
+               document.getElementById('tabBtnPlanner').classList.remove('text-slate-400');
+               document.getElementById('tabBtnPlanner').classList.add('bg-indigo-600', 'text-white', 'shadow-md');
+           } else {
+               document.getElementById('tabCalendar').classList.remove('hidden');
+               document.getElementById('tabBtnCalendar').classList.remove('text-slate-400');
+               document.getElementById('tabBtnCalendar').classList.add('bg-indigo-600', 'text-white', 'shadow-md');
+               initCalendar();
+               updateProjectsList();
            }
-           html += `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
-           for (const [platId, config] of Object.entries(seoFieldsConfig)) {
-               const platInfo = platformsConfig.find(item => item.id === platId);
-               const platData = p.seo[platId] || {};
-               let fieldsHtml = config.fields.map(f => `
-                   <div class="mb-2 bg-slate-900 p-2.5 rounded-lg border border-slate-800">
-                       <span class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">${f}</span>
-                       <p class="text-xs text-slate-200 whitespace-pre-wrap font-mono bg-slate-950 p-2 rounded border border-slate-800">${platData[f] || '<i class="text-slate-600">Non renseigné</i>'}</p>
-                   </div>
-               `).join('');
-               html += `
-                   <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
-                       <div class="flex items-center gap-2 mb-2">
-                           <i class="${platInfo.icon} text-sm text-slate-200"></i>
-                           <span class="font-bold text-xs text-white">${config.label}</span>
+       }
+       
+       function showToast(msg, success = true) {
+           const toast = document.getElementById('toast');
+           document.getElementById('toastMsg').innerText = msg;
+           toast.classList.remove('opacity-0', 'translate-y-10');
+           setTimeout(() => { toast.classList.add('opacity-0', 'translate-y-10'); }, 3000);
+       }
+       
+       function renderGrid() {
+           const launchDate = new Date(document.getElementById('launchDate').value);
+           const grid = document.getElementById('scheduleGrid');
+           grid.innerHTML = '';
+           
+           platformsConfig.forEach(plat => {
+               const pDate = new Date(launchDate);
+               pDate.setDate(launchDate.getDate() + plat.dayOffset);
+               const displayDate = pDate.toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: 'short' });
+               
+               grid.innerHTML += `
+                   <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col justify-between hover:border-slate-700 transition">
+                       <div class="flex items-center gap-3 mb-4">
+                           <div class="bg-gradient-to-br ${plat.color} p-2.5 rounded-lg border">
+                               <i class="${plat.icon} text-lg text-white"></i>
+                           </div>
+                           <div>
+                               <h4 class="font-bold text-white text-sm">${plat.name}</h4>
+                               <p class="text-xs text-slate-400 mt-0.5">${plat.kpi}</p>
+                           </div>
                        </div>
-                       ${fieldsHtml}
+                       <div class="space-y-2">
+                           <div class="flex items-center justify-between text-xs bg-slate-950 p-2 rounded-lg border border-slate-800">
+                               <span class="text-slate-400"><i class="fa-regular fa-calendar mr-1"></i> Date</span>
+                               <span class="font-semibold text-white uppercase">${displayDate}</span>
+                           </div>
+                           <div class="flex items-center justify-between text-xs bg-slate-950 p-2 rounded-lg border border-slate-800">
+                               <span class="text-slate-400"><i class="fa-regular fa-clock mr-1"></i> Heure</span>
+                               <span class="font-semibold text-white">${plat.timeSlot}</span>
+                           </div>
+                       </div>
                    </div>
                `;
-           }
-           html += `</div>`;
-           content.innerHTML = html;
-           document.getElementById('seoViewModal').classList.remove('hidden');
-       }
-
-       function closeSeoView() { document.getElementById('seoViewModal').classList.add('hidden'); }
-
-       function editProject(id) {
-           const p = projects.find(item => item.id === id);
-           if (!p) return;
-           currentEditProjectId = p.id;
-           document.getElementById('videoTitle').value = p.title;
-           document.getElementById('launchDate').value = p.launchDate;
-           loadSeoData(p.seo);
-           renderGrid();
-           switchTab('planner');
-           showToast("Projet chargé dans le planificateur.");
-       }
-
-       async function deleteProject(id) {
-           if (!confirm("Voulez-vous vraiment supprimer ce projet ?")) return;
-           projects = projects.filter(p => p.id !== id);
-           const conf = getGitHubConfig();
-           if (conf.username && conf.repo && conf.token) {
-               try {
-                   const contentEncoded = btoa(unescape(encodeURIComponent(JSON.stringify(projects, null, 2))));
-                   const url = `https://api.github.com/repos/${conf.username}/${conf.repo}/contents/${FILE_PATH}`;
-                   const res = await fetch(url, {
-                       method: 'PUT',
-                       headers: {
-                           'Authorization': `token ${conf.token}`,
-                           'Content-Type': 'application/json',
-                           'Accept': 'application/vnd.github.v3+json'
-                       },
-                       body: JSON.stringify({
-                           message: `Suppression projet ${id}`,
-                           content: contentEncoded,
-                           sha: currentSha
-                       })
-                   });
-                   if (res.ok) {
-                       const resData = await res.json();
-                       currentSha = resData.content.sha;
-                   }
-               } catch (e) {}
-           }
-           updateSavedCount();
-           renderProjectsList();
-           if (calendar) updateCalendarEvents();
-           showToast("Projet supprimé.");
-       }
-
-       function initCalendar() {
-           const calendarEl = document.getElementById('calendar');
-           calendar = new FullCalendar.Calendar(calendarEl, {
-               initialView: 'dayGridMonth',
-               locale: 'fr',
-               headerToolbar: {
-                   left: 'prev,next today',
-                   center: 'title',
-                   right: 'dayGridMonth,timeGridWeek'
-               },
-               buttonText: { today: "Aujourd'hui", month: 'Mois', week: 'Semaine' },
-               events: getCalendarEvents(),
-               eventClick: function(info) {
-                   if (info.event.extendedProps.projectId) {
-                       openSeoView(info.event.extendedProps.projectId);
-                   }
-               }
            });
-           calendar.render();
        }
-
-       function updateCalendarEvents() {
-           if (!calendar) return;
-           calendar.removeAllEvents();
-           calendar.addEventSource(getCalendarEvents());
-       }
-
+       
+       // --- CALENDRIER AVEC CASES À COCHER ---
        function getCalendarEvents() {
-           const events = [];
-           projects.forEach(p => {
-               if (!p.launchDate) return;
-               const baseDate = new Date(p.launchDate);
+           let events = [];
+           projects.forEach(project => {
+               const baseDate = new Date(project.launchDate);
+               
                platformsConfig.forEach(plat => {
                    const pDate = new Date(baseDate);
-                   pDate.setDate(pDate.getDate() + plat.dayOffset);
-                   const dateStr = pDate.toISOString().split('T')[0];
+                   pDate.setDate(baseDate.getDate() + plat.dayOffset);
+                   
+                   // Récupération du statut publié pour cette plateforme (false par défaut)
+                   const isPublished = project.publishedStatus && project.publishedStatus[plat.id] ? true : false;
+                   
                    events.push({
-                       title: `${plat.name}: ${p.title}`,
-                       start: `${dateStr}T${plat.startTime}:00`,
-                       end: `${dateStr}T${plat.endTime}:00`,
+                       id: project.id + '_' + plat.id,
+                       title: `${plat.name}: ${project.title}`,
+                       start: pDate.toISOString().split('T')[0] + 'T' + plat.startTime + ':00',
+                       end: pDate.toISOString().split('T')[0] + 'T' + plat.endTime + ':00',
                        backgroundColor: plat.calendarColor,
-                       borderColor: plat.calendarColor,
-                       extendedProps: { projectId: p.id }
+                       extendedProps: {
+                           projectId: project.id,
+                           platformId: plat.id,
+                           timeSlot: plat.timeSlot,
+                           isPublished: isPublished
+                       }
                    });
                });
            });
            return events;
        }
 
-       function copyPlanningText() {
-           const title = document.getElementById('videoTitle').value.trim() || 'Sans titre';
-           const launchDateVal = document.getElementById('launchDate').value;
-           const baseDate = launchDateVal ? new Date(launchDateVal) : new Date();
-
-           let text = `📅 PLANNING DE PUBLICATION - ${title}\n\n`;
-           platformsConfig.forEach(p => {
-               const pDate = new Date(baseDate);
-               pDate.setDate(pDate.getDate() + p.dayOffset);
-               const dateStr = pDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-               text += `• ${p.name} (J+${p.dayOffset}) : ${dateStr} à ${p.timeSlot}\n`;
-           });
-
-           navigator.clipboard.writeText(text).then(() => {
-               showToast("Planning copié dans le presse-papiers !");
-           }).catch(() => {
-               showToast("Erreur lors de la copie.", "fa-solid fa-triangle-exclamation");
-           });
-       }
-
-       function exportICalendar() {
-           const title = document.getElementById('videoTitle').value.trim() || 'Projet SocialSync';
-           const launchDateVal = document.getElementById('launchDate').value;
-           if (!launchDateVal) return;
-           const baseDate = new Date(launchDateVal);
-
-           let ics = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//SocialSync Hub//FR\n";
-           platformsConfig.forEach(p => {
-               const pDate = new Date(baseDate);
-               pDate.setDate(pDate.getDate() + p.dayOffset);
-               const dStr = pDate.toISOString().replace(/[-:]/g, '').split('T')[0];
-               const startStr = `${dStr}T${p.startTime.replace(':', '')}00`;
-               const endStr = `${dStr}T${p.endTime.replace(':', '')}00`;
-
-               ics += "BEGIN:VEVENT\n";
-               ics += `SUMMARY:${p.name} - ${title}\n`;
-               ics += `DTSTART:${startStr}\n`;
-               ics += `DTEND:${endStr}\n`;
-               ics += `DESCRIPTION:Publication sur ${p.name}. KPI: ${p.kpi}\n`;
-               ics += "END:VEVENT\n";
-           });
-           ics += "END:VCALENDAR";
-
-           const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8;' });
-           const link = document.createElement('a');
-           link.href = URL.createObjectURL(blob);
-           link.download = `planning_${title.replace(/\s+/g, '_')}.ics`;
-           link.click();
-           showToast("Fichier .ICS exporté !");
-       }
-
-       function exportAllData() {
-           const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(projects, null, 2));
-           const dlAnchor = document.createElement('a');
-           dlAnchor.setAttribute("href", dataStr);
-           dlAnchor.setAttribute("download", `socialsync_export_${new Date().toISOString().split('T')[0]}.json`);
-           document.body.appendChild(dlAnchor);
-           dlAnchor.click();
-           dlAnchor.remove();
-           showToast("Données exportées au format JSON.");
-       }
-
-       function importAllData(event) {
-           const file = event.target.files[0];
-           if (!file) return;
-           const reader = new FileReader();
-           reader.onload = function(e) {
-               try {
-                   const imported = JSON.parse(e.target.result);
-                   if (Array.isArray(imported)) {
-                       projects = imported;
-                       updateSavedCount();
-                       renderProjectsList();
-                       if (calendar) updateCalendarEvents();
-                       showToast("Données importées avec succès.");
-                   } else {
-                       showToast("Format JSON invalide.", "fa-solid fa-triangle-exclamation");
-                   }
-               } catch (err) {
-                   showToast("Erreur de lecture du fichier JSON.", "fa-solid fa-triangle-exclamation");
+       function initCalendar() {
+           const calendarEl = document.getElementById('calendar');
+           if (!calendarEl || calendar) {
+               if (calendar) calendar.render();
+               return;
+           }
+           
+           calendar = new FullCalendar.Calendar(calendarEl, {
+               initialView: 'dayGridMonth',
+               headerToolbar: {
+                   left: 'prev,next today',
+                   center: 'title',
+                   right: 'dayGridMonth,timeGridWeek'
+               },
+               locale: 'fr',
+               height: 650,
+               events: getCalendarEvents(),
+               
+               // C'est ici que l'on injecte la case à cocher personnalisée !
+               eventContent: function(arg) {
+                   const props = arg.event.extendedProps;
+                   const isChecked = props.isPublished ? 'checked' : '';
+                   const viewType = arg.view.type;
+                   
+                   // On créé notre propre structure HTML pour l'événement
+                   let html = `
+                       <div class="fc-event-main-frame flex items-start gap-1.5 p-1 w-full h-full cursor-pointer pointer-events-auto shadow-sm" style="background-color: ${arg.event.backgroundColor}; color: #fff; border-radius: 3px;">
+                           <input type="checkbox" ${isChecked} 
+                                  onclick="togglePublishStatus(event, '${props.projectId}', '${props.platformId}')" 
+                                  class="mt-[2px] w-3 h-3 rounded border-white/40 bg-black/20 text-white cursor-pointer pointer-events-auto shrink-0 accent-emerald-500">
+                           <div class="flex flex-col overflow-hidden leading-tight">
+                               <span class="truncate font-semibold text-[10px]">${arg.event.title}</span>
+                               ${viewType === 'timeGridWeek' ? `<span class="text-[9px] opacity-80 truncate">${props.timeSlot}</span>` : ''}
+                           </div>
+                       </div>
+                   `;
+                   return { html: html };
                }
-           };
-           reader.readAsText(file);
+           });
+           calendar.render();
        }
 
-       function showToast(msg, icon = "fa-solid fa-circle-check") {
-           const toast = document.getElementById('toast');
-           const toastMsg = document.getElementById('toastMsg');
-           const toastIcon = document.getElementById('toastIcon');
-           if (!toast) return;
-           toastMsg.innerText = msg;
-           toastIcon.className = `${icon} text-xl`;
-           toast.classList.remove('opacity-0', 'translate-y-10', 'pointer-events-none');
-           setTimeout(() => {
-               toast.classList.add('opacity-0', 'translate-y-10', 'pointer-events-none');
-           }, 3000);
+       // Fonction appelée lors du clic sur la case à cocher d'un événement
+       window.togglePublishStatus = function(e, projectId, platformId) {
+           e.stopPropagation(); // Empêche d'autres actions liées au clic sur l'événement entier
+           const isChecked = e.target.checked;
+           
+           // Trouver le projet correspondant
+           const projIndex = projects.findIndex(p => p.id === projectId);
+           if (projIndex > -1) {
+               if (!projects[projIndex].publishedStatus) {
+                   projects[projIndex].publishedStatus = {};
+               }
+               // Mettre à jour l'état
+               projects[projIndex].publishedStatus[platformId] = isChecked;
+               
+               // Sauvegarder silencieusement sur GitHub
+               saveToGitHub(true);
+           }
+       };
+
+       function updateProjectsList() {
+           const list = document.getElementById('projectsList');
+           document.getElementById('savedCountBadge').innerText = projects.length;
+           list.innerHTML = '';
+           
+           // Trier du plus récent au plus ancien
+           const sortedProjects = [...projects].sort((a, b) => new Date(b.launchDate) - new Date(a.launchDate));
+           
+           sortedProjects.forEach(proj => {
+               const d = new Date(proj.launchDate).toLocaleDateString('fr-FR');
+               list.innerHTML += `
+                   <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-3">
+                       <div class="flex justify-between items-start gap-2">
+                           <div>
+                               <h4 class="font-bold text-white text-sm">${proj.title}</h4>
+                               <p class="text-[10px] text-slate-400"><i class="fa-regular fa-clock"></i> J0 (YT): ${d}</p>
+                           </div>
+                           <button onclick="editProject('${proj.id}')" class="text-xs bg-slate-800 hover:bg-slate-700 px-2 py-1 rounded text-slate-300 transition"><i class="fa-solid fa-pen"></i></button>
+                       </div>
+                   </div>
+               `;
+           });
        }
+       
+       function editProject(id) {
+           const p = projects.find(x => x.id === id);
+           if (!p) return;
+           currentEditProjectId = id;
+           document.getElementById('videoTitle').value = p.title;
+           document.getElementById('launchDate').value = p.launchDate;
+           loadSeoData(p.seo);
+           switchTab('planner');
+           renderGrid();
+           document.getElementById('saveBtn').innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Mettre à jour le projet';
+       }
+
+       async function syncFromGitHub(silent = false) {
+           const conf = getGitHubConfig();
+           if (!conf.token) return;
+           
+           try {
+               const res = await fetch(`https://api.github.com/repos/${conf.username}/${conf.repo}/contents/${FILE_PATH}`, {
+                   headers: { 'Authorization': `token ${conf.token}`, 'Accept': 'application/vnd.github.v3+json' }
+               });
+               
+               if (res.ok) {
+                   const data = await res.json();
+                   currentSha = data.sha;
+                   const content = JSON.parse(decodeURIComponent(escape(atob(data.content))));
+                   projects = content.projects || [];
+                   if (!silent) showToast("Synchronisation GitHub réussie !");
+                   
+                   if (calendar) {
+                       calendar.removeAllEvents();
+                       calendar.addEventSource(getCalendarEvents());
+                   }
+                   updateProjectsList();
+               } else if (res.status === 404) {
+                   projects = [];
+                   if (!silent) showToast("Fichier non trouvé. Un nouveau sera créé.");
+               }
+           } catch (e) {
+               console.error(e);
+               if (!silent) showToast("Erreur de synchronisation GitHub", false);
+           }
+       }
+
+       async function saveToGitHub(silent = false) {
+           const conf = getGitHubConfig();
+           if (!conf.token) {
+               checkGitHubConnectionAndLoad();
+               return;
+           }
+           
+           const dataToSave = {
+               lastUpdated: new Date().toISOString(),
+               projects: projects
+           };
+           
+           const contentEncoded = btoa(unescape(encodeURIComponent(JSON.stringify(dataToSave, null, 2))));
+           
+           const body = {
+               message: currentSha ? "Mise à jour des planifications (via SocialSync Hub)" : "Création fichier de planification",
+               content: contentEncoded
+           };
+           
+           if (currentSha) body.sha = currentSha;
+           
+           try {
+               const res = await fetch(`https://api.github.com/repos/${conf.username}/${conf.repo}/contents/${FILE_PATH}`, {
+                   method: 'PUT',
+                   headers: { 'Authorization': `token ${conf.token}`, 'Content-Type': 'application/json' },
+                   body: JSON.stringify(body)
+               });
+               
+               if (res.ok) {
+                   const data = await res.json();
+                   currentSha = data.content.sha;
+                   if (!silent) showToast("Sauvegardé dans GitHub !");
+               }
+           } catch (e) {
+               if (!silent) showToast("Erreur lors de la sauvegarde", false);
+           }
+       }
+
+       function saveProject() {
+           const title = document.getElementById('videoTitle').value.trim();
+           const lDate = document.getElementById('launchDate').value;
+           
+           if (!title || !lDate) {
+               showToast("Titre et Date YT sont obligatoires", false);
+               return;
+           }
+           
+           const projectData = {
+               id: currentEditProjectId || Date.now().toString(),
+               title: title,
+               launchDate: lDate,
+               seo: getSeoData(),
+               // Conserver l'état de publication si on édite un projet existant
+               publishedStatus: currentEditProjectId ? (projects.find(p => p.id === currentEditProjectId)?.publishedStatus || {}) : {}
+           };
+           
+           if (currentEditProjectId) {
+               const idx = projects.findIndex(p => p.id === currentEditProjectId);
+               if (idx > -1) projects[idx] = projectData;
+           } else {
+               projects.push(projectData);
+           }
+           
+           currentEditProjectId = null;
+           document.getElementById('videoTitle').value = '';
+           clearSeoFields();
+           document.getElementById('saveBtn').innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Sauvegarder dans GitHub';
+           
+           saveToGitHub();
+       }
+
    </script>
 </body>
 </html>
