@@ -16,7 +16,7 @@
        .fc { --fc-border-color: #334155; --fc-page-bg-color: transparent; }
        .fc-theme-standard td, .fc-theme-standard th { border-color: #334155 !important; }
        .fc-col-header-cell-cushion, .fc-daygrid-day-number { color: #cbd5e1 !important; text-decoration: none !important; }
-       .fc-event { border: none !important; cursor: pointer; background: transparent; } /* Fond transparent pour laisser notre custom HTML gérer la couleur */
+       .fc-event { border: none !important; cursor: pointer; background: transparent; }
        .fc-daygrid-event-harness { margin-bottom: 4px !important; }
    </style>
 </head>
@@ -219,11 +219,11 @@
        </div>
    </div>
 
-   <!-- MODAL VUE SEO -->
+   <!-- MODAL VUE SEO (MISE A JOUR) -->
    <div id="seoViewModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-       <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl relative">
-           <button onclick="closeSeoView()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-           <div id="seoViewContent"></div>
+       <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl relative overflow-hidden">
+           <button onclick="closeSeoView()" class="absolute top-4 right-4 text-slate-400 hover:text-white z-10 bg-slate-900/80 rounded-full p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+           <div id="seoViewContent" class="overflow-y-auto p-6 flex-grow"></div>
        </div>
    </div>
 
@@ -594,7 +594,6 @@
                    const pDate = new Date(baseDate);
                    pDate.setDate(baseDate.getDate() + plat.dayOffset);
                    
-                   // Récupération du statut publié pour cette plateforme (false par défaut)
                    const isPublished = project.publishedStatus && project.publishedStatus[plat.id] ? true : false;
                    
                    events.push({
@@ -633,13 +632,17 @@
                height: 650,
                events: getCalendarEvents(),
                
-               // C'est ici que l'on injecte la case à cocher personnalisée !
+               // Événement déclenché lors du clic sur l'événement complet (hors checkbox)
+               eventClick: function(info) {
+                   const props = info.event.extendedProps;
+                   openSeoView(props.projectId, props.platformId);
+               },
+               
                eventContent: function(arg) {
                    const props = arg.event.extendedProps;
                    const isChecked = props.isPublished ? 'checked' : '';
                    const viewType = arg.view.type;
                    
-                   // On créé notre propre structure HTML pour l'événement
                    let html = `
                        <div class="fc-event-main-frame flex items-start gap-1.5 p-1 w-full h-full cursor-pointer pointer-events-auto shadow-sm" style="background-color: ${arg.event.backgroundColor}; color: #fff; border-radius: 3px;">
                            <input type="checkbox" ${isChecked} 
@@ -657,23 +660,101 @@
            calendar.render();
        }
 
-       // Fonction appelée lors du clic sur la case à cocher d'un événement
+       // Gestion du clic sur la checkbox
        window.togglePublishStatus = function(e, projectId, platformId) {
-           e.stopPropagation(); // Empêche d'autres actions liées au clic sur l'événement entier
+           e.stopPropagation(); // Indispensable : empêche de déclencher "eventClick" du calendrier
            const isChecked = e.target.checked;
            
-           // Trouver le projet correspondant
            const projIndex = projects.findIndex(p => p.id === projectId);
            if (projIndex > -1) {
                if (!projects[projIndex].publishedStatus) {
                    projects[projIndex].publishedStatus = {};
                }
-               // Mettre à jour l'état
                projects[projIndex].publishedStatus[platformId] = isChecked;
-               
-               // Sauvegarder silencieusement sur GitHub
                saveToGitHub(true);
            }
+       };
+
+       // --- GESTION DE LA VUE SEO DEPUIS LE CALENDRIER ---
+       
+       // Petite fonction utilitaire pour échapper le HTML basique
+       function escapeHtml(unsafe) {
+           return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+       }
+
+       function openSeoView(projectId, platformId) {
+           const project = projects.find(p => p.id === projectId);
+           if (!project) return;
+           
+           const platInfo = platformsConfig.find(p => p.id === platformId);
+           const seoData = (project.seo && project.seo[platformId]) ? project.seo[platformId] : {};
+           const platConfig = seoFieldsConfig[platformId];
+           
+           let html = `
+               <div class="flex items-center gap-4 mb-6 border-b border-slate-800 pb-5">
+                   <div class="bg-gradient-to-br ${platInfo.color} p-3.5 rounded-xl border flex-shrink-0">
+                       <i class="${platInfo.icon} text-2xl text-white"></i>
+                   </div>
+                   <div>
+                       <h3 class="font-bold text-xl text-white leading-tight">${platInfo.name}</h3>
+                       <p class="text-sm text-slate-400 mt-1"><i class="fa-solid fa-film text-indigo-400 mr-1"></i> ${project.title}</p>
+                   </div>
+               </div>
+               <div class="space-y-4">
+           `;
+           
+           if (project.seo && project.seo.playlist) {
+               html += `
+                   <div class="group relative">
+                       <div class="flex justify-between items-end mb-1">
+                           <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Playlist</span>
+                           <button onclick="copyFieldContent(this)" class="text-[10px] bg-slate-800 px-2 py-1 rounded-md text-indigo-400 hover:text-indigo-300 opacity-0 group-hover:opacity-100 transition shadow"><i class="fa-regular fa-copy"></i> Copier</button>
+                       </div>
+                       <div class="seo-content-box bg-slate-950 border border-slate-800 rounded-xl p-3.5 text-sm text-slate-200">${escapeHtml(project.seo.playlist)}</div>
+                   </div>
+               `;
+           }
+
+           platConfig.fields.forEach(f => {
+               const rawValue = seoData[f];
+               const displayValue = rawValue ? escapeHtml(rawValue) : '<span class="text-slate-600 italic">Non renseigné</span>';
+               
+               html += `
+                   <div class="group relative">
+                       <div class="flex justify-between items-end mb-1">
+                           <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider">${f}</span>
+                           ${rawValue ? `<button onclick="copyFieldContent(this)" class="text-[10px] bg-slate-800 px-2 py-1 rounded-md text-indigo-400 hover:text-indigo-300 opacity-0 group-hover:opacity-100 transition shadow"><i class="fa-regular fa-copy"></i> Copier</button>` : ''}
+                       </div>
+                       <div class="seo-content-box bg-slate-950 border border-slate-800 rounded-xl p-3.5 text-sm text-slate-200 whitespace-pre-wrap font-sans">${displayValue}</div>
+                   </div>
+               `;
+           });
+           
+           html += `</div>`;
+           
+           document.getElementById('seoViewContent').innerHTML = html;
+           document.getElementById('seoViewModal').classList.remove('hidden');
+       }
+       
+       function closeSeoView() {
+           document.getElementById('seoViewModal').classList.add('hidden');
+       }
+
+       // Fonction pour copier le contenu d'une box spécifique (appelée depuis la modale SEO)
+       window.copyFieldContent = function(btn) {
+           const contentBox = btn.closest('.group').querySelector('.seo-content-box');
+           const textToCopy = contentBox.innerText; // Prend le texte brut, sans les balises HTML éventuelles
+           
+           navigator.clipboard.writeText(textToCopy).then(() => {
+               const originalHtml = btn.innerHTML;
+               btn.innerHTML = '<i class="fa-solid fa-check"></i> Copié !';
+               btn.classList.replace('text-indigo-400', 'text-emerald-400');
+               
+               setTimeout(() => {
+                   btn.innerHTML = originalHtml;
+                   btn.classList.replace('text-emerald-400', 'text-indigo-400');
+               }, 2000);
+           }).catch(() => showToast("Erreur lors de la copie.", false));
        };
 
        function updateProjectsList() {
@@ -681,7 +762,6 @@
            document.getElementById('savedCountBadge').innerText = projects.length;
            list.innerHTML = '';
            
-           // Trier du plus récent au plus ancien
            const sortedProjects = [...projects].sort((a, b) => new Date(b.launchDate) - new Date(a.launchDate));
            
            sortedProjects.forEach(proj => {
@@ -795,7 +875,6 @@
                title: title,
                launchDate: lDate,
                seo: getSeoData(),
-               // Conserver l'état de publication si on édite un projet existant
                publishedStatus: currentEditProjectId ? (projects.find(p => p.id === currentEditProjectId)?.publishedStatus || {}) : {}
            };
            
