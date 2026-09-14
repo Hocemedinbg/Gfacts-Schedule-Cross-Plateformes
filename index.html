@@ -34,11 +34,6 @@
                    </div>
                </div>
                <div class="flex items-center gap-3">
-                   <div id="githubStatusBadge" onclick="openConfigModal()" class="cursor-pointer px-3 py-1.5 rounded-lg border text-xs font-semibold flex items-center gap-2 bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-500 transition">
-                       <i class="fa-brands fa-github text-sm"></i>
-                       <span id="githubStatusText">Non configuré</span>
-                       <span id="githubStatusDot" class="w-2 h-2 rounded-full bg-amber-500"></span>
-                   </div>
                    <nav class="flex space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
                        <button id="tabBtnPlanner" onclick="switchTab('planner')" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-2 bg-indigo-600 text-white shadow-md">
                            <i class="fa-solid fa-pen-to-square"></i><span>Planificateur</span>
@@ -78,8 +73,7 @@
                </div>
 
                <!-- SECTION PACKAGE SEO -->
-               
-
+               <div>
                    <div class="flex items-center justify-between mb-4">
                        <h3 class="font-bold text-white flex items-center gap-2">
                            <i class="fa-solid fa-magnifying-glass-chart text-fuchsia-400"></i> Package SEO Complet
@@ -93,10 +87,6 @@
                            </button>
                        </div>
                    </div>
-
-
-
-
 
                    <div id="seoSection" class="hidden space-y-4">
                        <div>
@@ -196,6 +186,38 @@
        </div>
    </div>
 
+   <!-- MODAL IMPORT SEO -->
+   <div id="seoImportModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+       <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl relative">
+           <button onclick="closeSeoImportModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+           <div class="flex items-center gap-3">
+               <div class="bg-fuchsia-950/50 border border-fuchsia-800/50 p-3 rounded-xl text-fuchsia-400"><i class="fa-solid fa-wand-magic-sparkles text-xl"></i></div>
+               <div>
+                   <h3 class="font-bold text-lg text-white">Import Automatique Package SEO</h3>
+                   <p class="text-xs text-slate-400">Collez votre texte brut ou bloc de code SEO pour remplir automatiquement tous les champs.</p>
+               </div>
+           </div>
+           <div>
+               <textarea id="seoBulkInput" oninput="previewSeoPackage()" rows="8" placeholder="Collez ici votre texte SEO..." class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-xs text-slate-100 focus:outline-none focus:border-fuchsia-500 resize-y font-mono"></textarea>
+           </div>
+           <div id="seoImportStatus" class="text-xs min-h-[20px]"></div>
+           <div class="pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3">
+               <div class="flex gap-2">
+                   <button onclick="pasteSeoFromClipboard()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium transition flex items-center gap-1.5">
+                       <i class="fa-regular fa-clipboard"></i> Coller
+                   </button>
+                   <button onclick="clearSeoImportInput()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium transition flex items-center gap-1.5">
+                       <i class="fa-solid fa-eraser"></i> Vider
+                   </button>
+               </div>
+               <div class="flex gap-2">
+                   <button onclick="closeSeoImportModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg text-xs font-semibold hover:bg-slate-700">Annuler</button>
+                   <button onclick="applySeoPackage()" class="px-4 py-2 bg-gradient-to-r from-fuchsia-600 to-purple-600 hover:from-fuchsia-500 hover:to-purple-500 text-white rounded-lg text-xs font-semibold shadow-lg">Appliquer le Package</button>
+               </div>
+           </div>
+       </div>
+   </div>
+
    <!-- MODAL VUE SEO -->
    <div id="seoViewModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl relative">
@@ -240,6 +262,9 @@
            checkGitHubConnectionAndLoad();
            renderGrid();
            renderSeoFields();
+           if (dateInput) {
+               dateInput.addEventListener('change', renderGrid);
+           }
        });
 
        // --- SEO FIELDS RENDERING ---
@@ -299,7 +324,6 @@
                    if (el && seo[platId]) el.value = seo[platId][f] || '';
                });
            }
-           // Auto-expand SEO section if data exists
            const section = document.getElementById('seoSection');
            if (seo.playlist || Object.values(seo).some(v => typeof v === 'object' && Object.values(v).some(t => t))) {
                section.classList.remove('hidden');
@@ -316,7 +340,8 @@
                });
            }
        }
-               // --- IMPORT PACKAGE SEO (REMPLISSAGE AUTO EN 1 COUP) ---
+
+       // --- IMPORT PACKAGE SEO ---
        const seoSectionAliases = { 'youtube': 'yt', 'tiktok': 'tiktok', 'instagram': 'ig', 'facebook': 'fb', 'pinterest': 'pin' };
        const seoFieldAliases = {
            'playlist': '__PLAYLIST__',
@@ -339,7 +364,6 @@
            const parsed = { playlist: '', yt: {}, tiktok: {}, ig: {}, fb: {}, pin: {} };
            let currentSection = null;
 
-           // Méthode 1 : blocs de code ```text ... ```
            const blockRegex = /```[\w+-]*[^\S\r\n]*\r?\n([\s\S]*?)```/g;
            let match, lastIndex = 0, foundBlocks = false;
            const entries = [];
@@ -364,7 +388,6 @@
                return parsed;
            }
 
-           // Méthode 2 (secours) : texte brut sans ```
            let pendingField = null;
            const flushPending = () => {
                if (!pendingField) return;
@@ -455,6 +478,7 @@
            clearSeoImportInput();
            showToast(`${filled} champ(s) SEO rempli(s) automatiquement !`);
        }
+
        // --- GITHUB API ---
        function getGitHubConfig() {
            return { username: localStorage.getItem('gh_user') || '', repo: localStorage.getItem('gh_repo') || '', token: localStorage.getItem('gh_token') || '' };
@@ -478,346 +502,438 @@
        }
        async function checkGitHubConnectionAndLoad() {
            const conf = getGitHubConfig();
-           const badgeText = document.getElementById('githubStatusText');
-           const badgeDot = document.getElementById('githubStatusDot');
-           if (!conf.username || !conf.repo || !conf.token) {
-               badgeText.innerText = "Non configuré";
-               badgeDot.className = "w-2 h-2 rounded-full bg-amber-500";
-               return;
-           }
-           badgeText.innerText = "Connexion...";
-           badgeDot.className = "w-2 h-2 rounded-full bg-blue-500 animate-pulse";
+           if (!conf.username || !conf.repo || !conf.token) return;
            try {
                await syncFromGitHub();
-               badgeText.innerText = "Connecté à GitHub";
-               badgeDot.className = "w-2 h-2 rounded-full bg-emerald-500";
            } catch (err) {
-               badgeText.innerText = "Erreur Connexion";
-               badgeDot.className = "w-2 h-2 rounded-full bg-red-500";
+               console.error("Erreur Connexion GitHub:", err);
            }
        }
        async function syncFromGitHub() {
            const conf = getGitHubConfig();
            if (!conf.username || !conf.repo || !conf.token) return;
            const url = `https://api.github.com/repos/${conf.username}/${conf.repo}/contents/${FILE_PATH}`;
-           const res = await fetch(url, { headers: { 'Authorization': `token ${conf.token}`, 'Accept': 'application/vnd.github.v3+json' } });
-           if (res.status === 404) { projects = []; currentSha = null; }
-           else if (res.ok) {
-               const data = await res.json();
-               currentSha = data.sha;
-               const binaryStr = atob(data.content.replace(/\n/g, ''));
-               const bytes = new Uint8Array(binaryStr.length);
-               for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
-               projects = JSON.parse(new TextDecoder().decode(bytes));
-           } else { throw new Error("Échec du chargement"); }
-           updateBadgeCount();
-           if (!document.getElementById('tabCalendar').classList.contains('hidden')) renderCalendarAndProjects();
-           showToast("Données synchronisées avec GitHub !");
-       }
-       async function pushToGitHub(commitMessage) {
-           const conf = getGitHubConfig();
-           if (!conf.username || !conf.repo || !conf.token) { openConfigModal(); throw new Error("GitHub non configuré."); }
-           const url = `https://api.github.com/repos/${conf.username}/${conf.repo}/contents/${FILE_PATH}`;
-           const jsonString = JSON.stringify(projects, null, 2);
-           const utf8Bytes = new TextEncoder().encode(jsonString);
-           let binary = '';
-           utf8Bytes.forEach(b => binary += String.fromCharCode(b));
-           const base64Content = btoa(binary);
-           const bodyData = { message: commitMessage || 'Mise à jour', content: base64Content };
-           if (currentSha) bodyData.sha = currentSha;
-           const res = await fetch(url, { method: 'PUT', headers: { 'Authorization': `token ${conf.token}`, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' }, body: JSON.stringify(bodyData) });
-           if (res.ok) { const resData = await res.json(); currentSha = resData.content.sha; showToast("Sauvegardé dans GitHub !"); }
-           else { const errData = await res.json(); alert("Erreur GitHub : " + (errData.message || "Impossible")); throw new Error(errData.message); }
+           try {
+               const res = await fetch(url, { headers: { 'Authorization': `token ${conf.token}`, 'Accept': 'application/vnd.github.v3+json' } });
+               if (res.status === 404) { projects = []; currentSha = null; }
+               else if (res.ok) {
+                   const data = await res.json();
+                   currentSha = data.sha;
+                   const content = decodeURIComponent(escape(atob(data.content)));
+                   projects = JSON.parse(content);
+               }
+               updateSavedCount();
+               renderProjectsList();
+               if (calendar) updateCalendarEvents();
+           } catch (err) {
+               console.error("Erreur sync GitHub:", err);
+           }
        }
 
-       // --- NAVIGATION ---
-       function switchTab(tabName) {
+       function openConfigModal() { document.getElementById('configModal').classList.remove('hidden'); }
+       function closeConfigModal() { document.getElementById('configModal').classList.add('hidden'); }
+
+       function switchTab(tab) {
            const tabPlanner = document.getElementById('tabPlanner');
            const tabCalendar = document.getElementById('tabCalendar');
            const btnPlanner = document.getElementById('tabBtnPlanner');
            const btnCalendar = document.getElementById('tabBtnCalendar');
-           if (tabName === 'planner') {
-               tabPlanner.classList.remove('hidden'); tabCalendar.classList.add('hidden');
+
+           if (tab === 'planner') {
+               tabPlanner.classList.remove('hidden');
+               tabCalendar.classList.add('hidden');
                btnPlanner.className = "px-3.5 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-2 bg-indigo-600 text-white shadow-md";
                btnCalendar.className = "px-3.5 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-2 text-slate-400 hover:text-white";
            } else {
-               tabPlanner.classList.add('hidden'); tabCalendar.classList.remove('hidden');
+               tabPlanner.classList.add('hidden');
+               tabCalendar.classList.remove('hidden');
                btnCalendar.className = "px-3.5 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-2 bg-indigo-600 text-white shadow-md";
                btnPlanner.className = "px-3.5 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-2 text-slate-400 hover:text-white";
-               renderCalendarAndProjects();
+               if (!calendar) {
+                   initCalendar();
+               } else {
+                   calendar.render();
+                   updateCalendarEvents();
+               }
            }
        }
-       function openConfigModal() { document.getElementById('configModal').classList.remove('hidden'); }
-       function closeConfigModal() { document.getElementById('configModal').classList.add('hidden'); }
 
-       // --- PLANNER LOGIC ---
-       function formatDateStr(dateObj) { return dateObj.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }); }
-       function calculateSchedule() {
-           const baseDateVal = dateInput.value;
-           if (!baseDateVal) return [];
-           const baseDate = new Date(baseDateVal + 'T00:00:00');
-           return platformsConfig.map(p => {
-               const targetDate = new Date(baseDate);
-               targetDate.setDate(baseDate.getDate() + p.dayOffset);
-               return { ...p, computedDate: targetDate, formattedDateStr: formatDateStr(targetDate), isoDateStr: targetDate.toISOString().split('T')[0] };
-           });
-       }
        function renderGrid() {
-           const schedule = calculateSchedule();
-           const gridContainer = document.getElementById('scheduleGrid');
-           gridContainer.innerHTML = '';
-           schedule.forEach((item) => {
-               const dayLabel = item.dayOffset === 0 ? 'Jour 1 (J0)' : 'Jour 2 (J+1)';
-               gridContainer.innerHTML += `
-                   <div class="bg-gradient-to-br ${item.color} border bg-slate-900/90 rounded-xl p-5 shadow-lg flex flex-col justify-between space-y-4">
+           const grid = document.getElementById('scheduleGrid');
+           if (!grid) return;
+           const launchDateVal = document.getElementById('launchDate').value;
+           const baseDate = launchDateVal ? new Date(launchDateVal) : new Date();
+
+           grid.innerHTML = platformsConfig.map(p => {
+               const pDate = new Date(baseDate);
+               pDate.setDate(pDate.getDate() + p.dayOffset);
+               const dateStr = pDate.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+
+               return `
+                   <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col justify-between hover:border-slate-700 transition">
                        <div>
                            <div class="flex items-center justify-between mb-3">
-                               <div class="flex items-center gap-2.5"><i class="${item.icon} text-2xl text-slate-100"></i><h3 class="font-bold text-base text-white">${item.name}</h3></div>
-                               <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border ${item.badgeColor}">${dayLabel}</span>
+                               <div class="flex items-center gap-2.5">
+                                   <div class="w-8 h-8 rounded-xl bg-gradient-to-br ${p.color} flex items-center justify-center border border-slate-700">
+                                       <i class="${p.icon} text-slate-200 text-sm"></i>
+                                   </div>
+                                   <div>
+                                       <h4 class="font-bold text-sm text-white">${p.name}</h4>
+                                       <span class="text-[10px] text-slate-400">J+${p.dayOffset} — ${dateStr}</span>
+                                   </div>
+                               </div>
+                               <span class="px-2.5 py-1 rounded-full text-[10px] font-bold border ${p.badgeColor}">${p.timeSlot}</span>
                            </div>
-                           <div class="bg-slate-950/70 rounded-lg p-2.5 border border-slate-800 mb-3 text-xs flex justify-between">
-                               <span><i class="fa-regular fa-calendar text-indigo-400 mr-1.5"></i>${item.formattedDateStr}</span>
-                               <span class="text-emerald-400"><i class="fa-regular fa-clock mr-1"></i>${item.timeSlot}</span>
-                           </div>
-                           <div class="space-y-1.5 text-xs">
-                               <div><span class="text-slate-400 block text-[10px]">KPI :</span> <span class="text-slate-200 font-medium">${item.kpi}</span></div>
-                               <div><span class="text-slate-400 block text-[10px]">Action :</span> <p class="text-slate-300 text-[11px]">${item.strategy}</p></div>
+                           <div class="space-y-2 text-xs text-slate-300 mt-4 bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+                               <p><strong class="text-slate-400">KPI principal :</strong> ${p.kpi}</p>
+                               <p><strong class="text-slate-400">Stratégie :</strong> ${p.strategy}</p>
                            </div>
                        </div>
-                       <div class="pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs">
-                           <span class="text-slate-400">Statut :</span>
-                           <select id="status-select-${item.id}" class="bg-slate-950 text-slate-100 border border-slate-700 rounded-lg px-2 py-1 text-xs">
-                               <option value="todo">⏳ À planifier</option>
-                               <option value="scheduled">📅 Programmé</option>
-                               <option value="done">✅ Publié</option>
-                           </select>
-                       </div>
-                   </div>`;
-           });
+                   </div>
+               `;
+           }).join('');
        }
 
        async function saveProject() {
            const title = document.getElementById('videoTitle').value.trim();
-           if (!title) { alert("Veuillez saisir un titre !"); return; }
+           const launchDate = document.getElementById('launchDate').value;
+
+           if (!title) {
+               showToast("Veuillez saisir un titre pour la vidéo.", "fa-solid fa-triangle-exclamation");
+               return;
+           }
+
+           const conf = getGitHubConfig();
+           if (!conf.username || !conf.repo || !conf.token) {
+               showToast("Veuillez configurer vos identifiants GitHub.", "fa-solid fa-triangle-exclamation");
+               openConfigModal();
+               return;
+           }
+
+           const seoData = getSeoData();
+           const projectData = {
+               id: currentEditProjectId || Date.now().toString(),
+               title: title,
+               launchDate: launchDate,
+               seo: seoData,
+               updatedAt: new Date().toISOString()
+           };
+
+           if (currentEditProjectId) {
+               const idx = projects.findIndex(p => p.id === currentEditProjectId);
+               if (idx !== -1) projects[idx] = projectData;
+               currentEditProjectId = null;
+           } else {
+               projects.push(projectData);
+           }
+
            const saveBtn = document.getElementById('saveBtn');
            saveBtn.disabled = true;
-           saveBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Sauvegarde...`;
+           saveBtn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> Sauvegarde...';
+
            try {
-               const schedule = calculateSchedule();
-               const platformStatuses = {};
-               schedule.forEach(item => {
-                   const sel = document.getElementById(`status-select-${item.id}`);
-                   platformStatuses[item.id] = { status: sel ? sel.value : 'todo', date: item.isoDateStr, time: item.startTime, timeSlot: item.timeSlot };
+               const contentEncoded = btoa(unescape(encodeURIComponent(JSON.stringify(projects, null, 2))));
+               const url = `https://api.github.com/repos/${conf.username}/${conf.repo}/contents/${FILE_PATH}`;
+               
+               const bodyData = {
+                   message: `Mise à jour projet: ${title}`,
+                   content: contentEncoded
+               };
+               if (currentSha) bodyData.sha = currentSha;
+
+               const res = await fetch(url, {
+                   method: 'PUT',
+                   headers: {
+                       'Authorization': `token ${conf.token}`,
+                       'Content-Type': 'application/json',
+                       'Accept': 'application/vnd.github.v3+json'
+                   },
+                   body: JSON.stringify(bodyData)
                });
-               const seo = getSeoData();
-               const projectId = currentEditProjectId || 'proj_' + Date.now();
-               const newProject = { id: projectId, title, launchDate: dateInput.value, updatedAt: new Date().toISOString(), platforms: platformStatuses, seoPackage: seo };
-               const existingIndex = projects.findIndex(p => p.id === projectId);
-               if (existingIndex >= 0) projects[existingIndex] = newProject; else projects.push(newProject);
-               await pushToGitHub(`Add/Update: ${title}`);
-               updateBadgeCount();
-               currentEditProjectId = null;
-               document.getElementById('videoTitle').value = '';
-               clearSeoFields();
-           } catch (err) { console.error(err); }
-           finally { saveBtn.disabled = false; saveBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Sauvegarder dans GitHub`; }
+
+               if (res.ok) {
+                   const resData = await res.json();
+                   currentSha = resData.content.sha;
+                   showToast("Projet sauvegardé dans GitHub avec succès !");
+                   document.getElementById('videoTitle').value = '';
+                   clearSeoFields();
+                   updateSavedCount();
+                   renderProjectsList();
+                   if (calendar) updateCalendarEvents();
+               } else {
+                   const errData = await res.json();
+                   showToast("Erreur lors de la sauvegarde: " + (errData.message || res.status), "fa-solid fa-triangle-exclamation");
+               }
+           } catch (err) {
+               showToast("Erreur de connexion à GitHub", "fa-solid fa-triangle-exclamation");
+           } finally {
+               saveBtn.disabled = false;
+               saveBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Sauvegarder dans GitHub';
+           }
        }
 
-       // --- CALENDAR & PROJECTS ---
-       function renderCalendarAndProjects() {
-           if (!calendar) {
-               calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
-                   initialView: 'dayGridMonth', locale: 'fr',
-                   headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
-                   buttonText: { today: "Aujourd'hui", month: 'Mois', week: 'Semaine' },
-                   events: getCalendarEvents()
-               });
-               calendar.render();
-           } else { calendar.removeAllEvents(); calendar.addEventSource(getCalendarEvents()); }
-           renderProjectsList();
+       function updateSavedCount() {
+           const badge = document.getElementById('savedCountBadge');
+           if (badge) badge.innerText = projects.length;
        }
+
+       function renderProjectsList() {
+           const container = document.getElementById('projectsList');
+           if (!container) return;
+           if (projects.length === 0) {
+               container.innerHTML = '<p class="text-xs text-slate-500 text-center py-8">Aucun projet enregistré pour le moment.</p>';
+               return;
+           }
+
+           container.innerHTML = projects.map(p => `
+               <div class="bg-slate-950 border border-slate-800 rounded-xl p-3.5 space-y-2">
+                   <div class="flex items-center justify-between">
+                       <h4 class="font-bold text-xs text-white truncate max-w-[180px]">${p.title}</h4>
+                       <span class="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">${p.launchDate}</span>
+                   </div>
+                   <div class="flex items-center gap-1.5 pt-1 border-t border-slate-800/80">
+                       <button onclick="openSeoView('${p.id}')" class="px-2 py-1 bg-fuchsia-950/60 hover:bg-fuchsia-900/60 text-fuchsia-300 border border-fuchsia-800/50 rounded text-[10px] font-medium transition flex items-center gap-1">
+                           <i class="fa-solid fa-eye text-[9px]"></i> SEO
+                       </button>
+                       <button onclick="editProject('${p.id}')" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[10px] font-medium transition flex items-center gap-1">
+                           <i class="fa-solid fa-pen text-[9px]"></i> Modifier
+                       </button>
+                       <button onclick="deleteProject('${p.id}')" class="px-2 py-1 bg-red-950/60 hover:bg-red-900/60 text-red-300 border border-red-800/50 rounded text-[10px] font-medium transition flex items-center gap-1 ml-auto">
+                           <i class="fa-solid fa-trash text-[9px]"></i> Supprimer
+                       </button>
+                   </div>
+               </div>
+           `).join('');
+       }
+
+       function openSeoView(id) {
+           const p = projects.find(item => item.id === id);
+           if (!p || !p.seo) return;
+           const content = document.getElementById('seoViewContent');
+           
+           let html = `<h3 class="font-bold text-lg text-white mb-1">${p.title}</h3>`;
+           html += `<p class="text-xs text-slate-400 mb-4">Date de lancement YT : <span class="text-indigo-400">${p.launchDate}</span></p>`;
+           if (p.seo.playlist) {
+               html += `<div class="mb-4 bg-slate-950 p-3 rounded-xl border border-slate-800"><span class="text-xs font-bold text-fuchsia-400">Playlist :</span> <span class="text-xs text-slate-200">${p.seo.playlist}</span></div>`;
+           }
+           html += `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
+           for (const [platId, config] of Object.entries(seoFieldsConfig)) {
+               const platInfo = platformsConfig.find(item => item.id === platId);
+               const platData = p.seo[platId] || {};
+               let fieldsHtml = config.fields.map(f => `
+                   <div class="mb-2 bg-slate-900 p-2.5 rounded-lg border border-slate-800">
+                       <span class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">${f}</span>
+                       <p class="text-xs text-slate-200 whitespace-pre-wrap font-mono bg-slate-950 p-2 rounded border border-slate-800">${platData[f] || '<i class="text-slate-600">Non renseigné</i>'}</p>
+                   </div>
+               `).join('');
+               html += `
+                   <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
+                       <div class="flex items-center gap-2 mb-2">
+                           <i class="${platInfo.icon} text-sm text-slate-200"></i>
+                           <span class="font-bold text-xs text-white">${config.label}</span>
+                       </div>
+                       ${fieldsHtml}
+                   </div>
+               `;
+           }
+           html += `</div>`;
+           content.innerHTML = html;
+           document.getElementById('seoViewModal').classList.remove('hidden');
+       }
+
+       function closeSeoView() { document.getElementById('seoViewModal').classList.add('hidden'); }
+
+       function editProject(id) {
+           const p = projects.find(item => item.id === id);
+           if (!p) return;
+           currentEditProjectId = p.id;
+           document.getElementById('videoTitle').value = p.title;
+           document.getElementById('launchDate').value = p.launchDate;
+           loadSeoData(p.seo);
+           renderGrid();
+           switchTab('planner');
+           showToast("Projet chargé dans le planificateur.");
+       }
+
+       async function deleteProject(id) {
+           if (!confirm("Voulez-vous vraiment supprimer ce projet ?")) return;
+           projects = projects.filter(p => p.id !== id);
+           const conf = getGitHubConfig();
+           if (conf.username && conf.repo && conf.token) {
+               try {
+                   const contentEncoded = btoa(unescape(encodeURIComponent(JSON.stringify(projects, null, 2))));
+                   const url = `https://api.github.com/repos/${conf.username}/${conf.repo}/contents/${FILE_PATH}`;
+                   const res = await fetch(url, {
+                       method: 'PUT',
+                       headers: {
+                           'Authorization': `token ${conf.token}`,
+                           'Content-Type': 'application/json',
+                           'Accept': 'application/vnd.github.v3+json'
+                       },
+                       body: JSON.stringify({
+                           message: `Suppression projet ${id}`,
+                           content: contentEncoded,
+                           sha: currentSha
+                       })
+                   });
+                   if (res.ok) {
+                       const resData = await res.json();
+                       currentSha = resData.content.sha;
+                   }
+               } catch (e) {}
+           }
+           updateSavedCount();
+           renderProjectsList();
+           if (calendar) updateCalendarEvents();
+           showToast("Projet supprimé.");
+       }
+
+       function initCalendar() {
+           const calendarEl = document.getElementById('calendar');
+           calendar = new FullCalendar.Calendar(calendarEl, {
+               initialView: 'dayGridMonth',
+               locale: 'fr',
+               headerToolbar: {
+                   left: 'prev,next today',
+                   center: 'title',
+                   right: 'dayGridMonth,timeGridWeek'
+               },
+               buttonText: { today: "Aujourd'hui", month: 'Mois', week: 'Semaine' },
+               events: getCalendarEvents(),
+               eventClick: function(info) {
+                   if (info.event.extendedProps.projectId) {
+                       openSeoView(info.event.extendedProps.projectId);
+                   }
+               }
+           });
+           calendar.render();
+       }
+
+       function updateCalendarEvents() {
+           if (!calendar) return;
+           calendar.removeAllEvents();
+           calendar.addEventSource(getCalendarEvents());
+       }
+
        function getCalendarEvents() {
            const events = [];
-           projects.forEach(proj => {
+           projects.forEach(p => {
+               if (!p.launchDate) return;
+               const baseDate = new Date(p.launchDate);
                platformsConfig.forEach(plat => {
-                   const pData = proj.platforms[plat.id];
-                   if (pData) {
-                       let icon = pData.status === 'done' ? '✅' : (pData.status === 'scheduled' ? '📅' : '⏳');
-                       events.push({ title: `${icon} [${plat.name}] ${proj.title}`, start: `${pData.date}T${pData.time}:00`, backgroundColor: plat.calendarColor, borderColor: plat.calendarColor });
-                   }
+                   const pDate = new Date(baseDate);
+                   pDate.setDate(pDate.getDate() + plat.dayOffset);
+                   const dateStr = pDate.toISOString().split('T')[0];
+                   events.push({
+                       title: `${plat.name}: ${p.title}`,
+                       start: `${dateStr}T${plat.startTime}:00`,
+                       end: `${dateStr}T${plat.endTime}:00`,
+                       backgroundColor: plat.calendarColor,
+                       borderColor: plat.calendarColor,
+                       extendedProps: { projectId: p.id }
+                   });
                });
            });
            return events;
        }
-       function renderProjectsList() {
-           const listEl = document.getElementById('projectsList');
-           listEl.innerHTML = '';
-           if (projects.length === 0) { listEl.innerHTML = `<div class="text-center text-slate-500 py-10 text-xs">Aucun projet enregistré.</div>`; return; }
-           const sorted = [...projects].sort((a,b) => new Date(b.launchDate) - new Date(a.launchDate));
-           sorted.forEach(proj => {
-               let platformsHtml = '';
-               platformsConfig.forEach(plat => {
-                   const pData = proj.platforms[plat.id];
-                   if (pData) {
-                       platformsHtml += `
-                           <div class="flex items-center justify-between text-[11px] py-1 border-b border-slate-800/50 last:border-0">
-                               <span class="text-slate-300 font-medium flex items-center gap-1.5"><i class="${plat.icon} text-xs"></i> ${plat.name}</span>
-                               <select onchange="updatePlatformStatusDirect('${proj.id}', '${plat.id}', this.value)" class="bg-slate-950 text-[10px] border border-slate-700 rounded px-1.5 py-0.5 text-slate-200">
-                                   <option value="todo" ${pData.status==='todo'?'selected':''}>⏳ À planifier</option>
-                                   <option value="scheduled" ${pData.status==='scheduled'?'selected':''}>📅 Programmé</option>
-                                   <option value="done" ${pData.status==='done'?'selected':''}>✅ Publié</option>
-                               </select>
-                           </div>`;
-                   }
-               });
-               const hasSeo = proj.seoPackage && (proj.seoPackage.playlist || Object.values(proj.seoPackage).some(v => typeof v === 'object' && Object.values(v).some(t => t)));
-               listEl.innerHTML += `
-                   <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-2">
-                       <div class="flex items-start justify-between">
-                           <div>
-                               <h4 class="font-bold text-xs text-slate-100">${proj.title}</h4>
-                               <p class="text-[10px] text-slate-400">Lancement YT: ${new Date(proj.launchDate).toLocaleDateString('fr-FR')}</p>
-                           </div>
-                           <div class="flex gap-1">
-                               ${hasSeo ? `<button onclick="viewSeo('${proj.id}')" class="text-fuchsia-400 hover:text-fuchsia-300 p-1 text-xs" title="Voir SEO"><i class="fa-solid fa-magnifying-glass-chart"></i></button>` : ''}
-                               <button onclick="loadProjectToEdit('${proj.id}')" class="text-slate-400 hover:text-indigo-400 p-1 text-xs"><i class="fa-solid fa-pen"></i></button>
-                               <button onclick="deleteProject('${proj.id}')" class="text-slate-400 hover:text-red-400 p-1 text-xs"><i class="fa-solid fa-trash"></i></button>
-                           </div>
-                       </div>
-                       <div class="bg-slate-900/80 rounded-lg p-2 border border-slate-800/80 space-y-0.5">${platformsHtml}</div>
-                   </div>`;
-           });
-       }
 
-       function viewSeo(projId) {
-           const proj = projects.find(p => p.id === projId);
-           if (!proj || !proj.seoPackage) return;
-           const seo = proj.seoPackage;
-           let html = `<h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2"><i class="fa-solid fa-magnifying-glass-chart text-fuchsia-400"></i> SEO — ${proj.title}</h2>`;
-           if (seo.playlist) html += `<div class="mb-4"><h3 class="font-bold text-xs text-fuchsia-400 mb-1">Playlist</h3><div class="bg-slate-950 border border-slate-800 rounded-lg p-3 font-mono text-xs text-slate-200 whitespace-pre-wrap">${escapeHtml(seo.playlist)}</div></div>`;
-           for (const [platId, config] of Object.entries(seoFieldsConfig)) {
-               const platInfo = platformsConfig.find(p => p.id === platId);
-               const platSeo = seo[platId];
-               if (!platSeo) continue;
-               const hasContent = config.fields.some(f => platSeo[f]);
-               if (!hasContent) continue;
-               html += `<div class="mb-4"><h3 class="font-bold text-sm text-white mb-2 flex items-center gap-2"><i class="${platInfo.icon}"></i> ${config.label}</h3>`;
-               config.fields.forEach(f => {
-                   if (platSeo[f]) {
-                       html += `<div class="mb-2"><span class="block text-[10px] font-semibold text-slate-400 mb-0.5">${f}</span><div class="bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-slate-200 whitespace-pre-wrap">${escapeHtml(platSeo[f])}</div></div>`;
-                   }
-               });
-               html += `</div>`;
-           }
-           document.getElementById('seoViewContent').innerHTML = html;
-           document.getElementById('seoViewModal').classList.remove('hidden');
-       }
-       function closeSeoView() { document.getElementById('seoViewModal').classList.add('hidden'); }
-       function escapeHtml(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
-
-       async function updatePlatformStatusDirect(projId, platId, newStatus) {
-           const proj = projects.find(p => p.id === projId);
-           if (proj && proj.platforms[platId]) {
-               proj.platforms[platId].status = newStatus;
-               await pushToGitHub(`Update status: ${proj.title} [${platId}]`);
-               renderCalendarAndProjects();
-           }
-       }
-       function loadProjectToEdit(projId) {
-           const proj = projects.find(p => p.id === projId);
-           if (!proj) return;
-           currentEditProjectId = proj.id;
-           document.getElementById('videoTitle').value = proj.title;
-           dateInput.value = proj.launchDate;
-           renderGrid();
-           loadSeoData(proj.seoPackage);
-           platformsConfig.forEach(plat => {
-               if (proj.platforms[plat.id]) {
-                   const sel = document.getElementById(`status-select-${plat.id}`);
-                   if (sel) sel.value = proj.platforms[plat.id].status;
-               }
-           });
-           switchTab('planner');
-           showToast("Projet chargé pour modification.");
-       }
-       async function deleteProject(projId) {
-           if (confirm("Supprimer ce projet de GitHub ?")) {
-               const proj = projects.find(p => p.id === projId);
-               projects = projects.filter(p => p.id !== projId);
-               await pushToGitHub(`Delete: ${proj ? proj.title : projId}`);
-               renderCalendarAndProjects();
-               updateBadgeCount();
-           }
-       }
-       function updateBadgeCount() { document.getElementById('savedCountBadge').innerText = projects.length; }
-       function showToast(msg) {
-           const toast = document.getElementById('toast');
-           document.getElementById('toastMsg').innerText = msg;
-           toast.classList.remove('opacity-0', 'translate-y-10', 'pointer-events-none');
-           setTimeout(() => toast.classList.add('opacity-0', 'translate-y-10', 'pointer-events-none'), 3000);
-       }
-
-       // --- EXPORTS ---
        function copyPlanningText() {
-           const schedule = calculateSchedule();
-           const videoTitle = document.getElementById('videoTitle').value || 'Vidéo Sans Titre';
-           let text = `📌 PLANNING DE PUBLICATION : ${videoTitle}\n\n`;
-           schedule.forEach(s => { text += `• ${s.name} (${s.dayOffset === 0 ? 'J0' : 'J+1'}) :\n  🗓 Date: ${s.formattedDateStr}\n  ⏰ Heure: ${s.timeSlot}\n  🎯 KPI: ${s.kpi}\n  💡 Action: ${s.strategy}\n\n`; });
-           navigator.clipboard.writeText(text);
-           showToast("Planning copié !");
-       }
-       function exportICalendar() {
-           const schedule = calculateSchedule();
-           const videoTitle = document.getElementById('videoTitle').value || 'Publication Vidéo';
-           let icsContent = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//SocialSync Hub//FR'];
-           schedule.forEach(item => {
-               const y = item.computedDate.getFullYear(), m = String(item.computedDate.getMonth()+1).padStart(2,'0'), d = String(item.computedDate.getDate()).padStart(2,'0');
-               const [sh, sm] = item.startTime.split(':'), [eh, em] = item.endTime.split(':');
-               icsContent.push('BEGIN:VEVENT', `SUMMARY:[${item.name}] ${videoTitle}`, `DTSTART:${y}${m}${d}T${sh}${sm}00`, `DTEND:${y}${m}${d}T${eh}${em}00`, 'END:VEVENT');
+           const title = document.getElementById('videoTitle').value.trim() || 'Sans titre';
+           const launchDateVal = document.getElementById('launchDate').value;
+           const baseDate = launchDateVal ? new Date(launchDateVal) : new Date();
+
+           let text = `📅 PLANNING DE PUBLICATION - ${title}\n\n`;
+           platformsConfig.forEach(p => {
+               const pDate = new Date(baseDate);
+               pDate.setDate(pDate.getDate() + p.dayOffset);
+               const dateStr = pDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+               text += `• ${p.name} (J+${p.dayOffset}) : ${dateStr} à ${p.timeSlot}\n`;
            });
-           icsContent.push('END:VCALENDAR');
-           const blob = new Blob([icsContent.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
+
+           navigator.clipboard.writeText(text).then(() => {
+               showToast("Planning copié dans le presse-papiers !");
+           }).catch(() => {
+               showToast("Erreur lors de la copie.", "fa-solid fa-triangle-exclamation");
+           });
+       }
+
+       function exportICalendar() {
+           const title = document.getElementById('videoTitle').value.trim() || 'Projet SocialSync';
+           const launchDateVal = document.getElementById('launchDate').value;
+           if (!launchDateVal) return;
+           const baseDate = new Date(launchDateVal);
+
+           let ics = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//SocialSync Hub//FR\n";
+           platformsConfig.forEach(p => {
+               const pDate = new Date(baseDate);
+               pDate.setDate(pDate.getDate() + p.dayOffset);
+               const dStr = pDate.toISOString().replace(/[-:]/g, '').split('T')[0];
+               const startStr = `${dStr}T${p.startTime.replace(':', '')}00`;
+               const endStr = `${dStr}T${p.endTime.replace(':', '')}00`;
+
+               ics += "BEGIN:VEVENT\n";
+               ics += `SUMMARY:${p.name} - ${title}\n`;
+               ics += `DTSTART:${startStr}\n`;
+               ics += `DTEND:${endStr}\n`;
+               ics += `DESCRIPTION:Publication sur ${p.name}. KPI: ${p.kpi}\n`;
+               ics += "END:VEVENT\n";
+           });
+           ics += "END:VCALENDAR";
+
+           const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8;' });
            const link = document.createElement('a');
            link.href = URL.createObjectURL(blob);
-           link.setAttribute('download', `planning-${dateInput.value}.ics`);
-           document.body.appendChild(link); link.click(); document.body.removeChild(link);
+           link.download = `planning_${title.replace(/\s+/g, '_')}.ics`;
+           link.click();
+           showToast("Fichier .ICS exporté !");
        }
 
        function exportAllData() {
-           if (projects.length === 0) { alert("Aucune donnée à exporter."); return; }
-           const exportObj = { exportedAt: new Date().toISOString(), app: 'SocialSync Hub', version: '2.0', projects };
-           const blob = new Blob([JSON.stringify(exportObj, null, 2)], { type: 'application/json' });
-           const link = document.createElement('a');
-           link.href = URL.createObjectURL(blob);
-           link.setAttribute('download', `socialsync-backup-${new Date().toISOString().split('T')[0]}.json`);
-           document.body.appendChild(link); link.click(); document.body.removeChild(link);
-           showToast(`${projects.length} projet(s) exporté(s) !`);
+           const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(projects, null, 2));
+           const dlAnchor = document.createElement('a');
+           dlAnchor.setAttribute("href", dataStr);
+           dlAnchor.setAttribute("download", `socialsync_export_${new Date().toISOString().split('T')[0]}.json`);
+           document.body.appendChild(dlAnchor);
+           dlAnchor.click();
+           dlAnchor.remove();
+           showToast("Données exportées au format JSON.");
        }
 
-       async function importAllData(event) {
+       function importAllData(event) {
            const file = event.target.files[0];
            if (!file) return;
-           try {
-               const text = await file.text();
-               const data = JSON.parse(text);
-               const imported = data.projects || data;
-               if (!Array.isArray(imported)) throw new Error("Format invalide");
-               const mode = confirm(`OK = Fusionner (ajouter aux ${projects.length} existants)\nAnnuler = Remplacer tout`);
-               if (mode) {
-                   const existingIds = new Set(projects.map(p => p.id));
-                   imported.forEach(p => { if (!existingIds.has(p.id)) projects.push(p); });
-               } else {
-                   projects = imported;
+           const reader = new FileReader();
+           reader.onload = function(e) {
+               try {
+                   const imported = JSON.parse(e.target.result);
+                   if (Array.isArray(imported)) {
+                       projects = imported;
+                       updateSavedCount();
+                       renderProjectsList();
+                       if (calendar) updateCalendarEvents();
+                       showToast("Données importées avec succès.");
+                   } else {
+                       showToast("Format JSON invalide.", "fa-solid fa-triangle-exclamation");
+                   }
+               } catch (err) {
+                   showToast("Erreur de lecture du fichier JSON.", "fa-solid fa-triangle-exclamation");
                }
-               await pushToGitHub(`Import: ${imported.length} projets`);
-               renderCalendarAndProjects();
-               updateBadgeCount();
-               showToast(`${imported.length} projet(s) importé(s) !`);
-           } catch (err) { alert("Erreur d'import : " + err.message); }
-           event.target.value = '';
+           };
+           reader.readAsText(file);
        }
 
-       dateInput.addEventListener('change', renderGrid);
+       function showToast(msg, icon = "fa-solid fa-circle-check") {
+           const toast = document.getElementById('toast');
+           const toastMsg = document.getElementById('toastMsg');
+           const toastIcon = document.getElementById('toastIcon');
+           if (!toast) return;
+           toastMsg.innerText = msg;
+           toastIcon.className = `${icon} text-xl`;
+           toast.classList.remove('opacity-0', 'translate-y-10', 'pointer-events-none');
+           setTimeout(() => {
+               toast.classList.add('opacity-0', 'translate-y-10', 'pointer-events-none');
+           }, 3000);
+       }
    </script>
 </body>
 </html>
