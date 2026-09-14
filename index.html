@@ -306,7 +306,145 @@
                 });
             }
         }
+                // --- IMPORT PACKAGE SEO (REMPLISSAGE AUTO EN 1 COUP) ---
+        const seoSectionAliases = { 'youtube': 'yt', 'tiktok': 'tiktok', 'instagram': 'ig', 'facebook': 'fb', 'pinterest': 'pin' };
+        const seoFieldAliases = {
+            'playlist': '__PLAYLIST__',
+            'script start': 'Script Start', 'script': 'Script Start',
+            'title': 'Title', 'description': 'Description',
+            'tags': 'Tags', 'tag': 'Tags',
+            'pinned comment': 'Pinned Comment', 'pinned': 'Pinned Comment',
+            'title/caption': 'Title/Caption', 'title / caption': 'Title/Caption',
+            'hook': 'Hook',
+            'hashtags': 'Hashtags', 'hashtag': 'Hashtags',
+            'caption': 'Caption',
+            'call to action': 'Call To Action', 'cta': 'Call To Action',
+            'post copy': 'Post copy', 'post': 'Post copy',
+            'engagement question': 'Engagement Question',
+            'pin title': 'Pin Title', 'pin description': 'Pin Description'
+        };
+        function normSeoLine(s) { return s.toLowerCase().replace(/[*_#`~>]/g, '').replace(/\s+/g, ' ').trim(); }
 
+        function parseSeoPackage(rawText) {
+            const parsed = { playlist: '', yt: {}, tiktok: {}, ig: {}, fb: {}, pin: {} };
+            let currentSection = null;
+
+            // Méthode 1 : blocs de code ```text ... ```
+            const blockRegex = /```[\w+-]*[^\S\r\n]*\r?\n([\s\S]*?)```/g;
+            let match, lastIndex = 0, foundBlocks = false;
+            const entries = [];
+            while ((match = blockRegex.exec(rawText)) !== null) {
+                foundBlocks = true;
+                const lines = rawText.slice(lastIndex, match.index).split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+                let label = null;
+                for (const line of lines) {
+                    const n = normSeoLine(line);
+                    if (seoSectionAliases[n]) { currentSection = seoSectionAliases[n]; label = null; }
+                    else if (seoFieldAliases[n]) { label = seoFieldAliases[n]; }
+                }
+                entries.push({ section: currentSection, label, content: match[1].trim() });
+                lastIndex = blockRegex.lastIndex;
+            }
+            if (foundBlocks) {
+                entries.forEach(e => {
+                    if (!e.label) return;
+                    if (e.label === '__PLAYLIST__') parsed.playlist = e.content;
+                    else if (e.section) parsed[e.section][e.label] = e.content;
+                });
+                return parsed;
+            }
+
+            // Méthode 2 (secours) : texte brut sans ```
+            let pendingField = null;
+            const flushPending = () => {
+                if (!pendingField) return;
+                const content = pendingField.buffer.join('\n').trim();
+                if (pendingField.label === '__PLAYLIST__') parsed.playlist = content;
+                else if (pendingField.section) parsed[pendingField.section][pendingField.label] = content;
+                pendingField = null;
+            };
+            rawText.split(/\r?\n/).forEach(rawLine => {
+                const n = normSeoLine(rawLine);
+                if (seoSectionAliases[n]) { flushPending(); currentSection = seoSectionAliases[n]; }
+                else if (seoFieldAliases[n]) { flushPending(); pendingField = { section: currentSection, label: seoFieldAliases[n], buffer: [] }; }
+                else if (pendingField) pendingField.buffer.push(rawLine);
+            });
+            flushPending();
+            return parsed;
+        }
+
+        function flashSeoField(el) {
+            el.classList.add('border-fuchsia-500', 'ring-1', 'ring-fuchsia-500/50');
+            setTimeout(() => el.classList.remove('border-fuchsia-500', 'ring-1', 'ring-fuchsia-500/50'), 1600);
+        }
+
+        function applyParsedSeo(parsed) {
+            let filled = 0;
+            if (parsed.playlist) {
+                const el = document.getElementById('seoPlaylist');
+                el.value = parsed.playlist; flashSeoField(el); filled++;
+            }
+            for (const [platId, config] of Object.entries(seoFieldsConfig)) {
+                const platData = parsed[platId] || {};
+                const keys = Object.keys(platData);
+                if (!keys.length) continue;
+                config.fields.forEach(f => {
+                    const el = document.getElementById(`seo_${platId}_${f.replace(/[\s\/]/g, '_')}`);
+                    if (!el) return;
+                    const target = f.toLowerCase();
+                    let key = keys.find(k => k.toLowerCase() === target);
+                    if (!key) {
+                        const base = target.split('/')[0].trim();
+                        key = keys.find(k => k.toLowerCase() === base || k.toLowerCase().includes(base));
+                    }
+                    if (key && platData[key]) { el.value = platData[key]; flashSeoField(el); filled++; }
+                });
+            }
+            return filled;
+        }
+
+        function openSeoImportModal() {
+            document.getElementById('seoImportModal').classList.remove('hidden');
+            const section = document.getElementById('seoSection');
+            if (section.classList.contains('hidden')) toggleSeoSection();
+            setTimeout(() => document.getElementById('seoBulkInput').focus(), 60);
+        }
+        function closeSeoImportModal() { document.getElementById('seoImportModal').classList.add('hidden'); }
+        function clearSeoImportInput() {
+            document.getElementById('seoBulkInput').value = '';
+            document.getElementById('seoImportStatus').innerHTML = '';
+        }
+        async function pasteSeoFromClipboard() {
+            try {
+                const text = await navigator.clipboard.readText();
+                if (text) { document.getElementById('seoBulkInput').value = text; previewSeoPackage(); }
+                else showToast("Le presse-papiers est vide.");
+            } catch (e) { showToast("Collage bloqué par le navigateur — utilisez Ctrl+V."); }
+        }
+        function previewSeoPackage() {
+            const raw = document.getElementById('seoBulkInput').value;
+            const statusEl = document.getElementById('seoImportStatus');
+            if (!raw.trim()) { statusEl.innerHTML = ''; return; }
+            const parsed = parseSeoPackage(raw);
+            let count = (parsed.playlist ? 1 : 0);
+            const secs = parsed.playlist ? ['Playlist'] : [];
+            for (const [platId, cfg] of Object.entries(seoFieldsConfig)) {
+                const n = Object.keys(parsed[platId] || {}).length;
+                if (n) { count += n; secs.push(cfg.label); }
+            }
+            statusEl.innerHTML = count
+                ? `<span class="text-emerald-400 font-semibold"><i class="fa-solid fa-circle-check"></i> ${count} champ(s) détecté(s) :</span> <span class="text-slate-300">${secs.join(' · ')}</span>`
+                : `<span class="text-amber-400"><i class="fa-solid fa-triangle-exclamation"></i> Aucun champ reconnu pour le moment…</span>`;
+        }
+        function applySeoPackage() {
+            const raw = document.getElementById('seoBulkInput').value;
+            if (!raw.trim()) { showToast("Collez d'abord le package SEO."); return; }
+            const filled = applyParsedSeo(parseSeoPackage(raw));
+            if (filled === 0) { showToast("Format non reconnu — vérifiez le package collé."); return; }
+            closeSeoImportModal();
+            clearSeoImportInput();
+            showToast(`${filled} champ(s) SEO rempli(s) automatiquement !`);
+        }
         // --- GITHUB API ---
         function getGitHubConfig() {
             return { username: localStorage.getItem('gh_user') || '', repo: localStorage.getItem('gh_repo') || '', token: localStorage.getItem('gh_token') || '' };
