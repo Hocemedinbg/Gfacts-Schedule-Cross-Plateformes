@@ -9,6 +9,8 @@
    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/locales/fr.global.min.js"></script>
+   <!-- ===== MODIFICATION : PDF.js pour extraction texte des PDF uploadés ===== -->
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
    <style>
        ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -65,6 +67,10 @@
                </div>
                <div class="flex items-center gap-3">
                    <nav class="flex space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
+                       <!-- ===== MODIFICATION : onglet Scripts placé en premier ===== -->
+                       <button id="tabBtnScripts" onclick="switchTab('scripts')" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-2 text-slate-400 hover:text-white">
+                           <i class="fa-solid fa-clapperboard"></i><span>Scripts</span>
+                       </button>
                        <button id="tabBtnPlanner" onclick="switchTab('planner')" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-2 bg-indigo-600 text-white shadow-md">
                            <i class="fa-solid fa-pen-to-square"></i><span>Planificateur</span>
                        </button>
@@ -79,6 +85,98 @@
    </header>
 
    <main class="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+       <!-- ===== DÉBUT MODIFICATION : ONGLET 0 : GÉNÉRATEUR DE SCRIPTS IA (PDF → OpenRouter) ===== -->
+       <section id="tabScripts" class="hidden space-y-6">
+           <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+               <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                   <div>
+                       <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                           <i class="fa-solid fa-clapperboard text-indigo-400"></i> Générateur de Scripts IA
+                       </h2>
+                       <p class="text-xs text-slate-400 mt-0.5">Uploadez un PDF : l'IA OpenRouter analyse tout le contenu et rédige des scripts TTS prêts à l'emploi.</p>
+                   </div>
+                   <div class="flex flex-wrap items-end gap-3">
+                       <div>
+                           <label class="block text-xs font-semibold text-slate-400 mb-1">Clé API OpenRouter <span class="text-red-400">*</span></label>
+                           <input type="password" id="scriptsApiKey" placeholder="sk-or-v1-..." class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 w-56">
+                       </div>
+                       <div>
+                           <label class="block text-xs font-semibold text-slate-400 mb-1">Modèle</label>
+                           <input type="text" id="scriptsModel" placeholder="meta-llama/llama-3.3-70b-instruct" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 w-72">
+                       </div>
+                   </div>
+               </div>
+               <p class="text-[10px] text-slate-500 mt-3">Clé gratuite sur <code class="text-indigo-400">openrouter.ai/keys</code> · Modèle par défaut : <code class="text-indigo-400">meta-llama/llama-3.3-70b-instruct</code> (ajoutez <code class="text-indigo-400">:free</code> pour la variante gratuite si disponible).</p>
+           </div>
+
+           <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+               <!-- ZONE 1 : SCRIPTS SHORTS -->
+               <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+                   <div>
+                       <h3 class="font-bold text-white flex items-center gap-2">
+                           <i class="fa-solid fa-mobile-screen-button text-cyan-400"></i> Scripts Vidéos Shorts
+                       </h3>
+                       <p class="text-[11px] text-slate-400 mt-0.5">TikTok · YouTube Shorts · Instagram Reels — 1:30 à 3:00 min, minimum 4-5 scripts distincts, keywords 4-5 mots.</p>
+                   </div>
+                   <div id="shortPdfZone" onclick="document.getElementById('shortPdfInput').click()"
+                        ondragover="event.preventDefault(); this.classList.add('border-indigo-500');"
+                        ondragleave="this.classList.remove('border-indigo-500');"
+                        ondrop="handlePdfDrop(event, 'short')"
+                        class="border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-xl p-6 text-center cursor-pointer transition">
+                       <i class="fa-solid fa-file-pdf text-3xl text-slate-500 mb-2 block"></i>
+                       <p class="text-xs text-slate-300 font-semibold">Cliquez ou glissez-déposez votre PDF ici</p>
+                       <p class="text-[10px] text-slate-500 mt-1">Le texte est extrait localement dans votre navigateur.</p>
+                   </div>
+                   <input type="file" id="shortPdfInput" accept=".pdf" class="hidden" onchange="handlePdfUpload(event, 'short')">
+                   <div id="shortPdfStatus" class="text-xs min-h-[18px]"></div>
+                   <button onclick="generateScriptWithAi('short')" id="shortGenBtn" class="w-full px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-bold rounded-xl text-sm transition shadow-lg flex items-center justify-center gap-2">
+                       ✨ Générer les scripts Shorts
+                   </button>
+                   <div id="shortGenStatus" class="text-xs min-h-[18px]"></div>
+                   <textarea id="shortScriptOutput" rows="12" placeholder="Les scripts générés apparaîtront ici..." class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 resize-y font-mono"></textarea>
+                   <div class="flex items-center justify-between gap-2">
+                       <div id="shortScriptStats" class="text-[10px] text-slate-500"></div>
+                       <button onclick="copyScriptOutput('short')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium transition flex items-center gap-1.5">
+                           <i class="fa-regular fa-copy"></i> Copier
+                       </button>
+                   </div>
+               </div>
+
+               <!-- ZONE 2 : SCRIPT VIDÉO LONGUE -->
+               <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+                   <div>
+                       <h3 class="font-bold text-white flex items-center gap-2">
+                           <i class="fa-solid fa-film text-fuchsia-400"></i> Script Vidéo Longue
+                       </h3>
+                       <p class="text-[11px] text-slate-400 mt-0.5">Documentaire longue durée — hook 10-30 s, rythme information/pauses, keywords 4-6 mots.</p>
+                   </div>
+                   <div id="longPdfZone" onclick="document.getElementById('longPdfInput').click()"
+                        ondragover="event.preventDefault(); this.classList.add('border-indigo-500');"
+                        ondragleave="this.classList.remove('border-indigo-500');"
+                        ondrop="handlePdfDrop(event, 'long')"
+                        class="border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-xl p-6 text-center cursor-pointer transition">
+                       <i class="fa-solid fa-file-pdf text-3xl text-slate-500 mb-2 block"></i>
+                       <p class="text-xs text-slate-300 font-semibold">Cliquez ou glissez-déposez votre PDF ici</p>
+                       <p class="text-[10px] text-slate-500 mt-1">Le texte est extrait localement dans votre navigateur.</p>
+                   </div>
+                   <input type="file" id="longPdfInput" accept=".pdf" class="hidden" onchange="handlePdfUpload(event, 'long')">
+                   <div id="longPdfStatus" class="text-xs min-h-[18px]"></div>
+                   <button onclick="generateScriptWithAi('long')" id="longGenBtn" class="w-full px-4 py-2.5 bg-gradient-to-r from-fuchsia-600 to-purple-600 hover:from-fuchsia-500 hover:to-purple-500 text-white font-bold rounded-xl text-sm transition shadow-lg flex items-center justify-center gap-2">
+                       ✨ Générer le script Long
+                   </button>
+                   <div id="longGenStatus" class="text-xs min-h-[18px]"></div>
+                   <textarea id="longScriptOutput" rows="12" placeholder="Le script généré apparaîtra ici..." class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 resize-y font-mono"></textarea>
+                   <div class="flex items-center justify-between gap-2">
+                       <div id="longScriptStats" class="text-[10px] text-slate-500"></div>
+                       <button onclick="copyScriptOutput('long')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium transition flex items-center gap-1.5">
+                           <i class="fa-regular fa-copy"></i> Copier
+                       </button>
+                   </div>
+               </div>
+           </div>
+       </section>
+       <!-- ===== FIN MODIFICATION : ONGLET SCRIPTS ===== -->
 
        <!-- ONGLET 1 : PLANIFICATEUR -->
        <section id="tabPlanner" class="space-y-6">
@@ -112,11 +210,9 @@
                            <button type="button" onclick="openSeoImportModal()" class="px-3 py-1.5 bg-gradient-to-r from-fuchsia-600 to-purple-600 hover:from-fuchsia-500 hover:to-purple-500 text-white rounded-lg text-xs font-medium transition flex items-center gap-1.5 shadow-md">
                                <i class="fa-solid fa-wand-magic-sparkles text-[10px]"></i> <span>Import auto</span>
                            </button>
-                           <!-- ===== DÉBUT MODIFICATION : bouton ✨ Générer (IA OpenRouter) ===== -->
                            <button type="button" onclick="openAiGenerateModal()" title="Générer le package SEO avec l'IA (OpenRouter)" class="px-3 py-1.5 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white rounded-lg text-xs font-medium transition flex items-center gap-1.5 shadow-md">
                                <span>✨</span> <span>Générer</span>
                            </button>
-                           <!-- ===== FIN MODIFICATION ===== -->
                            <button type="button" onclick="toggleSeoSection()" id="seoToggleBtn" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium transition flex items-center gap-1.5">
                                <i class="fa-solid fa-chevron-down text-[10px]"></i> <span>Afficher</span>
                            </button>
@@ -253,7 +349,7 @@
        </div>
    </div>
 
-   <!-- ===== DÉBUT MODIFICATION : MODAL GÉNÉRATION IA (OpenRouter) ===== -->
+   <!-- MODAL GÉNÉRATION IA (OpenRouter) -->
    <div id="aiGenerateModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl relative">
            <button onclick="closeAiGenerateModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
@@ -271,10 +367,10 @@
                </div>
                <div>
                    <label class="block text-xs font-semibold text-slate-400 mb-1">Modèle</label>
-                   <input type="text" id="orModel" placeholder="deepseek/deepseek-chat-v3-0324:free" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+                   <input type="text" id="orModel" placeholder="meta-llama/llama-3.3-70b-instruct" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
                </div>
            </div>
-           <p class="text-[10px] text-slate-500">Clé gratuite sur <code class="text-indigo-400">openrouter.ai/keys</code> · Modèle gratuit par défaut : <code class="text-indigo-400">deepseek/deepseek-chat-v3-0324:free</code> (modifiable, ex : <code class="text-indigo-400">meta-llama/llama-3.3-70b-instruct:free</code>).</p>
+           <p class="text-[10px] text-slate-500">Clé gratuite sur <code class="text-indigo-400">openrouter.ai/keys</code> · Modèle par défaut : <code class="text-indigo-400">meta-llama/llama-3.3-70b-instruct</code> (modifiable — ajoutez <code class="text-indigo-400">:free</code> pour la variante gratuite si disponible).</p>
            <div>
                <label class="block text-xs font-semibold text-slate-400 mb-1">Script de la vidéo (ou sujet) <span class="text-red-400">*</span></label>
                <textarea id="aiScriptInput" rows="8" placeholder="Collez ici le script complet de la vidéo (ou décrivez son sujet)..." class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 resize-y font-mono"></textarea>
@@ -296,7 +392,6 @@
            </div>
        </div>
    </div>
-   <!-- ===== FIN MODIFICATION ===== -->
 
    <!-- MODAL VUE SEO -->
    <div id="seoViewModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
@@ -354,7 +449,11 @@
        dateInput.value = new Date().toISOString().split('T')[0];
 
        window.addEventListener('DOMContentLoaded', () => {
+           if (window.pdfjsLib) {
+               pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+           }
            loadGitHubConfigInputs();
+           loadScriptConfigInputs();
            checkGitHubConnectionAndLoad();
            renderGrid();
            renderSeoFields();
@@ -577,8 +676,9 @@
            showToast(`${filled} champ(s) SEO rempli(s) automatiquement !`);
        }
 
-       // ===== DÉBUT MODIFICATION : GÉNÉRATION IA (OpenRouter) =====
-       const AI_DEFAULT_MODEL = 'deepseek/deepseek-chat-v3-0324:free';
+       // ===== GÉNÉRATION IA PACKAGE SEO (OpenRouter) =====
+       // ===== MODIFICATION : modèle par défaut = meta-llama/llama-3.3-70b-instruct =====
+       const AI_DEFAULT_MODEL = 'meta-llama/llama-3.3-70b-instruct';
 
        const AI_SYSTEM_PROMPT = `You are a viral content strategist and SEO expert specializing in cross-platform video distribution. Your expertise spans YouTube algorithm optimization, TikTok virality mechanics, Instagram Reels engagement patterns, Facebook video performance, and Pinterest discovery systems.
 
@@ -761,7 +861,6 @@ content
            let text = String(raw || '').replace(/\[\/?COPY BOX\]/gi, '').trim();
            const parsed = { playlist: '', yt: {}, tiktok: {}, ig: {}, fb: {}, pin: {} };
 
-           // Playlist : correspondance avec la liste imposée
            const lower = text.toLowerCase();
            for (const pl of AI_PLAYLISTS) {
                if (lower.includes(pl.toLowerCase())) { parsed.playlist = pl; break; }
@@ -773,7 +872,6 @@ content
 
            const platRe = /\b(youtube|tiktok|instagram|facebook|pinterest)\b/i;
 
-           // Extraction via blocs de code (```...```) — format imposé au modèle
            const blockRegex = /```[^\n\r`]*\r?\n([\s\S]*?)```/g;
            let match, found = false, lastIndex = 0;
            while ((match = blockRegex.exec(text)) !== null) {
@@ -782,7 +880,6 @@ content
                const content = match[1].trim();
                lastIndex = blockRegex.lastIndex;
 
-               // Label = dernière ligne non vide au-dessus du bloc
                const segLines = seg.split(/\r?\n/);
                let label = null;
                for (let i = segLines.length - 1; i >= 0; i--) {
@@ -795,7 +892,6 @@ content
 
                if (label === '__PLAYLIST__') { if (!parsed.playlist) parsed.playlist = content; continue; }
 
-               // Plateforme = dernière ligne "titre de section" au-dessus du bloc (hors blocs de code)
                const before = text.slice(0, match.index);
                let plat = null, inFence = false;
                before.split(/\r?\n/).forEach(line => {
@@ -815,7 +911,6 @@ content
                return parsed;
            }
 
-           // Fallback ligne par ligne (si aucun bloc de code)
            let currentPlat = null, pending = null;
            const flush = () => {
                if (!pending) return;
@@ -917,7 +1012,321 @@ content
            btn.disabled = false;
            btn.innerHTML = '✨ Générer avec l\'IA';
        }
-       // ===== FIN MODIFICATION : GÉNÉRATION IA (OpenRouter) =====
+
+       // ===== DÉBUT MODIFICATION : GÉNÉRATEUR DE SCRIPTS (PDF → IA OpenRouter) =====
+       const PDF_MAX_CHARS = 180000;
+       const pdfState = { short: { text: '', name: '' }, long: { text: '', name: '' } };
+
+       const SHORT_SCRIPT_PROMPT = `You are an expert in creating viral content for TikTok, YouTube Shorts, and Instagram Reels, as well as a professional documentary-style scriptwriter specialized in Text-To-Speech narration.
+I will provide a book, document, or PDF. Your task is to read, analyze, and completely rewrite the ENTIRE content into multiple video scripts optimized for TTS narration and AI-generated imagery.
+IMPORTANT:
+You must process the ENTIRE book. Do not summarize only the beginning or the most famous chapters. Cover all major ideas, events, stories, examples, anecdotes, revelations, and important concepts contained throughout the complete document.
+VIDEO GENERATION REQUIREMENTS
+- Generate a MINIMUM of 4 and preferably 5 video scripts from the supplied content.
+- If the book contains enough material, you may generate more than 5 videos.
+- Every video must focus on a different hook, mystery, revelation, lesson, event, character, conflict, concept, or perspective from the source material.
+- Avoid producing multiple videos that tell the exact same story in slightly different words.
+- Each video should feel unique and worth watching independently.
+- When possible, vary the angles:
+  - Hidden facts
+  - Unexpected events
+  - Mysteries
+  - Historical turning points
+  - Character stories
+  - Shocking revelations
+  - Little-known details
+  - Lessons and consequences
+  - Behind-the-scenes explanations
+  - Important discoveries
+VIDEO DURATION
+Each video must last BETWEEN 1 MINUTE 30 SECONDS AND 3 MINUTES.
+Since TTS narration averages around 130 words per minute, each video script must contain BETWEEN 200 AND 380 WORDS.
+Never generate videos shorter than 200 words.
+VIDEO SEPARATION
+Each video must be separated from the next video by EXACTLY TWO EMPTY LINES.
+This rule is mandatory.
+SCENE SEPARATION
+Within each video:
+- One line equals one scene.
+- Each scene should contain 1 to 3 sentences maximum.
+- Separate scenes using a single line break.
+- No numbering.
+- No titles.
+- No bullet points.
+Only narration text followed by the keyword tag.
+KEYWORD FORMAT
+At the end of EVERY scene add:
+[KEYWORD: ...]
+Keyword rules:
+- Use exactly 4 to 5 words whenever possible.
+- Write keywords in English.
+- Proper names, official titles, cities, countries, monuments, landmarks, organizations, artworks, historical events, and people must keep their exact searchable names.
+- If a person is mentioned, include their real full name whenever possible.
+- If a country is mentioned, use recognizable visual elements from that country.
+- If a city, monument, landmark, castle, building, artwork, invention, publication, or historical event is mentioned, use its real searchable name.
+- Never replace named entities with generic descriptions.
+GOOD:
+[KEYWORD: Nelson Mandela prison portrait]
+[KEYWORD: Eiffel Tower Paris France]
+[KEYWORD: Leonardo da Vinci workshop]
+[KEYWORD: Ancient Rome empire map]
+BAD:
+[KEYWORD: famous leader]
+[KEYWORD: historical building]
+[KEYWORD: old man speaking]
+Keywords must describe what would produce the most accurate and visually recognizable image search result.
+NARRATION STYLE
+Write in an engaging viral documentary style.
+Every video should:
+- Start with a strong curiosity-driven hook.
+- Use rhetorical questions.
+- Build tension progressively.
+- Alternate between information and breathing room.
+- Include surprises and revelations.
+- Maintain a sense of discovery.
+- End with a strong concluding thought, mystery, implication, lesson, or reflection.
+Use techniques commonly found in successful documentary Shorts channels.
+CONTENT ORGANIZATION
+- Reorganize information when necessary to improve storytelling.
+- Group related facts together.
+- Build narrative momentum.
+- Reveal information gradually.
+- Create a satisfying progression from beginning to end.
+The output should feel like a professionally edited documentary script rather than a chapter summary.
+SENSITIVE CONTENT HANDLING
+You must carefully identify potentially sensitive topics.
+When dealing with wars, dictatorships, extremist ideologies, crimes, executions, deaths, massacres, persecution, terrorism, propaganda, or other sensitive historical subjects:
+- Preserve factual accuracy.
+- Preserve historical meaning.
+- Remain educational and neutral.
+- Never glorify violence or extremist figures.
+- Never sensationalize tragedy.
+When a sensitive term is not essential for understanding:
+- Prefer neutral descriptive wording.
+Examples:
+- "the German dictator"
+- "the extremist regime"
+- "the regime's propaganda newspaper"
+- "the prohibited political symbol"
+However:
+- If the exact historical name is necessary for understanding, identification, or education, retain the correct historical term.
+- Never intentionally misspell names.
+- Never use leetspeak.
+- Never use OCR-evasion tricks.
+- Never distort history.
+The goal is factual educational storytelling while remaining suitable for mainstream social-media platforms.
+FINAL OUTPUT FORMAT
+Return ONLY the scripts.
+No introductions.
+No explanations.
+No summaries.
+No notes.
+Each scene must follow this format:
+Narration sentence(s). [KEYWORD: searchable image keywords]
+Separate scenes with one line break.
+Separate videos with TWO EMPTY LINES.
+Most importantly:
+- Cover the ENTIRE source material.
+- Generate AT LEAST 4 to 5 distinct videos.
+- Ensure each video explores a different angle of the book.
+- Create highly searchable and accurate keywords for every scene.
+At the end of EVERY scene add: [KEYWORD: ...]
+At the end of EVERY scene add: [KEYWORD: ...]
+really mandatory At the end of EVERY scene add: [KEYWORD: ...]`;
+
+       const LONG_SCRIPT_PROMPT = `You are a script writer specializing in TTS-driven video content. Your task is to convert PDF books into engaging video scripts optimized for text-to-speech narration and AI-generated imagery.
+
+For each PDF I send, produce a script following this exact format:
+
+**One line = one scene.** Each line contains:
+1. The sentence the TTS AI will speak (natural, conversational pacing)
+2. A [KEYWORD: ...] tag at the end specifying the image to display during that sentence
+
+**The script structure must follow these pacing rules:**
+- Open with a **strong hook** in the first 10–30 seconds that grabs attention
+- **Alternate** between moments of dense information and pauses (allow breathing room after complex ideas)
+- **Build intensity** toward key moments (revelations, punchlines, demonstrations, turning points)
+- **Slow down** after a peak to let information settle before the next rise
+- Adapt pacing based on content density—complex sections get shorter sentences and visual breaks; lighter sections can flow longer
+
+**Keyword requirements:**
+- Use exactly 4–6 words per keyword.
+- Write every keyword in English, except proper names, official titles, and place names, which must retain their standard searchable spelling.
+- Identify the exact person, character, monument, landmark, city, country, organization, artwork, object, or historical event referenced in each scene.
+- If a specific person or character is mentioned, include their exact full or canonical name in the keyword.
+- If a monument, landmark, city, or location is mentioned, include its exact recognized name.
+- If a country is mentioned, use a visual unmistakably related to that country, such as its flag, map, landmark, capital, landscape, architecture, or contextually relevant national symbol.
+- If an event, organization, publication, artwork, invention, or historical object is mentioned, use its recognized name whenever possible.
+- Never replace a named entity with a vague category. Write "Nelson Mandela public speech," not "political leader speaking."
+- Add useful contextual details such as period, activity, location, clothing, or visual setting, while respecting the 4–6-word limit.
+- Where several entities are mentioned, prioritize the entity most important to the spoken sentence.
+- Match the visual angle to the narration: geography should favor maps or landscapes; national identity should favor flags or symbols; history should favor relevant people, events, locations, or artifacts.
+- Use concrete, visually searchable descriptions and avoid vague terms such as "man," "woman," "person," "thing," "place," or "historical scene."
+- Do not invent information that is absent from the PDF.
+**Tone and style adaptation:**
+- **Type 1 (Ah Lecks style):** Sustained narrative pace, rhythmic editing, clear punchlines. Priority: **dynamism + clarity**. Use varied sentence lengths to maintain energy; include pauses strategically.
+- **Type 2 (Simon Puech / Micode / Amistory / maeonstream style):** Educational focus with deliberate tension-building. Priority: **educational value + building tension**. Structure information in layers; use anticipation before reveals.
+
+**Output format:**
+Return only the script—no introductions, no explanations, just the lines. Each line on a new line. Example:
+
+\`\`\`
+Hello and welcome to this video dedicated to nature. [KEYWORD: green forest]
+Today, we are going to explore the mysteries of the oceans. [KEYWORD: underwater seabed]
+Look at these magnificent creatures swimming in the depths. [KEYWORD: whale swimming]
+But the ocean is fragile, we must protect it. [KEYWORD: ocean plastic pollution]
+Thank you for watching, see you very soon. [KEYWORD: sunset beach]
+\`\`\`
+the entire book !! the entire book please!!
+You must also be very careful when rewriting terms considered "forbidden" or sensitive by automatic moderation algorithms. Here are some examples, but you must be vigilant about everything:
+
+Adolf Hitler / Führer
+
+Nazi
+
+anti-Semitic / Jew hater
+
+Der Stürmer / swastika
+
+high treason
+
+You will need to adapt the texts:
+
+
+**Sensitive historical content:**
+- Preserve the historical meaning and factual accuracy of the source.
+- When a sensitive term is not essential to understanding the scene, replace it with a clear neutral description such as "the German dictator," "the extremist regime," "the regime's propaganda newspaper," or "the prohibited political symbol."
+- When the exact historical term is essential for clarity, education, or identification, retain its standard spelling and present it in a factual, non-glorifying context.
+- Never use leetspeak, deliberate misspellings, phonetic tricks, or OCR-evasion techniques.
+- Do not sanitize information so heavily that the historical meaning becomes misleading.
+- Avoid celebratory, promotional, or sensational framing of extremist people, organizations, ideologies, or symbols.
+
+it's really important to scan and rewrite the entire book, the entire book
+When you receive a PDF, extract the core ideas, reorganize them for pacing and drama, and output the script in this format. The script's rhythm should mirror how the narration will be spoken—short, punchy lines for fast moments; longer, flowing lines for contemplative moments.`;
+
+       function loadScriptConfigInputs() {
+           const keyEl = document.getElementById('scriptsApiKey');
+           const modelEl = document.getElementById('scriptsModel');
+           if (keyEl && !keyEl.value) keyEl.value = localStorage.getItem('or_api_key') || '';
+           if (modelEl && !modelEl.value) modelEl.value = localStorage.getItem('or_model') || AI_DEFAULT_MODEL;
+       }
+
+       async function extractPdfText(file, onProgress) {
+           if (!window.pdfjsLib) throw new Error('Module PDF.js non chargé.');
+           const arrayBuffer = await file.arrayBuffer();
+           const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+           let fullText = '';
+           for (let i = 1; i <= pdf.numPages; i++) {
+               if (onProgress) onProgress(i, pdf.numPages);
+               const page = await pdf.getPage(i);
+               const tc = await page.getTextContent();
+               fullText += tc.items.map(it => it.str).join(' ') + '\n\n';
+           }
+           return { text: fullText.replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim(), pages: pdf.numPages };
+       }
+
+       async function processPdfFile(file, zone) {
+           if (!file) return;
+           if (!file.name.toLowerCase().endsWith('.pdf')) { showToast('Veuillez sélectionner un fichier PDF.', 'error'); return; }
+           const statusEl = document.getElementById(zone + 'PdfStatus');
+           statusEl.innerHTML = '<span class="text-amber-300"><i class="fa-solid fa-spinner fa-spin"></i> Extraction du texte…</span>';
+           try {
+               const { text, pages } = await extractPdfText(file, (p, total) => {
+                   statusEl.innerHTML = `<span class="text-amber-300"><i class="fa-solid fa-spinner fa-spin"></i> Extraction… page ${p}/${total}</span>`;
+               });
+               if (!text || text.length < 20) throw new Error('Aucun texte extractible (PDF scanné ou protégé ?).');
+               let finalText = text, truncated = false;
+               if (text.length > PDF_MAX_CHARS) { finalText = text.slice(0, PDF_MAX_CHARS); truncated = true; }
+               pdfState[zone] = { text: finalText, name: file.name };
+               statusEl.innerHTML = `<span class="text-emerald-400"><i class="fa-solid fa-circle-check"></i> ${escapeHtml(file.name)} — ${pages} page(s) — ${finalText.length.toLocaleString('fr-FR')} caractères extraits${truncated ? ' <span class="text-amber-400">(tronqué à ' + PDF_MAX_CHARS.toLocaleString('fr-FR') + ' caractères pour respecter les limites du modèle)</span>' : ''}</span>`;
+               showToast('PDF chargé : ' + file.name);
+           } catch (e) {
+               pdfState[zone] = { text: '', name: '' };
+               statusEl.innerHTML = `<span class="text-red-400"><i class="fa-solid fa-triangle-exclamation"></i> ${escapeHtml(e.message)}</span>`;
+           }
+       }
+
+       function handlePdfUpload(event, zone) {
+           const file = event.target.files[0];
+           processPdfFile(file, zone);
+           event.target.value = '';
+       }
+
+       function handlePdfDrop(event, zone) {
+           event.preventDefault();
+           const zoneEl = document.getElementById(zone + 'PdfZone');
+           if (zoneEl) zoneEl.classList.remove('border-indigo-500');
+           const file = event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0];
+           processPdfFile(file, zone);
+       }
+
+       async function generateScriptWithAi(zone) {
+           const apiKey = document.getElementById('scriptsApiKey').value.trim();
+           if (!apiKey) { showToast('Renseignez votre clé API OpenRouter.', 'error'); return; }
+           const model = document.getElementById('scriptsModel').value.trim() || AI_DEFAULT_MODEL;
+           localStorage.setItem('or_api_key', apiKey);
+           localStorage.setItem('or_model', model);
+
+           const state = pdfState[zone];
+           if (!state.text) { showToast("Uploadez d'abord un PDF.", 'error'); return; }
+
+           const systemPrompt = zone === 'short' ? SHORT_SCRIPT_PROMPT : LONG_SCRIPT_PROMPT;
+           const btn = document.getElementById(zone + 'GenBtn');
+           const statusEl = document.getElementById(zone + 'GenStatus');
+           const outputEl = document.getElementById(zone + 'ScriptOutput');
+           const statsEl = document.getElementById(zone + 'ScriptStats');
+
+           btn.disabled = true;
+           const originalBtn = btn.innerHTML;
+           btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Génération en cours…';
+           statusEl.innerHTML = '<span class="text-indigo-300"><i class="fa-solid fa-circle-notch fa-spin"></i> L\'IA analyse le document et rédige les scripts (cela peut prendre plusieurs minutes pour un livre entier)…</span>';
+
+           try {
+               const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                   method: 'POST',
+                   headers: {
+                       'Authorization': `Bearer ${apiKey}`,
+                       'Content-Type': 'application/json',
+                       'HTTP-Referer': 'https://socialsync-hub.app',
+                       'X-Title': 'SocialSync Hub'
+                   },
+                   body: JSON.stringify({
+                       model: model,
+                       messages: [
+                           { role: 'system', content: systemPrompt },
+                           { role: 'user', content: state.text }
+                       ]
+                   })
+               });
+               if (!res.ok) {
+                   const errText = await res.text().catch(() => '');
+                   throw new Error('OpenRouter HTTP ' + res.status + (errText ? ' — ' + errText.slice(0, 160) : ''));
+               }
+               const data = await res.json();
+               const content = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+               if (!content || !content.trim()) throw new Error('Réponse IA vide — réessayez.');
+
+               outputEl.value = content.trim();
+               const videos = content.trim().split(/\n{3,}/).filter(b => b.trim()).length;
+               const words = content.trim().split(/\s+/).length;
+               statsEl.innerHTML = `<i class="fa-solid fa-film"></i> ~${videos} script(s) · ${words.toLocaleString('fr-FR')} mots · ${content.length.toLocaleString('fr-FR')} caractères`;
+               statusEl.innerHTML = '<span class="text-emerald-400"><i class="fa-solid fa-circle-check"></i> Scripts générés avec succès !</span>';
+               showToast('✨ Scripts générés !');
+           } catch (e) {
+               statusEl.innerHTML = `<span class="text-red-400"><i class="fa-solid fa-triangle-exclamation"></i> ${escapeHtml(e.message)}</span>`;
+           }
+           btn.disabled = false;
+           btn.innerHTML = originalBtn;
+       }
+
+       function copyScriptOutput(zone) {
+           const val = document.getElementById(zone + 'ScriptOutput').value;
+           if (!val.trim()) { showToast('Aucun script à copier.', 'error'); return; }
+           navigator.clipboard.writeText(val)
+               .then(() => showToast('Scripts copiés dans le presse-papiers !'))
+               .catch(() => showToast('Copie impossible.', 'error'));
+       }
+       // ===== FIN MODIFICATION : GÉNÉRATEUR DE SCRIPTS =====
 
        // --- GITHUB API ---
        function getGitHubConfig() {
@@ -1191,7 +1600,6 @@ content
                eventDidMount: (info) => {
                    info.el.classList.toggle('ssync-ev-validated', !!info.event.extendedProps.validated);
                },
-               // ===== clic événement = package SEO de CETTE plateforme seulement =====
                eventClick: (info) => {
                    viewSeoForPlatform(info.event.extendedProps.projectId, info.event.extendedProps.platformId);
                }
@@ -1383,7 +1791,6 @@ content
            document.getElementById('seoViewModal').classList.remove('hidden');
        }
 
-       // ===== vue SEO filtrée sur UNE seule plateforme (clic événement calendrier) =====
        function viewSeoForPlatform(projectId, platformId) {
            const proj = projects.find(p => p.id === projectId);
            if (!proj) return;
@@ -1459,25 +1866,32 @@ content
        }
 
        // --- UI GLOBAL ---
+       // ===== MODIFICATION : gestion de 3 onglets (Scripts | Planificateur | Calendrier) =====
        function switchTab(tab) {
            const planner = document.getElementById('tabPlanner');
            const cal = document.getElementById('tabCalendar');
+           const scr = document.getElementById('tabScripts');
            const bP = document.getElementById('tabBtnPlanner');
            const bC = document.getElementById('tabBtnCalendar');
-           if (tab === 'planner') {
-               planner.classList.remove('hidden');
-               cal.classList.add('hidden');
-               bP.classList.add('bg-indigo-600', 'text-white', 'shadow-md');
-               bP.classList.remove('text-slate-400', 'hover:text-white');
-               bC.classList.remove('bg-indigo-600', 'text-white', 'shadow-md');
-               bC.classList.add('text-slate-400', 'hover:text-white');
-           } else {
-               cal.classList.remove('hidden');
-               planner.classList.add('hidden');
-               bC.classList.add('bg-indigo-600', 'text-white', 'shadow-md');
-               bC.classList.remove('text-slate-400', 'hover:text-white');
-               bP.classList.remove('bg-indigo-600', 'text-white', 'shadow-md');
-               bP.classList.add('text-slate-400', 'hover:text-white');
+           const bS = document.getElementById('tabBtnScripts');
+           const show = (el, on) => el.classList.toggle('hidden', !on);
+           const setActive = (btn, on) => {
+               if (on) {
+                   btn.classList.add('bg-indigo-600', 'text-white', 'shadow-md');
+                   btn.classList.remove('text-slate-400', 'hover:text-white');
+               } else {
+                   btn.classList.remove('bg-indigo-600', 'text-white', 'shadow-md');
+                   btn.classList.add('text-slate-400', 'hover:text-white');
+               }
+           };
+           show(planner, tab === 'planner');
+           show(cal, tab === 'calendar');
+           show(scr, tab === 'scripts');
+           setActive(bP, tab === 'planner');
+           setActive(bC, tab === 'calendar');
+           setActive(bS, tab === 'scripts');
+           if (tab === 'scripts') loadScriptConfigInputs();
+           if (tab === 'calendar') {
                if (!calendar) initCalendar();
                else {
                    calendar.render();
