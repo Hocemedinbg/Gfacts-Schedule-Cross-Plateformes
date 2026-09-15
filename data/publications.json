@@ -40,11 +40,13 @@
       },
       "validations": {
         "yt": false,
-        "fb": true
+        "fb": true,
+        "ig": true
       },
       "status": {
         "yt": "programme",
-        "fb": "publie"
+        "fb": "publie",
+        "ig": "publie"
       },
       "createdAt": "2026-09-15T07:04:15.752Z"
     }
