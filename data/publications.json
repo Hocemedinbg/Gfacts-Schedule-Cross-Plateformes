@@ -39,10 +39,12 @@
         }
       },
       "validations": {
-        "yt": false
+        "yt": false,
+        "fb": true
       },
       "status": {
-        "yt": "programme"
+        "yt": "programme",
+        "fb": "publie"
       },
       "createdAt": "2026-09-15T07:04:15.752Z"
     }
