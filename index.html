@@ -43,12 +43,11 @@
        .ssync-validated .ssync-ev-plat,
        .ssync-validated .ssync-ev-time { text-decoration: line-through; opacity: .75; }
 
-       /* ===== DÉBUT MODIFICATION : dropdown statut plateforme ===== */
+       /* ===== dropdown statut plateforme ===== */
        .ssync-status-select { color-scheme: dark; cursor: pointer; }
        .ssync-status-select option { background: #0f172a; color: #e2e8f0; }
-       /* ===== FIN MODIFICATION ===== */
    </style>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍓</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍿</text></svg>">
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col">
 
@@ -279,7 +278,7 @@
            pin: { label: 'Pinterest', fields: ['Script Start', 'Pin Title', 'Pin Description', 'Hashtags'] }
        };
 
-       // ===== DÉBUT MODIFICATION : statuts plateforme (dropdown 3 choix) =====
+       // ===== statuts plateforme (dropdown 3 choix) =====
        const PLATFORM_STATUS = {
            a_planifier: { label: 'À planifier', emoji: '📝', classes: 'bg-slate-800 text-slate-300 border-slate-700' },
            programme:   { label: 'Programmé',   emoji: '📅', classes: 'bg-amber-500/15 text-amber-300 border-amber-500/40' },
@@ -294,7 +293,6 @@
        function statusLabel(s) { return statusConfig(s).label; }
        function statusEmoji(s) { return statusConfig(s).emoji; }
        function statusSelectClasses(s) { return statusConfig(s).classes; }
-       // ===== FIN MODIFICATION =====
 
        let projects = [];
        let currentSha = null;
@@ -801,9 +799,11 @@
                eventDidMount: (info) => {
                    info.el.classList.toggle('ssync-ev-validated', !!info.event.extendedProps.validated);
                },
+               // ===== DÉBUT MODIFICATION : clic événement = package SEO de CETTE plateforme seulement =====
                eventClick: (info) => {
-                   viewSeo(info.event.extendedProps.projectId);
+                   viewSeoForPlatform(info.event.extendedProps.projectId, info.event.extendedProps.platformId);
                }
+               // ===== FIN MODIFICATION =====
            });
            calendar.render();
        }
@@ -816,7 +816,7 @@
            const timeText = arg.timeText ? `<div class="ssync-ev-time">${arg.timeText}</div>` : '';
            return {
                html: `
-               <div class="ssync-event${props.validated ? ' ssync-validated' : ''}" title="${plat.name} — cliquez pour voir le package SEO">
+               <div class="ssync-event${props.validated ? ' ssync-validated' : ''}" title="${plat.name} — cliquez pour voir le package SEO de cette plateforme">
                    <div class="ssync-ev-head">
                        <input type="checkbox" class="ssync-check" ${props.validated ? 'checked' : ''}
                            title="Cocher = 📤 Publié"
@@ -863,7 +863,6 @@
            calendar.setOption('events', getCalendarEvents());
        }
 
-       // ===== DÉBUT MODIFICATION : dropdown statut (Publié / Programmé / À planifier) =====
        async function setPlatformStatus(projectId, platformId, newStatus, selectEl) {
            const proj = projects.find(p => p.id === projectId);
            if (!proj) return;
@@ -893,7 +892,6 @@
                showToast('Mise à jour GitHub échouée : ' + e.message, 'error');
            }
        }
-       // ===== FIN MODIFICATION =====
 
        // --- PROJETS ---
        function renderProjectsList() {
@@ -984,7 +982,7 @@
                        </select>
                    </div>`;
                cfg.fields.forEach(f => {
-                   const val = (proj.seo && proj.seo[platId] && proj.seo[proj ? platId : platId] && proj.seo[platId][f]) || '';
+                   const val = (proj.seo && proj.seo[platId] && proj.seo[platId][f]) || '';
                    html += `<div class="mb-2"><p class="text-[10px] font-semibold text-slate-400">${f}</p><p class="text-xs text-slate-200 whitespace-pre-wrap">${escapeHtml(val || '—')}</p></div>`;
                });
                html += `</div>`;
@@ -993,6 +991,51 @@
            document.getElementById('seoViewContent').innerHTML = html;
            document.getElementById('seoViewModal').classList.remove('hidden');
        }
+
+       // ===== DÉBUT MODIFICATION : vue SEO filtrée sur UNE seule plateforme (clic événement calendrier) =====
+       function viewSeoForPlatform(projectId, platformId) {
+           const proj = projects.find(p => p.id === projectId);
+           if (!proj) return;
+           const cfg = seoFieldsConfig[platformId];
+           const plat = platformsConfig.find(p => p.id === platformId);
+           if (!cfg || !plat) { viewSeo(projectId); return; }
+           const d = addDaysToDate(proj.date, plat.dayOffset);
+           const st = getPlatStatus(proj, platformId);
+           let html = `
+           <div class="space-y-5">
+               <div>
+                   <h3 class="text-xl font-bold text-white flex items-center gap-2"><i class="fa-solid fa-video text-indigo-400"></i> ${escapeHtml(proj.title)}</h3>
+                   <p class="text-xs text-slate-400 mt-1"><i class="fa-regular fa-calendar mr-1"></i>Lancement YT (J0) : ${formatDateFr(proj.date)}</p>
+                   <p class="text-xs text-fuchsia-400 mt-0.5"><i class="fa-solid fa-list mr-1"></i>Playlist : ${escapeHtml((proj.seo && proj.seo.playlist) || '—')}</p>
+               </div>
+               <button onclick="viewSeo('${proj.id}')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium transition flex items-center gap-1.5">
+                   <i class="fa-solid fa-arrow-left text-[10px]"></i> Voir toutes les plateformes
+               </button>
+               <div class="bg-slate-950 border border-slate-800 rounded-xl p-4">
+                   <div class="flex items-center justify-between gap-2 mb-3 flex-wrap">
+                       <div class="flex items-center gap-2 flex-wrap">
+                           <i class="${plat.icon} text-sm"></i>
+                           <span class="font-bold text-sm text-white">${cfg.label}</span>
+                           <span class="text-[10px] text-slate-400">J+${plat.dayOffset} · ${formatDateFr(d)} · ${plat.timeSlot}</span>
+                       </div>
+                       <select onchange="setPlatformStatus('${proj.id}', '${platformId}', this.value, this)"
+                               class="ssync-status-select text-[11px] font-semibold rounded-lg border px-2.5 py-1.5 focus:outline-none ${statusSelectClasses(st)}"
+                               title="Statut de publication">
+                           <option value="a_planifier" ${st === 'a_planifier' ? 'selected' : ''}>📝 À planifier</option>
+                           <option value="programme" ${st === 'programme' ? 'selected' : ''}>📅 Programmé</option>
+                           <option value="publie" ${st === 'publie' ? 'selected' : ''}>📤 Publié</option>
+                       </select>
+                   </div>`;
+           cfg.fields.forEach(f => {
+               const val = (proj.seo && proj.seo[platformId] && proj.seo[platformId][f]) || '';
+               html += `<div class="mb-2"><p class="text-[10px] font-semibold text-slate-400">${f}</p><p class="text-xs text-slate-200 whitespace-pre-wrap">${escapeHtml(val || '—')}</p></div>`;
+           });
+           html += `</div></div>`;
+           document.getElementById('seoViewContent').innerHTML = html;
+           document.getElementById('seoViewModal').classList.remove('hidden');
+       }
+       // ===== FIN MODIFICATION =====
+
        function closeSeoView() { document.getElementById('seoViewModal').classList.add('hidden'); }
 
        // --- DATA IMPORT / EXPORT ---
