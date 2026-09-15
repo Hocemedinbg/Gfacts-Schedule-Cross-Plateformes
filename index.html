@@ -1,1316 +1,1099 @@
 <!DOCTYPE html>
 <html lang="fr" class="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SocialSync Hub - Synchro GitHub</title>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>SocialSync Hub - Synchro GitHub</title>
+   
+   <script src="https://cdn.tailwindcss.com"></script>
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/locales/fr.global.min.js"></script>
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/locales/fr.global.min.js"></script>
+   <style>
+       ::-webkit-scrollbar { width: 8px; height: 8px; }
+       ::-webkit-scrollbar-track { background: #0f172a; }
+       ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+       .fc { --fc-border-color: #334155; --fc-page-bg-color: transparent; }
+       .fc-theme-standard td, .fc-theme-standard th { border-color: #334155 !important; }
+       .fc-col-header-cell-cushion, .fc-daygrid-day-number { color: #cbd5e1 !important; text-decoration: none !important; }
+       .fc-event { border: none !important; cursor: pointer; }
 
-    <style>
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #0f172a; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-        .fc { --fc-border-color: #334155; --fc-page-bg-color: transparent; }
-        .fc-theme-standard td, .fc-theme-standard th { border-color: #334155 !important; }
-        .fc-col-header-cell-cushion, .fc-daygrid-day-number { color: #cbd5e1 !important; text-decoration: none !important; }
-        .fc-event { border: none !important; cursor: pointer; }
-        .fc-daygrid-event-harness { margin-bottom: 4px !important; }
-        /* 🆕 Style des événements marqués "publié" */
-        .fc-event-published .fc-event-main, .fc-event-published .fc-list-event-title { text-decoration: line-through; opacity: 0.7; }
-    </style>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍿</text></svg>">
+       .fc .fc-toolbar-title { font-size: 1.15rem; font-weight: 700; color: #ffffff; }
+       .fc .fc-button { background: #1e293b; border: 1px solid #334155; color: #cbd5e1; font-size: 12px; font-weight: 600; box-shadow: none !important; text-transform: capitalize; }
+       .fc .fc-button:hover { background: #334155; border-color: #475569; }
+       .fc .fc-button-primary:not(:disabled).fc-button-active,
+       .fc .fc-button-primary:not(:disabled):active { background: #4f46e5 !important; border-color: #4f46e5 !important; color: #fff !important; }
+       .fc .fc-button:disabled { background: #0f172a; color: #64748b; }
+       .fc-day-today { background: rgba(99, 102, 241, .08) !important; }
+       .fc-event { border-radius: 6px !important; overflow: hidden; }
+       .fc-event-main { padding: 0 !important; }
+       .fc .fc-more-popover, .fc .fc-popover { background: #0f172a !important; border: 1px solid #334155 !important; }
+       .fc-event.ssync-ev-validated { box-shadow: inset 0 0 0 2px rgba(16,185,129,.9) !important; }
+
+       .ssync-event { width: 100%; padding: 3px 4px; border-radius: 5px; font-size: 11px; line-height: 1.25; color: #fff; overflow: hidden; }
+       .ssync-ev-head { display: flex; align-items: center; gap: 5px; min-width: 0; }
+       .ssync-check { width: 13px; height: 13px; min-width: 13px; accent-color: #ffffff; cursor: pointer; margin: 0; }
+       .ssync-ev-plat { font-weight: 700; font-size: 10.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 4px; }
+       .ssync-ev-ico { font-size: 10px; }
+       .ssync-ev-time { font-size: 9.5px; opacity: .85; }
+       .ssync-ev-title { font-size: 10px; opacity: .92; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+       .ssync-validated { background: rgba(16,185,129,.30) !important; }
+       .ssync-validated .ssync-ev-title,
+       .ssync-validated .ssync-ev-plat,
+       .ssync-validated .ssync-ev-time { text-decoration: line-through; opacity: .75; }
+
+       /* ===== DÉBUT MODIFICATION : dropdown statut plateforme ===== */
+       .ssync-status-select { color-scheme: dark; cursor: pointer; }
+       .ssync-status-select option { background: #0f172a; color: #e2e8f0; }
+       /* ===== FIN MODIFICATION ===== */
+   </style>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍓</text></svg>">
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col">
 
-    <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center gap-3">
-                    <div class="bg-gradient-to-tr from-indigo-600 to-pink-500 p-2.5 rounded-xl shadow-lg">
-                        <i class="fa-solid fa-share-nodes text-white text-lg"></i>
-                    </div>
-                    <div>
-                        <span class="font-bold text-lg bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent block">SocialSync Hub</span>
-                        <span class="text-xs text-slate-400">Synchro GitHub API Active</span>
-                    </div>
-                </div>
-                <div class="flex items-center gap-3">
-                    <button onclick="openConfigModal()" class="p-2 text-slate-400 hover:text-white bg-slate-950 border border-slate-800 rounded-xl transition" title="Configuration GitHub">
-                        <i class="fa-brands fa-github text-lg"></i>
-                    </button>
-                    <nav class="flex space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
-                        <button id="tabBtnPlanner" onclick="switchTab('planner')" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-2 bg-indigo-600 text-white shadow-md">
-                            <i class="fa-solid fa-pen-to-square"></i><span>Planificateur</span>
-                        </button>
-                        <button id="tabBtnCalendar" onclick="switchTab('calendar')" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-2 text-slate-400 hover:text-white">
-                            <i class="fa-solid fa-calendar-days"></i><span>Calendrier</span>
-                            <span id="savedCountBadge" class="bg-slate-800 text-indigo-400 text-[10px] px-2 py-0.5 rounded-full border border-slate-700">0</span>
-                        </button>
-                    </nav>
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <main class="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
-
-        <!-- ONGLET 1 : PLANIFICATEUR -->
-        <section id="tabPlanner" class="space-y-6">
-            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
-                    <div>
-                        <h2 class="text-xl font-bold text-white flex items-center gap-2">
-                            <i class="fa-solid fa-rocket text-indigo-400"></i> Nouvelle Programmation
-                        </h2>
-                        <p class="text-xs text-slate-400 mt-0.5">Saisissez la date YT pour générer les créneaux multi-plateformes.</p>
-                    </div>
-                    <div class="flex flex-wrap items-center gap-3">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-400 mb-1">Titre de la vidéo <span class="text-red-400">*</span></label>
-                            <input type="text" id="videoTitle" placeholder="Ex: 5 Astuces Secrètes..." class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 w-64">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-400 mb-1">Date Lancement YT (J0) <span class="text-red-400">*</span></label>
-                            <input type="date" id="launchDate" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- SECTION PACKAGE SEO -->
-                <div>
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="font-bold text-white flex items-center gap-2">
-                            <i class="fa-solid fa-magnifying-glass-chart text-fuchsia-400"></i> Package SEO Complet
-                        </h3>
-                        <div class="flex items-center gap-2">
-                            <button type="button" onclick="openSeoImportModal()" class="px-3 py-1.5 bg-gradient-to-r from-fuchsia-600 to-purple-600 hover:from-fuchsia-500 hover:to-purple-500 text-white rounded-lg text-xs font-medium transition flex items-center gap-1.5 shadow-md">
-                                <i class="fa-solid fa-wand-magic-sparkles text-[10px]"></i> <span>Import auto</span>
-                            </button>
-                            <button type="button" onclick="toggleSeoSection()" id="seoToggleBtn" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium transition flex items-center gap-1.5">
-                                <i class="fa-solid fa-chevron-down text-[10px]"></i> <span>Afficher</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div id="seoSection" class="hidden space-y-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-400 mb-1">Playlist</label>
-                            <input type="text" id="seoPlaylist" placeholder="Ex: True Crime & Dark History" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-fuchsia-500">
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="seoFieldsContainer"></div>
-                    </div>
-                </div>
-
-                <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-800 pt-5">
-                    <div class="flex gap-2">
-                        <button onclick="copyPlanningText()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium transition flex items-center gap-2">
-                            <i class="fa-regular fa-copy"></i> Copier texte
-                        </button>
-                        <button onclick="exportICalendar()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium transition flex items-center gap-2">
-                            <i class="fa-regular fa-calendar-plus"></i> Export .ICS
-                        </button>
-                    </div>
-                    <button onclick="saveProject()" id="saveBtn" class="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold rounded-xl text-sm transition shadow-lg shadow-emerald-900/30 flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
-                        <i class="fa-solid fa-cloud-arrow-up"></i> Sauvegarder dans GitHub
-                    </button>
-                </div>
-            </div>
-
-            <div id="scheduleGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
-        </section>
-
-        <!-- ONGLET 2 : CALENDRIER & SUIVI -->
-        <section id="tabCalendar" class="hidden space-y-6">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
-                <div>
-                    <h2 class="text-xl font-bold text-white flex items-center gap-2">
-                        <i class="fa-solid fa-calendar-check text-indigo-400"></i> Suivi & Planning Global
-                    </h2>
-                    <p class="text-xs text-slate-400 mt-1">Synchronisé avec votre dépôt GitHub. Cliquez sur un événement pour cocher "Publié".</p>
-                </div>
-                <div class="flex items-center gap-3 flex-wrap">
-                    <button onclick="exportAllData()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold transition flex items-center gap-2">
-                        <i class="fa-solid fa-download"></i> Exporter tout (JSON)
-                    </button>
-                    <label class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold transition flex items-center gap-2 cursor-pointer">
-                        <i class="fa-solid fa-upload"></i> Importer JSON
-                        <input type="file" accept=".json" onchange="importAllData(event)" class="hidden">
-                    </label>
-                    <button onclick="syncFromGitHub()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold transition flex items-center gap-2 shadow-md">
-                        <i class="fa-solid fa-rotate"></i> Forcer la synchro GitHub
-                    </button>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
-                    <div id="calendar"></div>
-                </div>
-                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col h-[650px]">
-                    <h3 class="font-bold text-lg text-white mb-4 flex items-center justify-between">
-                        <span><i class="fa-solid fa-list-check text-indigo-400 mr-2"></i>Projets Enregistrés</span>
-                    </h3>
-                    <div id="projectsList" class="flex-grow overflow-y-auto space-y-4 pr-1"></div>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <!-- MODAL DE CONFIGURATION GITHUB -->
-    <div id="configModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl relative">
-            <button onclick="closeConfigModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            <div class="flex items-center gap-3">
-                <div class="bg-slate-800 p-3 rounded-xl text-white"><i class="fa-brands fa-github text-2xl"></i></div>
-                <div>
-                    <h3 class="font-bold text-lg text-white">Configuration GitHub API</h3>
-                    <p class="text-xs text-slate-400">Connectez l'application à votre dépôt.</p>
-                </div>
-            </div>
-            <div class="space-y-4 text-xs">
-                <div>
-                    <label class="block font-semibold text-slate-300 mb-1">Nom d'utilisateur GitHub</label>
-                    <input type="text" id="ghUsername" placeholder="ex: mon-pseudo" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500">
-                </div>
-                <div>
-                    <label class="block font-semibold text-slate-300 mb-1">Nom du Dépôt (Repository)</label>
-                    <input type="text" id="ghRepo" placeholder="ex: socialsync-hub" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500">
-                </div>
-                <div>
-                    <label class="block font-semibold text-slate-300 mb-1">GitHub Personal Access Token (PAT)</label>
-                    <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500">
-                    <p class="text-[10px] text-slate-500 mt-1">Classic : droit <code class="text-indigo-400">repo</code>. Fine-grained : <code class="text-indigo-400">Contents → Read and write</code>.</p>
-                </div>
-            </div>
-            <div class="pt-3 border-t border-slate-800 flex justify-end gap-3">
-                <button onclick="closeConfigModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg text-xs font-semibold hover:bg-slate-700">Annuler</button>
-                <button onclick="saveGitHubConfig()" id="saveConfigBtn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-500 shadow-lg shadow-indigo-900/40 disabled:opacity-60">Tester & Enregistrer</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL IMPORT SEO -->
-    <div id="seoImportModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl relative">
-            <button onclick="closeSeoImportModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            <div class="flex items-center gap-3">
-                <div class="bg-fuchsia-950/50 border border-fuchsia-800/50 p-3 rounded-xl text-fuchsia-400"><i class="fa-solid fa-wand-magic-sparkles text-xl"></i></div>
-                <div>
-                    <h3 class="font-bold text-lg text-white">Import Automatique Package SEO</h3>
-                    <p class="text-xs text-slate-400">Collez votre texte (blocs ```text, Markdown, indentation libre) : tout est reconnu automatiquement.</p>
-                </div>
-            </div>
-            <div>
-                <textarea id="seoBulkInput" oninput="previewSeoPackage()" rows="8" placeholder="Collez ici votre texte SEO (indentation libre)..." class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-xs text-slate-100 focus:outline-none focus:border-fuchsia-500 resize-y font-mono"></textarea>
-            </div>
-            <div id="seoImportStatus" class="text-xs min-h-[20px]"></div>
-            <div class="pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3">
-                <div class="flex gap-2">
-                    <button onclick="pasteSeoFromClipboard()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium transition flex items-center gap-1.5">
-                        <i class="fa-regular fa-clipboard"></i> Coller
-                    </button>
-                    <button onclick="clearSeoImportInput()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-eraser"></i> Vider
-                    </button>
-                </div>
-                <div class="flex gap-2">
-                    <button onclick="closeSeoImportModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg text-xs font-semibold hover:bg-slate-700">Annuler</button>
-                    <button onclick="applySeoPackage()" class="px-4 py-2 bg-gradient-to-r from-fuchsia-600 to-purple-600 hover:from-fuchsia-500 hover:to-purple-500 text-white rounded-lg text-xs font-semibold shadow-lg">Appliquer le Package</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL VUE SEO -->
-    <div id="seoViewModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl relative overflow-hidden">
-            <button onclick="closeSeoView()" class="absolute top-4 right-4 text-slate-400 hover:text-white z-10 bg-slate-900/80 rounded-full p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
-            <div id="seoViewContent" class="overflow-y-auto p-6 flex-grow"></div>
-        </div>
-    </div>
-
-    <div id="toast" class="fixed bottom-5 right-5 bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-2xl transition-all duration-300 opacity-0 translate-y-10 pointer-events-none flex items-center gap-3 z-50">
-        <i id="toastIcon" class="fa-solid fa-circle-check text-xl"></i>
-        <span id="toastMsg" class="text-sm font-semibold">Action réussie !</span>
-    </div>
-
-    <script>
-        // ============================================================
-        // CONFIGURATION PLATEFORMES & SEO
-        // ============================================================
-        const platformsConfig = [
-            { id: 'yt', name: 'YouTube Shorts', icon: 'fa-brands fa-youtube', color: 'from-red-600/20 to-red-900/10 border-red-500/40', badgeColor: 'bg-red-500/20 text-red-400 border-red-500/30', calendarColor: '#ef4444', dayOffset: 0, timeSlot: '16h00 - 17h00', startTime: '16:00', endTime: '17:00', kpi: 'CTR & Abonnés', strategy: "Point de départ. Fin d'après-midi." },
-            { id: 'pin', name: 'Pinterest (Pin YT)', icon: 'fa-brands fa-pinterest', color: 'from-rose-600/20 to-rose-900/10 border-rose-500/40', badgeColor: 'bg-rose-500/20 text-rose-400 border-rose-500/30', calendarColor: '#e11d48', dayOffset: 0, timeSlot: '18h00 - 20h00', startTime: '18:00', endTime: '20:00', kpi: 'Saves & Trafic', strategy: 'Épingle avec lien direct YT.' },
-            { id: 'tiktok', name: 'TikTok', icon: 'fa-brands fa-tiktok', color: 'from-cyan-600/20 to-slate-900/10 border-cyan-500/40', badgeColor: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30', calendarColor: '#06b6d4', dayOffset: 0, timeSlot: '19h00 - 21h00', startTime: '19:00', endTime: '21:00', kpi: 'Rétention (>70%)', strategy: 'Accroche 2s, audio tendance.' },
-            { id: 'fb', name: 'Facebook Reels', icon: 'fa-brands fa-facebook', color: 'from-blue-600/20 to-blue-900/10 border-blue-500/40', badgeColor: 'bg-blue-500/20 text-blue-400 border-blue-500/30', calendarColor: '#3b82f6', dayOffset: 1, timeSlot: '11h30 - 13h30', startTime: '11:30', endTime: '13:30', kpi: 'Commentaires', strategy: 'Pause déjeuner. Poser question.' },
-            { id: 'ig', name: 'Instagram Reels', icon: 'fa-brands fa-instagram', color: 'from-fuchsia-600/20 to-fuchsia-900/10 border-fuchsia-500/40', badgeColor: 'bg-fuchsia-500/20 text-fuchsia-400 border-fuchsia-500/30', calendarColor: '#d946ef', dayOffset: 1, timeSlot: '18h30 - 20h30', startTime: '18:30', endTime: '20:30', kpi: 'Partages DM & Saves', strategy: 'Usage détente du soir.' }
-        ];
-
-        const seoFieldsConfig = {
-            yt: { label: 'YouTube', fields: ['Script Start', 'Title', 'Description', 'Tags', 'Pinned Comment'] },
-            tiktok: { label: 'TikTok', fields: ['Script Start', 'Title/Caption', 'Hook', 'Hashtags'] },
-            ig: { label: 'Instagram', fields: ['Script Start', 'Caption', 'Hashtags', 'Call To Action'] },
-            fb: { label: 'Facebook', fields: ['Script Start', 'Post copy', 'Hashtags', 'Engagement Question'] },
-            pin: { label: 'Pinterest', fields: ['Script Start', 'Pin Title', 'Pin Description', 'Hashtags'] }
-        };
-
-        // ============================================================
-        // ÉTAT GLOBAL
-        // ============================================================
-        let projects = [];
-        let currentSha = null;
-        let calendar = null;
-        let currentEditProjectId = null;
-        let toastTimer = null;
-        let currentSeoViewPlat = null; // 🆕 plateforme filtrée dans la vue SEO (null = toutes)
-
-        const FILE_PATH = 'data/publications.json';
-        const GH_CONFIG_KEY = 'socialsync_gh_config';
-        const WARN_ICON = 'fa-solid fa-triangle-exclamation';
-        const DEFAULT_SAVE_LABEL = '<i class="fa-solid fa-cloud-arrow-up"></i> Sauvegarder dans GitHub';
-
-        const dateInput = document.getElementById('launchDate');
-
-        // ============================================================
-        // UTILITAIRES
-        // ============================================================
-        function escapeHtml(str) {
-            return String(str ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-        }
-
-        function showToast(msg, icon = 'fa-solid fa-circle-check') {
-            const t = document.getElementById('toast');
-            const isWarn = icon.includes('triangle');
-            document.getElementById('toastIcon').className = icon + ' text-xl';
-            document.getElementById('toastMsg').textContent = msg;
-            t.classList.toggle('bg-amber-600', isWarn);
-            t.classList.toggle('bg-emerald-600', !isWarn);
-            t.classList.remove('opacity-0', 'translate-y-10', 'pointer-events-none');
-            clearTimeout(toastTimer);
-            toastTimer = setTimeout(() => t.classList.add('opacity-0', 'translate-y-10', 'pointer-events-none'), 4500);
-        }
-
-        // Encodage UTF-8 -> Base64 SANS erreur sur accents/emojis (cause n°1 du bug)
-        function utf8ToBase64(str) {
-            const bytes = new TextEncoder().encode(str);
-            let bin = '';
-            const CHUNK = 0x8000;
-            for (let i = 0; i < bytes.length; i += CHUNK) {
-                bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
-            }
-            return btoa(bin);
-        }
-
-        function base64ToUtf8(b64) {
-            const bin = atob(String(b64).replace(/\s/g, ''));
-            const bytes = new Uint8Array(bin.length);
-            for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-            return new TextDecoder('utf-8').decode(bytes);
-        }
-
-        function copyToClipboard(text) {
-            if (navigator.clipboard && window.isSecureContext) {
-                return navigator.clipboard.writeText(text);
-            }
-            return new Promise((resolve, reject) => {
-                const ta = document.createElement('textarea');
-                ta.value = text;
-                ta.style.position = 'fixed';
-                ta.style.opacity = '0';
-                document.body.appendChild(ta);
-                ta.select();
-                try {
-                    document.execCommand('copy') ? resolve() : reject(new Error('copy failed'));
-                } catch (e) { reject(e); }
-                finally { ta.remove(); }
-            });
-        }
-
-        function downloadBlob(content, filename, type) {
-            const blob = new Blob([content], { type });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 200);
-        }
-
-        // ============================================================
-        // NORMALISATION — garantit que projects est TOUJOURS un tableau
-        // ============================================================
-        function normalizeProjects(data) {
-            if (Array.isArray(data)) return data;                              // déjà un tableau ✓
-            if (data && typeof data === 'object') {
-                if (Array.isArray(data.projects))     return data.projects;    // format { projects: [...] }
-                if (Array.isArray(data.publications)) return data.publications; // format { publications: [...] }
-            }
-            return []; // tout le reste → tableau vide
-        }
-
-        function loadLocalProjects() {
-            try {
-                projects = normalizeProjects(JSON.parse(localStorage.getItem('socialsync_projects') || '[]'));
-            } catch (e) {
-                projects = [];
-            }
-            if (!Array.isArray(projects)) projects = []; // garde-fou absolu
-        }
-
-        function saveLocalProjects() {
-            try { localStorage.setItem('socialsync_projects', JSON.stringify(projects)); } catch (e) {}
-        }
-
-        function refreshCalendar() {
-            if (calendar) calendar.refetchEvents();
-        }
-
-        function updateSavedCountBadge() {
-            const b = document.getElementById('savedCountBadge');
-            if (b) b.textContent = Array.isArray(projects) ? projects.length : 0;
-        }
-
-        // ============================================================
-        // INITIALISATION
-        // ============================================================
-        window.addEventListener('DOMContentLoaded', () => {
-            loadLocalProjects();
-            loadGitHubConfigInputs();
-            renderGrid();
-            renderSeoFields();
-            renderProjectsList();
-            initCalendar();
-            updateSavedCountBadge();
-            if (dateInput) {
-                dateInput.value = new Date().toISOString().split('T')[0];
-                dateInput.addEventListener('change', renderGrid);
-            }
-            checkGitHubConnectionAndLoad();
-        });
-
-        // ============================================================
-        // GRILLE PLANNING & CHAMPS SEO
-        // ============================================================
-        function renderGrid() {
-            const grid = document.getElementById('scheduleGrid');
-            if (!grid) return;
-            const baseDateVal = dateInput ? dateInput.value : new Date().toISOString().split('T')[0];
-            const baseDate = baseDateVal ? new Date(baseDateVal + 'T00:00:00') : new Date();
-            let html = '';
-
-            platformsConfig.forEach(p => {
-                const d = new Date(baseDate);
-                d.setDate(d.getDate() + p.dayOffset);
-                const formattedDate = d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
-                html += `
-                    <div class="bg-gradient-to-br ${p.color} border rounded-2xl p-5 shadow-lg flex flex-col justify-between space-y-4">
-                        <div class="space-y-3">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-2.5">
-                                    <i class="${p.icon} text-xl text-white"></i>
-                                    <span class="font-bold text-sm text-white">${p.name}</span>
-                                </div>
-                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border ${p.badgeColor}">J+${p.dayOffset}</span>
-                            </div>
-                            <div class="text-xs text-slate-300 flex items-center justify-between border-t border-b border-slate-800/60 py-2">
-                                <span class="capitalize"><i class="fa-regular fa-calendar text-slate-400 mr-1"></i> ${formattedDate}</span>
-                                <span class="font-semibold text-white"><i class="fa-regular fa-clock text-slate-400 mr-1"></i> ${p.timeSlot}</span>
-                            </div>
-                            <p class="text-xs text-slate-400 leading-relaxed">${p.strategy}</p>
-                        </div>
-                        <div class="pt-2 border-t border-slate-800/40 flex items-center justify-between text-[11px] text-slate-400">
-                            <span>KPI Cible:</span>
-                            <span class="font-semibold text-indigo-300">${p.kpi}</span>
-                        </div>
-                    </div>`;
-            });
-            grid.innerHTML = html;
-        }
-
-        function seoFieldId(platId, field) { return `seo_${platId}_${field.replace(/[\s\/]/g, '_')}`; }
-
-        function renderSeoFields() {
-            const container = document.getElementById('seoFieldsContainer');
-            if (!container) return;
-            let html = '';
-            for (const [platId, config] of Object.entries(seoFieldsConfig)) {
-                const platInfo = platformsConfig.find(p => p.id === platId);
-                const fieldsHtml = config.fields.map(f => `
-                    <div class="mb-2">
-                        <label class="block text-[10px] font-semibold text-slate-400 mb-0.5">${f}</label>
-                        <textarea id="${seoFieldId(platId, f)}" rows="2" placeholder="${f}..." class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-fuchsia-500 resize-y"></textarea>
-                    </div>`).join('');
-                html += `
-                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
-                        <div class="flex items-center gap-2 mb-2">
-                            <i class="${platInfo.icon} text-sm text-slate-200"></i>
-                            <span class="font-bold text-xs text-white">${config.label}</span>
-                        </div>
-                        ${fieldsHtml}
-                    </div>`;
-            }
-            container.innerHTML = html;
-        }
-
-        function toggleSeoSection() {
-            const section = document.getElementById('seoSection');
-            const btn = document.getElementById('seoToggleBtn');
-            if (!section || !btn) return;
-            if (section.classList.contains('hidden')) {
-                section.classList.remove('hidden');
-                btn.innerHTML = '<i class="fa-solid fa-chevron-up text-[10px]"></i> <span>Masquer</span>';
-            } else {
-                section.classList.add('hidden');
-                btn.innerHTML = '<i class="fa-solid fa-chevron-down text-[10px]"></i> <span>Afficher</span>';
-            }
-        }
-
-        function getSeoData() {
-            const seo = { playlist: (document.getElementById('seoPlaylist')?.value || '').trim() };
-            for (const [platId, config] of Object.entries(seoFieldsConfig)) {
-                seo[platId] = {};
-                config.fields.forEach(f => {
-                    const el = document.getElementById(seoFieldId(platId, f));
-                    seo[platId][f] = el ? el.value : '';
-                });
-            }
-            return seo;
-        }
-
-        function loadSeoData(seo) {
-            if (!seo) return;
-            const pl = document.getElementById('seoPlaylist');
-            if (pl) pl.value = seo.playlist || '';
-            for (const [platId, config] of Object.entries(seoFieldsConfig)) {
-                config.fields.forEach(f => {
-                    const el = document.getElementById(seoFieldId(platId, f));
-                    if (el && seo[platId]) el.value = seo[platId][f] || '';
-                });
-            }
-            const hasContent = seo.playlist || Object.values(seo).some(v => typeof v === 'object' && v && Object.values(v).some(t => t));
-            const section = document.getElementById('seoSection');
-            const btn = document.getElementById('seoToggleBtn');
-            if (hasContent && section && section.classList.contains('hidden')) toggleSeoSection();
-            else if (!hasContent && section && !section.classList.contains('hidden') && btn) toggleSeoSection();
-        }
-
-        function clearSeoFields() {
-            const pl = document.getElementById('seoPlaylist');
-            if (pl) pl.value = '';
-            for (const [platId, config] of Object.entries(seoFieldsConfig)) {
-                config.fields.forEach(f => {
-                    const el = document.getElementById(seoFieldId(platId, f));
-                    if (el) el.value = '';
-                });
-            }
-        }
-
-        function resetPlannerForm() {
-            const t = document.getElementById('videoTitle');
-            if (t) t.value = '';
-            if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
-            clearSeoFields();
-            currentEditProjectId = null;
-            const btn = document.getElementById('saveBtn');
-            if (btn) btn.innerHTML = DEFAULT_SAVE_LABEL;
-            const section = document.getElementById('seoSection');
-            if (section && !section.classList.contains('hidden')) toggleSeoSection();
-        }
-
-        // ============================================================
-        // IMPORT PACKAGE SEO
-        // Parser INSENSIBLE à l'indentation et au formatage du copier-coller
-        // ============================================================
-        const seoSectionAliases = { 'youtube': 'yt', 'tiktok': 'tiktok', 'instagram': 'ig', 'facebook': 'fb', 'pinterest': 'pin' };
-
-        function normKey(s) {
-            return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
-        }
-
-        const seoFieldAliases = (() => {
-            // Alias courants (synonymes FR) → clé canonique normalisée
-            const canonical = {
-                'titre': 'title', 'titrevideo': 'title',
-                'desc': 'description',
-                'motscles': 'tags', 'keywords': 'tags',
-                'script': 'scriptstart',
-                'commentaireepingle': 'pinnedcomment', 'commentaire': 'pinnedcomment',
-                'cta': 'calltoaction',
-                'question': 'engagementquestion', 'questionengagement': 'engagementquestion',
-                'hashtag': 'hashtags',
-                'titrepin': 'pintitle',
-                'descpin': 'pindescription', 'descriptionpin': 'pindescription',
-                'post': 'postcopy', 'copiedupost': 'postcopy', 'textedupost': 'postcopy',
-                'legende': 'caption'
-            };
-            // Table par plateforme : clé normalisée → nom exact du champ du formulaire
-            const tables = {};
-            for (const [platId, cfg] of Object.entries(seoFieldsConfig)) {
-                tables[platId] = {};
-                cfg.fields.forEach(f => { tables[platId][normKey(f)] = f; });
-            }
-            return { tables, canonical };
-        })();
-
-        function resolveSeoField(platId, label) {
-            const table = seoFieldAliases.tables[platId];
-            if (!table) return null;
-            const key = normKey(label);
-            if (table[key]) return table[key];
-            const mapped = seoFieldAliases.canonical[key];
-            if (mapped && table[mapped]) return table[mapped];
-            return null;
-        }
-
-        // Normalise une ligne quelle que soit l'indentation / le formatage
-        function cleanLine(raw) {
-            let s = String(raw ?? '')
-                .replace(/\u00A0/g, ' ')                 // espaces insécables (copier-coller web)
-                .replace(/[\u200B-\u200D\uFEFF]/g, '')   // caractères invisibles (zero-width, BOM)
-                .replace(/\r/g, '')
-                .trim();
-            // retire les décorations Markdown : titres ##, puces -, *, •, >, numérotation 1.
-            s = s.replace(/^(#{1,6}\s+|[-*•>]\s+|\d+[.)]\s+)/, '').trim();
-            // retire le gras/italique Markdown englobant : **texte**, *texte*, ***texte***
-            s = s.replace(/^\*{1,3}(?=\S)/, '').replace(/(?<=\S)\*{1,3}$/, '').trim();
-            return s;
-        }
-
-        // Retire l'indentation commune d'un bloc multi-lignes
-        function dedentLines(lines) {
-            const nonEmpty = lines.filter(l => l.trim());
-            if (!nonEmpty.length) return '';
-            const minIndent = Math.min(...nonEmpty.map(l => (l.match(/^[ \t]*/) || [''])[0].length));
-            return lines.map(l => l.slice(minIndent)).join('\n').trim();
-        }
-
-        function parseSeoBulkText(text) {
-            const result = { playlist: '', sections: {} };
-
-            // Noms de section acceptés -> id plateforme ('playlist' = cas spécial)
-            const sectionKeys = {
-                'playlist': 'playlist', 'playlists': 'playlist',
-                'yt': 'yt', 'youtube': 'yt', 'youtubeshorts': 'yt',
-                'tiktok': 'tiktok',
-                'ig': 'ig', 'instagram': 'ig', 'insta': 'ig', 'reels': 'ig', 'reelsinstagram': 'ig', 'instagramreels': 'ig',
-                'fb': 'fb', 'facebook': 'fb', 'facebookreels': 'fb',
-                'pin': 'pin', 'pinterest': 'pin'
-            };
-
-            const lines = String(text || '').split(/\r?\n/);
-            let currentPlat = null;   // 'playlist' | 'yt' | 'tiktok' | 'ig' | 'fb' | 'pin'
-            let pendingField = null;  // champ en attente de sa valeur
-            let inFence = false;      // capture d'un bloc ```text ... ```
-            let fenceBuffer = [];
-
-            for (const raw of lines) {
-                // --- 1) Capture multi-lignes DANS un bloc de code (contenu brut préservé) ---
-                if (inFence) {
-                    if (/^`{3,}\s*$/.test(String(raw).trim())) {   // ligne ``` (indentation tolérée) = fermeture
-                        inFence = false;
-                        const value = dedentLines(fenceBuffer);    // retire l'indentation commune
-                        if (value) {
-                            if (currentPlat === 'playlist') {
-                                result.playlist = value;
-                            } else if (currentPlat && pendingField) {
-                                (result.sections[currentPlat] = result.sections[currentPlat] || {})[pendingField] = value;
-                            }
-                        }
-                        pendingField = null;
-                        fenceBuffer = [];
-                    } else {
-                        fenceBuffer.push(String(raw).replace(/\r/g, ''));
-                    }
-                    continue;
-                }
-
-                const line = cleanLine(raw);
-                if (!line) continue;
-
-                // --- 2) Ouverture de bloc : ```, ```text, ```markdown... (indentation tolérée) ---
-                if (/^`{3,}/.test(line)) {
-                    inFence = true;
-                    fenceBuffer = [];
-                    continue;
-                }
-
-                const norm = normKey(line);
-
-                // --- 3) En-tête de section (Playlist, YouTube, TikTok, Instagram, Facebook, Pinterest) ---
-                if (sectionKeys[norm]) {
-                    currentPlat = sectionKeys[norm];
-                    pendingField = (currentPlat === 'playlist') ? 'playlist' : null;
-                    continue;
-                }
-
-                // --- 4) Format "Label: valeur" sur une seule ligne ---
-                const kv = line.match(/^([^:：]{2,40}?)\s*[:：]\s*(.*)$/);
-                if (currentPlat && currentPlat !== 'playlist' && kv) {
-                    const field = resolveSeoField(currentPlat, kv[1]);
-                    if (field) {
-                        if (kv[2].trim()) {
-                            (result.sections[currentPlat] = result.sections[currentPlat] || {})[field] = kv[2].trim();
-                            pendingField = null;
-                        } else {
-                            pendingField = field; // valeur sur la ligne suivante
-                        }
-                        continue;
-                    }
-                }
-
-                // --- 5) Nom de champ seul (Script Start, Title, Description, Pin Title...) ---
-                if (currentPlat && currentPlat !== 'playlist') {
-                    const field = resolveSeoField(currentPlat, line);
-                    if (field) {
-                        pendingField = field;
-                        continue;
-                    }
-                }
-
-                // --- 6) Fallback : valeur "nue" juste après un nom de champ (sans bloc ```) ---
-                if (pendingField) {
-                    const rawVal = String(raw ?? '').replace(/\u00A0/g, ' ').trim();
-                    if (currentPlat === 'playlist') {
-                        result.playlist = rawVal;
-                    } else if (currentPlat) {
-                        (result.sections[currentPlat] = result.sections[currentPlat] || {})[pendingField] = rawVal;
-                    }
-                    pendingField = null;
-                }
-            }
-            return result;
-        }
-
-        function openSeoImportModal() {
-            const status = document.getElementById('seoImportStatus');
-            if (status) status.innerHTML = '<span class="text-slate-500">En attente de contenu...</span>';
-            document.getElementById('seoImportModal').classList.remove('hidden');
-        }
-
-        function closeSeoImportModal() {
-            document.getElementById('seoImportModal').classList.add('hidden');
-        }
-
-        function previewSeoPackage() {
-            const status = document.getElementById('seoImportStatus');
-            const text = document.getElementById('seoBulkInput')?.value || '';
-            if (!status) return;
-            if (!text.trim()) {
-                status.innerHTML = '<span class="text-slate-500">En attente de contenu...</span>';
-                return;
-            }
-            const parsed = parseSeoBulkText(text);
-            const plats = Object.keys(parsed.sections).filter(k => Object.keys(parsed.sections[k]).length);
-            const fieldCount = plats.reduce((n, k) => n + Object.keys(parsed.sections[k]).length, 0);
-            if (!plats.length && !parsed.playlist) {
-                status.innerHTML = '<span class="text-amber-400"><i class="fa-solid fa-triangle-exclamation"></i> Aucun champ reconnu. Structure attendue : une ligne "Playlist"/"YouTube"/"TikTok"... puis des noms de champs (Title, Description...) suivis de blocs de code ``` ```</span>';
-            } else {
-                const names = plats.map(id => seoFieldsConfig[id].label).join(', ');
-                status.innerHTML = `<span class="text-emerald-400"><i class="fa-solid fa-circle-check"></i> ${plats.length} plateforme(s) détectée(s)${names ? ' : ' + escapeHtml(names) : ''} — ${fieldCount} champ(s) rempli(s)${parsed.playlist ? ' + Playlist ✓' : ''}</span>`;
-            }
-        }
-
-        async function pasteSeoFromClipboard() {
-            const ta = document.getElementById('seoBulkInput');
-            try {
-                const text = await navigator.clipboard.readText();
-                if (!text) { showToast('Presse-papiers vide', WARN_ICON); return; }
-                ta.value = text;
-                previewSeoPackage();
-            } catch (e) {
-                showToast('Collage bloqué par le navigateur — faites Ctrl+V dans la zone', WARN_ICON);
-                if (ta) ta.focus();
-            }
-        }
-
-        function clearSeoImportInput() {
-            const ta = document.getElementById('seoBulkInput');
-            if (ta) ta.value = '';
-            previewSeoPackage();
-        }
-
-        function applySeoPackage() {
-            const text = document.getElementById('seoBulkInput')?.value || '';
-            const parsed = parseSeoBulkText(text);
-            const plats = Object.keys(parsed.sections).filter(k => Object.keys(parsed.sections[k]).length);
-            if (!plats.length && !parsed.playlist) {
-                showToast('Rien à appliquer — vérifiez le format du texte', WARN_ICON);
-                return;
-            }
-            if (parsed.playlist) {
-                const el = document.getElementById('seoPlaylist');
-                if (el) el.value = parsed.playlist;
-            }
-            plats.forEach(id => {
-                Object.entries(parsed.sections[id]).forEach(([f, v]) => {
-                    const el = document.getElementById(seoFieldId(id, f));
-                    if (el) el.value = v;
-                });
-            });
-            const section = document.getElementById('seoSection');
-            if (section && section.classList.contains('hidden')) toggleSeoSection();
-            closeSeoImportModal();
-            showToast(`Package SEO appliqué (${plats.length} plateforme(s)) ✅`);
-        }
-
-        // ============================================================
-        // CONFIGURATION GITHUB
-        // ============================================================
-        function getGhConfig() {
-            try { return JSON.parse(localStorage.getItem(GH_CONFIG_KEY)) || null; } catch (e) { return null; }
-        }
-
-        function openConfigModal() {
-            loadGitHubConfigInputs();
-            document.getElementById('configModal').classList.remove('hidden');
-        }
-
-        function closeConfigModal() {
-            document.getElementById('configModal').classList.add('hidden');
-        }
-
-        function loadGitHubConfigInputs() {
-            const cfg = getGhConfig();
-            if (!cfg) return;
-            const u = document.getElementById('ghUsername');
-            const r = document.getElementById('ghRepo');
-            const t = document.getElementById('ghToken');
-            if (u) u.value = cfg.username || '';
-            if (r) r.value = cfg.repo || '';
-            if (t) t.value = cfg.token || '';
-        }
-
-        async function ghApi(url, options = {}, creds = null) {
-            const cfg = creds || getGhConfig();
-            return fetch(url, {
-                ...options,
-                headers: {
-                    'Accept': 'application/vnd.github+json',
-                    'Authorization': `Bearer ${cfg.token}`,
-                    'X-GitHub-Api-Version': '2022-11-28',
-                    ...(options.headers || {})
-                }
-            });
-        }
-
-        async function saveGitHubConfig() {
-            const username = (document.getElementById('ghUsername')?.value || '').trim();
-            const repo = (document.getElementById('ghRepo')?.value || '').trim();
-            const token = (document.getElementById('ghToken')?.value || '').trim();
-            if (!username || !repo || !token) {
-                showToast('Remplissez les 3 champs (utilisateur, dépôt, token)', WARN_ICON);
-                return;
-            }
-            const btn = document.getElementById('saveConfigBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Test en cours...';
-            try {
-                const res = await ghApi(`https://api.github.com/repos/${username}/${repo}`, {}, { username, repo, token });
-                if (res.ok) {
-                    localStorage.setItem(GH_CONFIG_KEY, JSON.stringify({ username, repo, token }));
-                    currentSha = null;
-                    closeConfigModal();
-                    showToast('Connexion GitHub validée et enregistrée ✅');
-                    checkGitHubConnectionAndLoad();
-                } else if (res.status === 401) {
-                    showToast('Token invalide ou expiré (401)', WARN_ICON);
-                } else if (res.status === 404) {
-                    showToast('Dépôt introuvable — vérifiez le nom, ou le token n\'y a pas accès (404)', WARN_ICON);
-                } else {
-                    showToast('Erreur GitHub : HTTP ' + res.status, WARN_ICON);
-                }
-            } catch (e) {
-                showToast('Erreur réseau : ' + e.message, WARN_ICON);
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = 'Tester & Enregistrer';
-            }
-        }
-
-        // ============================================================
-        // SYNCHRO GITHUB (LECTURE / ÉCRITURE)
-        // ============================================================
-        async function fetchRemoteFile(silent = false) {
-            const cfg = getGhConfig();
-            if (!cfg) return { ok: false, reason: 'no-config' };
-            try {
-                const res = await ghApi(`https://api.github.com/repos/${cfg.username}/${cfg.repo}/contents/${FILE_PATH}`);
-                if (res.status === 404) return { ok: true, empty: true }; // fichier pas encore créé
-                if (!res.ok) throw new Error('HTTP ' + res.status);
-                const json = await res.json();
-                const parsed = JSON.parse(base64ToUtf8(json.content));
-                projects = normalizeProjects(parsed);
-                if (!Array.isArray(projects)) projects = [];
-                currentSha = json.sha;
-                return { ok: true };
-            } catch (e) {
-                if (!silent) showToast('Erreur de synchro : ' + e.message, WARN_ICON);
-                return { ok: false, reason: e.message };
-            }
-        }
-
-        async function pushRemoteFile(commitMessage) {
-            const cfg = getGhConfig();
-            if (!cfg) { showToast('Configurez GitHub (icône en haut à droite) pour activer la synchro.', WARN_ICON); return false; }
-            const url = `https://api.github.com/repos/${cfg.username}/${cfg.repo}/contents/${FILE_PATH}`;
-
-            // Récupère le sha courant si inconnu (évite le 422 "does not match")
-            if (!currentSha) {
-                try {
-                    const get = await ghApi(url);
-                    if (get.ok) currentSha = (await get.json()).sha;
-                } catch (e) { /* fichier probablement absent, il sera créé */ }
-            }
-
-            const body = {
-                message: commitMessage,
-                content: utf8ToBase64(JSON.stringify(projects, null, 2)),
-                ...(currentSha ? { sha: currentSha } : {})
-            };
-
-            let res = await ghApi(url, { method: 'PUT', body: JSON.stringify(body) });
-
-            // Conflit de sha → on rafraîchit et on retente UNE fois
-            if (res.status === 409 || res.status === 422) {
-                const get = await ghApi(url);
-                if (get.ok) {
-                    currentSha = (await get.json()).sha;
-                    body.sha = currentSha;
-                } else {
-                    delete body.sha;
-                }
-                res = await ghApi(url, { method: 'PUT', body: JSON.stringify(body) });
-            }
-
-            if (!res.ok) {
-                const err = await res.json().catch(() => ({}));
-                throw new Error(err.message || 'HTTP ' + res.status);
-            }
-            const json = await res.json();
-            currentSha = json.content?.sha || currentSha;
-            return true;
-        }
-
-        async function checkGitHubConnectionAndLoad() {
-            const cfg = getGhConfig();
-            if (!cfg) return;
-            const r = await fetchRemoteFile(true);
-            if (r.ok && !r.empty) {
-                renderProjectsList();
-                refreshCalendar();
-                updateSavedCountBadge();
-                showToast(`Synchronisé avec GitHub (${projects.length} projet${projects.length > 1 ? 's' : ''})`);
-            }
-            // 404 : normal au premier lancement, le fichier sera créé à la première sauvegarde
-        }
-
-        async function syncFromGitHub() {
-            const cfg = getGhConfig();
-            if (!cfg) {
-                showToast('Configurez GitHub d\'abord (icône GitHub en haut)', WARN_ICON);
-                openConfigModal();
-                return;
-            }
-            const r = await fetchRemoteFile(true);
-            if (r.ok && !r.empty) {
-                renderProjectsList();
-                refreshCalendar();
-                updateSavedCountBadge();
-                showToast(`Synchro réussie : ${projects.length} projet(s) chargé(s) ✅`);
-            } else if (r.ok && r.empty) {
-                showToast('Aucun fichier distant — il sera créé à la première sauvegarde', WARN_ICON);
-            } else {
-                showToast('Échec de la synchro GitHub (' + r.reason + ')', WARN_ICON);
-            }
-        }
-
-        // ============================================================
-        // PROJETS : SAUVEGARDE / ÉDITION / SUPPRESSION
-        // ============================================================
-        async function saveProject() {
-            if (!Array.isArray(projects)) projects = [];
-            const title = (document.getElementById('videoTitle')?.value || '').trim();
-            const launchDate = dateInput ? dateInput.value : '';
-            if (!title || !launchDate) {
-                showToast('Titre et Date Lancement YT sont obligatoires', WARN_ICON);
-                return;
-            }
-            const seo = getSeoData();
-
-            if (currentEditProjectId) {
-                const idx = projects.findIndex(p => p.id === currentEditProjectId);
-                if (idx > -1) {
-                    projects[idx] = { ...projects[idx], title, launchDate, seo, updatedAt: new Date().toISOString() };
-                }
-            } else {
-                projects.push({
-                    id: 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
-                    title,
-                    launchDate,
-                    seo,
-                    published: {}, // 🆕 statut de publication par plateforme { yt: true, ig: false, ... }
-                    createdAt: new Date().toISOString()
-                });
-            }
-
-            saveLocalProjects();
-
-            const btn = document.getElementById('saveBtn');
-            const cfg = getGhConfig();
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ' + (cfg ? 'Envoi vers GitHub...' : 'Enregistrement...');
-            }
-
-            try {
-                if (cfg) {
-                    await pushRemoteFile(`SocialSync: ${currentEditProjectId ? 'MAJ' : 'ajout'} "${title}"`);
-                    showToast('Projet sauvegardé sur GitHub ✅');
-                } else {
-                    showToast('Projet enregistré localement (GitHub non configuré)', WARN_ICON);
-                }
-            } catch (e) {
-                showToast('Sauvegarde locale OK, mais GitHub a refusé : ' + e.message, WARN_ICON);
-            } finally {
-                if (btn) {
-                    btn.disabled = false;
-                    btn.innerHTML = DEFAULT_SAVE_LABEL;
-                }
-            }
-
-            resetPlannerForm();
-            renderProjectsList();
-            refreshCalendar();
-            updateSavedCountBadge();
-        }
-
-        function editProject(id) {
-            const p = projects.find(x => x.id === id);
-            if (!p) return;
-            currentEditProjectId = p.id;
-            const t = document.getElementById('videoTitle');
-            if (t) t.value = p.title || '';
-            if (dateInput) dateInput.value = p.launchDate || new Date().toISOString().split('T')[0];
-            loadSeoData(p.seo);
-            const btn = document.getElementById('saveBtn');
-            if (btn) btn.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> Mettre à jour dans GitHub';
-            switchTab('planner');
-            showToast('Projet chargé pour modification');
-        }
-
-        async function deleteProject(id) {
-            if (!Array.isArray(projects)) projects = [];
-            const p = projects.find(x => x.id === id);
-            if (!p) return;
-            if (!confirm(`Supprimer définitivement "${p.title}" ?`)) return;
-            projects = projects.filter(x => x.id !== id);
-            saveLocalProjects();
-            if (currentEditProjectId === id) resetPlannerForm();
-            renderProjectsList();
-            refreshCalendar();
-            updateSavedCountBadge();
-            const cfg = getGhConfig();
-            if (cfg) {
-                try {
-                    await pushRemoteFile(`SocialSync: suppression "${p.title}"`);
-                    showToast('Projet supprimé (GitHub synchronisé) ✅');
-                } catch (e) {
-                    showToast('Supprimé localement, mais synchro GitHub échouée : ' + e.message, WARN_ICON);
-                }
-            } else {
-                showToast('Projet supprimé localement', WARN_ICON);
-            }
-        }
-
-        // ============================================================
-        // STATUT "PUBLIÉ" PAR PLATEFORME 🆕
-        // ============================================================
-        function isPublished(p, platId) {
-            return !!(p && p.published && p.published[platId]);
-        }
-
-        async function togglePublished(projectId, platId, checked) {
-            const p = projects.find(x => x.id === projectId);
-            if (!p) return;
-            if (!p.published || typeof p.published !== 'object') p.published = {};
-            p.published[platId] = checked;
-            saveLocalProjects();
-            refreshCalendar(); // met à jour le visuel (✅ + barré) sur le calendrier
-
-            // Mise à jour du label dans le modal sans le fermer
-            const lbl = document.getElementById(`publbl_${projectId}_${platId}`);
-            if (lbl) {
-                lbl.textContent = checked ? 'Publié ✓' : 'Marquer publié';
-                lbl.classList.toggle('text-emerald-400', checked);
-                lbl.classList.toggle('text-slate-400', !checked);
-            }
-
-            const cfg = getGhConfig();
-            if (cfg) {
-                try {
-                    await pushRemoteFile(`SocialSync: ${platId.toUpperCase()} marqué ${checked ? 'publié' : 'non publié'} — "${p.title}"`);
-                } catch (e) {
-                    showToast('Statut enregistré localement, mais synchro GitHub échouée : ' + e.message, WARN_ICON);
-                }
-            }
-        }
-
-        // ============================================================
-        // LISTE DES PROJETS & VUE SEO
-        // ============================================================
-        function renderProjectsList() {
-            const list = document.getElementById('projectsList');
-            if (!list) return;
-            if (!Array.isArray(projects) || !projects.length) {
-                list.innerHTML = `<div class="text-center py-10 text-slate-500 text-xs space-y-3">
-                    <i class="fa-solid fa-inbox text-3xl text-slate-700 block"></i>
-                    <p>Aucun projet enregistré.<br>Créez votre première programmation dans le Planificateur.</p>
-                </div>`;
-                return;
-            }
-            const sorted = [...projects].sort((a, b) => (a.launchDate || '').localeCompare(b.launchDate || ''));
-            list.innerHTML = sorted.map(p => `
-                <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 hover:border-indigo-500/50 transition space-y-2">
-                    <div class="flex items-start justify-between gap-2">
-                        <h4 class="font-bold text-sm text-white leading-snug">${escapeHtml(p.title)}</h4>
-                        <span class="text-[10px] bg-indigo-500/10 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-full whitespace-nowrap">${escapeHtml((p.launchDate || '').split('-').reverse().join('/'))}</span>
-                    </div>
-                    <div class="flex items-center gap-2.5 text-base">
-                        ${platformsConfig.map(pl => `<i class="${pl.icon} ${isPublished(p, pl.id) ? 'text-emerald-400' : 'text-slate-400'}" title="${escapeHtml(pl.name)}${isPublished(p, pl.id) ? ' — publié ✓' : ''}"></i>`).join('')}
-                    </div>
-                    <div class="flex items-center gap-1.5 pt-2 border-t border-slate-800">
-                        <button onclick="openSeoView('${p.id}')" class="flex-1 px-2 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-[10px] font-semibold transition"><i class="fa-solid fa-eye"></i> SEO</button>
-                        <button onclick="editProject('${p.id}')" class="flex-1 px-2 py-1.5 bg-indigo-600/80 hover:bg-indigo-500 text-white rounded-lg text-[10px] font-semibold transition"><i class="fa-solid fa-pen"></i> Éditer</button>
-                        <button onclick="deleteProject('${p.id}')" class="px-2.5 py-1.5 bg-red-600/20 hover:bg-red-600/40 text-red-400 border border-red-500/30 rounded-lg text-[10px] font-semibold transition"><i class="fa-solid fa-trash"></i></button>
-                    </div>
-                </div>`).join('');
-        }
-
-        // 🆕 openSeoView(id, platId) : si platId fourni → affiche UNIQUEMENT le SEO de cette plateforme
-        function openSeoView(id, platId = null) {
-            const p = projects.find(x => x.id === id);
-            if (!p) return;
-            currentSeoViewPlat = platId;
-            const container = document.getElementById('seoViewContent');
-            if (!container) return;
-
-            const plats = platId ? platformsConfig.filter(x => x.id === platId) : platformsConfig;
-
-            let html = `<div class="space-y-5">
-                <div>
-                    <h3 class="text-xl font-bold text-white flex items-center gap-2 flex-wrap"><i class="fa-solid fa-video text-indigo-400"></i> ${escapeHtml(p.title)}</h3>
-                    <p class="text-xs text-slate-400 mt-1.5"><i class="fa-regular fa-calendar mr-1"></i>Lancement YT : ${new Date((p.launchDate || '') + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                    ${p.seo?.playlist ? `<p class="text-xs text-fuchsia-300 mt-1"><i class="fa-solid fa-list mr-1"></i>Playlist : ${escapeHtml(p.seo.playlist)}</p>` : ''}
-                    ${platId ? `<button onclick="openSeoView('${p.id}')" class="mt-3 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-[10px] font-semibold transition inline-flex items-center gap-1.5"><i class="fa-solid fa-arrow-left"></i> Voir toutes les plateformes</button>` : ''}
-                </div>`;
-
-            plats.forEach(plat => {
-                const data = (p.seo && p.seo[plat.id]) || {};
-                const entries = Object.entries(data).filter(([, v]) => v && String(v).trim());
-                const pub = isPublished(p, plat.id);
-                html += `
-                    <div class="bg-slate-950 border ${pub ? 'border-emerald-500/40' : 'border-slate-800'} rounded-xl p-4">
-                        <div class="flex items-center gap-2 mb-3 flex-wrap">
-                            <i class="${plat.icon} text-sm text-slate-200"></i>
-                            <span class="font-bold text-xs text-white">${seoFieldsConfig[plat.id].label}</span>
-                            <span class="text-[10px] text-slate-500">J+${plat.dayOffset} · ${plat.timeSlot}</span>
-                            <label class="ml-auto flex items-center gap-1.5 cursor-pointer select-none bg-slate-900 border ${pub ? 'border-emerald-500/50' : 'border-slate-700'} rounded-full px-2.5 py-1 hover:border-emerald-500/60 transition" title="Cocher une fois la publication effectuée">
-                                <input type="checkbox" ${pub ? 'checked' : ''} onchange="togglePublished('${p.id}','${plat.id}', this.checked)" class="accent-emerald-500 w-3.5 h-3.5 cursor-pointer">
-                                <span id="publbl_${p.id}_${plat.id}" class="text-[10px] font-semibold ${pub ? 'text-emerald-400' : 'text-slate-400'}">${pub ? 'Publié ✓' : 'Marquer publié'}</span>
-                            </label>
-                        </div>
-                        ${entries.length ? entries.map(([f, v]) => `
-                            <div class="mb-2.5 last:mb-0">
-                                <p class="text-[10px] font-semibold text-slate-400 uppercase">${escapeHtml(f)}</p>
-                                <p class="text-xs text-slate-200 whitespace-pre-wrap mt-0.5">${escapeHtml(v)}</p>
-                            </div>`).join('') : '<p class="text-xs text-slate-500 italic">Aucune donnée SEO</p>'}
-                    </div>`;
-            });
-            html += '</div>';
-            container.innerHTML = html;
-            document.getElementById('seoViewModal').classList.remove('hidden');
-        }
-
-        function closeSeoView() {
-            currentSeoViewPlat = null;
-            document.getElementById('seoViewModal').classList.add('hidden');
-        }
-
-        // ============================================================
-        // NAVIGATION ONGLETS
-        // ============================================================
-        function switchTab(tab) {
-            const isPlanner = tab === 'planner';
-            document.getElementById('tabPlanner').classList.toggle('hidden', !isPlanner);
-            document.getElementById('tabCalendar').classList.toggle('hidden', isPlanner);
-            const on = ['bg-indigo-600', 'text-white', 'shadow-md'];
-            const off = ['text-slate-400', 'hover:text-white'];
-            const bp = document.getElementById('tabBtnPlanner');
-            const bc = document.getElementById('tabBtnCalendar');
-            if (isPlanner) { bp.classList.add(...on); bp.classList.remove(...off); bc.classList.remove(...on); bc.classList.add(...off); }
-            else { bc.classList.add(...on); bc.classList.remove(...off); bp.classList.remove(...on); bp.classList.add(...off); }
-            if (!isPlanner && calendar) refreshCalendar();
-        }
-
-        // ============================================================
-        // CALENDRIER
-        // ============================================================
-        function fmtDateISO(d) {
-            const p = n => String(n).padStart(2, '0');
-            return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-        }
-
-        function getCalendarEvents(info, successCallback, failureCallback) {
-            try {
-                const events = [];
-                (Array.isArray(projects) ? projects : []).forEach(p => {
-                    platformsConfig.forEach(plat => {
-                        const d = new Date((p.launchDate || '') + 'T00:00:00');
-                        if (isNaN(d)) return;
-                        d.setDate(d.getDate() + plat.dayOffset);
-                        const iso = fmtDateISO(d);
-                        const pub = isPublished(p, plat.id); // 🆕
-                        events.push({
-                            id: p.id + '::' + plat.id,
-                            title: (pub ? '✅ ' : '') + `${plat.name} — ${p.title}`, // 🆕 préfixe ✅ si publié
-                            start: `${iso}T${plat.startTime}`,
-                            end: `${iso}T${plat.endTime}`,
-                            backgroundColor: plat.calendarColor,
-                            classNames: pub ? ['fc-event-published'] : [], // 🆕 texte barré si publié
-                            extendedProps: { projectId: p.id, platId: plat.id }
-                        });
-                    });
-                });
-                successCallback(events);
-            } catch (e) {
-                failureCallback(e);
-            }
-        }
-
-        function initCalendar() {
-            const el = document.getElementById('calendar');
-            if (!el || typeof FullCalendar === 'undefined') return;
-            calendar = new FullCalendar.Calendar(el, {
-                initialView: 'dayGridMonth',
-                locale: 'fr',
-                height: 'auto',
-                firstDay: 1,
-                headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,listMonth' },
-                events: getCalendarEvents,
-                // 🆕 clic sur un événement → vue SEO de CETTE plateforme uniquement
-                eventClick: (info) => {
-                    const [pid, plat] = String(info.event.id).split('::');
-                    openSeoView(pid, plat || null);
-                }
-            });
-            calendar.render();
-        }
-
-        // ============================================================
-        // EXPORT / IMPORT / COPIE
-        // ============================================================
-        async function copyPlanningText() {
-            const title = (document.getElementById('videoTitle')?.value || '').trim();
-            const baseDateVal = dateInput ? dateInput.value : '';
-            if (!title || !baseDateVal) {
-                showToast('Renseignez le titre et la date de lancement', WARN_ICON);
-                return;
-            }
-            const baseDate = new Date(baseDateVal + 'T00:00:00');
-            let text = `🎬 ${title}\n📅 Lancement YouTube (J0) : ${baseDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}\n`;
-            platformsConfig.forEach(p => {
-                const d = new Date(baseDate);
-                d.setDate(d.getDate() + p.dayOffset);
-                text += `\n▸ ${p.name} (J+${p.dayOffset})\n   ${d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} — ${p.timeSlot}\n   KPI : ${p.kpi} — ${p.strategy}\n`;
-            });
-            try {
-                await copyToClipboard(text);
-                showToast('Planning copié dans le presse-papiers ✅');
-            } catch (e) {
-                showToast('Impossible de copier automatiquement', WARN_ICON);
-            }
-        }
-
-        function icsEscape(s) {
-            return String(s).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
-        }
-
-        function icsLocal(d) {
-            const p = n => String(n).padStart(2, '0');
-            return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}T${p(d.getHours())}${p(d.getMinutes())}00`;
-        }
-
-        function exportICalendar() {
-            const title = (document.getElementById('videoTitle')?.value || '').trim();
-            const baseDateVal = dateInput ? dateInput.value : '';
-            if (!title || !baseDateVal) {
-                showToast('Renseignez le titre et la date de lancement', WARN_ICON);
-                return;
-            }
-            const baseDate = new Date(baseDateVal + 'T00:00:00');
-            const stamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-            let ics = 'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//SocialSync Hub//FR\r\nCALSCALE:GREGORIAN\r\n';
-            platformsConfig.forEach((p, i) => {
-                const d = new Date(baseDate);
-                d.setDate(d.getDate() + p.dayOffset);
-                const [sh, sm] = p.startTime.split(':');
-                const [eh, em] = p.endTime.split(':');
-                const start = new Date(d); start.setHours(+sh, +sm, 0, 0);
-                const end = new Date(d); end.setHours(+eh, +em, 0, 0);
-                ics += 'BEGIN:VEVENT\r\n';
-                ics += `UID:${Date.now()}-${i}@socialsync-hub\r\n`;
-                ics += `DTSTAMP:${stamp}\r\n`;
-                ics += `DTSTART:${icsLocal(start)}\r\nDTEND:${icsLocal(end)}\r\n`;
-                ics += `SUMMARY:${icsEscape(p.name + ' — ' + title)}\r\n`;
-                ics += `DESCRIPTION:${icsEscape('KPI : ' + p.kpi + '\n' + p.strategy)}\r\n`;
-                ics += 'END:VEVENT\r\n';
-            });
-            ics += 'END:VCALENDAR\r\n';
-            downloadBlob(ics, `planning-socialsync-${baseDateVal}.ics`, 'text/calendar;charset=utf-8');
-            showToast('Fichier .ICS exporté ✅');
-        }
-
-        function exportAllData() {
-            if (!Array.isArray(projects) || !projects.length) {
-                showToast('Aucune donnée à exporter', WARN_ICON);
-                return;
-            }
-            downloadBlob(JSON.stringify(projects, null, 2), `socialsync-export-${new Date().toISOString().split('T')[0]}.json`, 'application/json');
-            showToast('Export JSON téléchargé ✅');
-        }
-
-        async function importAllData(event) {
-            const file = event.target.files && event.target.files[0];
-            if (!file) return;
-            try {
-                const text = await file.text();
-                projects = normalizeProjects(JSON.parse(text));
-                saveLocalProjects();
-                renderProjectsList();
-                refreshCalendar();
-                updateSavedCountBadge();
-                const cfg = getGhConfig();
-                if (cfg) {
-                    try {
-                        await pushRemoteFile('SocialSync: import JSON');
-                        showToast(`Import appliqué et poussé sur GitHub ✅ (${projects.length} projets)`);
-                    } catch (e) {
-                        showToast('Import local OK, mais push GitHub échoué : ' + e.message, WARN_ICON);
-                    }
-                } else {
-                    showToast(`Import local réussi (${projects.length} projets) — configurez GitHub pour synchroniser`, WARN_ICON);
-                }
-            } catch (e) {
-                showToast('Fichier JSON invalide', WARN_ICON);
-            } finally {
-                event.target.value = '';
-            }
-        }
-    </script>
+   <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-50">
+       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+           <div class="flex items-center justify-between h-16">
+               <div class="flex items-center gap-3">
+                   <div class="bg-gradient-to-tr from-indigo-600 to-pink-500 p-2.5 rounded-xl shadow-lg">
+                       <i class="fa-solid fa-share-nodes text-white text-lg"></i>
+                   </div>
+                   <div>
+                       <span class="font-bold text-lg bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent block">SocialSync Hub</span>
+                       <span class="text-xs text-slate-400">Synchro GitHub API Active</span>
+                   </div>
+               </div>
+               <div class="flex items-center gap-3">
+                   <nav class="flex space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
+                       <button id="tabBtnPlanner" onclick="switchTab('planner')" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-2 bg-indigo-600 text-white shadow-md">
+                           <i class="fa-solid fa-pen-to-square"></i><span>Planificateur</span>
+                       </button>
+                       <button id="tabBtnCalendar" onclick="switchTab('calendar')" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-2 text-slate-400 hover:text-white">
+                           <i class="fa-solid fa-calendar-days"></i><span>Calendrier</span>
+                           <span id="savedCountBadge" class="bg-slate-800 text-indigo-400 text-[10px] px-2 py-0.5 rounded-full border border-slate-700">0</span>
+                       </button>
+                   </nav>
+               </div>
+           </div>
+       </div>
+   </header>
+
+   <main class="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+       <!-- ONGLET 1 : PLANIFICATEUR -->
+       <section id="tabPlanner" class="space-y-6">
+           <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
+               <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+                   <div>
+                       <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                           <i class="fa-solid fa-rocket text-indigo-400"></i> Nouvelle Programmation
+                       </h2>
+                       <p class="text-xs text-slate-400 mt-0.5">Saisissez la date YT pour générer les créneaux multi-plateformes.</p>
+                   </div>
+                   <div class="flex flex-wrap items-center gap-3">
+                       <div>
+                           <label class="block text-xs font-semibold text-slate-400 mb-1">Titre de la vidéo <span class="text-red-400">*</span></label>
+                           <input type="text" id="videoTitle" placeholder="Ex: 5 Astuces Secrètes..." class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 w-64">
+                       </div>
+                       <div>
+                           <label class="block text-xs font-semibold text-slate-400 mb-1">Date Lancement YT (J0) <span class="text-red-400">*</span></label>
+                           <input type="date" id="launchDate" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+                       </div>
+                   </div>
+               </div>
+
+               <!-- SECTION PACKAGE SEO -->
+               <div>
+                   <div class="flex items-center justify-between mb-4">
+                       <h3 class="font-bold text-white flex items-center gap-2">
+                           <i class="fa-solid fa-magnifying-glass-chart text-fuchsia-400"></i> Package SEO Complet
+                       </h3>
+                       <div class="flex items-center gap-2">
+                           <button type="button" onclick="openSeoImportModal()" class="px-3 py-1.5 bg-gradient-to-r from-fuchsia-600 to-purple-600 hover:from-fuchsia-500 hover:to-purple-500 text-white rounded-lg text-xs font-medium transition flex items-center gap-1.5 shadow-md">
+                               <i class="fa-solid fa-wand-magic-sparkles text-[10px]"></i> <span>Import auto</span>
+                           </button>
+                           <button type="button" onclick="toggleSeoSection()" id="seoToggleBtn" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium transition flex items-center gap-1.5">
+                               <i class="fa-solid fa-chevron-down text-[10px]"></i> <span>Afficher</span>
+                           </button>
+                       </div>
+                   </div>
+
+                   <div id="seoSection" class="hidden space-y-4">
+                       <div>
+                           <label class="block text-xs font-semibold text-slate-400 mb-1">Playlist</label>
+                           <input type="text" id="seoPlaylist" placeholder="Ex: True Crime & Dark History" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-fuchsia-500">
+                       </div>
+
+                       <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="seoFieldsContainer"></div>
+                   </div>
+               </div>
+
+               <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-800 pt-5">
+                   <div class="flex gap-2">
+                       <button onclick="copyPlanningText()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium transition flex items-center gap-2">
+                           <i class="fa-regular fa-copy"></i> Copier texte
+                       </button>
+                       <button onclick="exportICalendar()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium transition flex items-center gap-2">
+                           <i class="fa-regular fa-calendar-plus"></i> Export .ICS
+                       </button>
+                   </div>
+                   <button onclick="saveProject()" id="saveBtn" class="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold rounded-xl text-sm transition shadow-lg shadow-emerald-900/30 flex items-center gap-2">
+                       <i class="fa-solid fa-cloud-arrow-up"></i> Sauvegarder dans GitHub
+                   </button>
+               </div>
+           </div>
+
+           <div id="scheduleGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+       </section>
+
+       <!-- ONGLET 2 : CALENDRIER & SUIVI -->
+       <section id="tabCalendar" class="hidden space-y-6">
+           <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
+               <div>
+                   <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                       <i class="fa-solid fa-calendar-check text-indigo-400"></i> Suivi & Planning Global
+                   </h2>
+                   <p class="text-xs text-slate-400 mt-1">Synchronisé en temps réel avec votre dépôt GitHub.</p>
+               </div>
+               <div class="flex items-center gap-3 flex-wrap">
+                   <button onclick="exportAllData()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold transition flex items-center gap-2">
+                       <i class="fa-solid fa-download"></i> Exporter tout (JSON)
+                   </button>
+                   <label class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold transition flex items-center gap-2 cursor-pointer">
+                       <i class="fa-solid fa-upload"></i> Importer JSON
+                       <input type="file" accept=".json" onchange="importAllData(event)" class="hidden">
+                   </label>
+                   <button onclick="syncFromGitHub()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold transition flex items-center gap-2 shadow-md">
+                       <i class="fa-solid fa-rotate"></i> Forcer la synchro GitHub
+                   </button>
+               </div>
+           </div>
+
+           <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+               <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+                   <div id="calendar"></div>
+               </div>
+               <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col h-[650px]">
+                   <h3 class="font-bold text-lg text-white mb-4 flex items-center justify-between">
+                       <span><i class="fa-solid fa-list-check text-indigo-400 mr-2"></i>Projets Enregistrés</span>
+                   </h3>
+                   <div id="projectsList" class="flex-grow overflow-y-auto space-y-4 pr-1"></div>
+               </div>
+           </div>
+       </section>
+   </main>
+
+   <!-- MODAL DE CONFIGURATION GITHUB -->
+   <div id="configModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+       <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl relative">
+           <button onclick="closeConfigModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+           <div class="flex items-center gap-3">
+               <div class="bg-slate-800 p-3 rounded-xl text-white"><i class="fa-brands fa-github text-2xl"></i></div>
+               <div>
+                   <h3 class="font-bold text-lg text-white">Configuration GitHub API</h3>
+                   <p class="text-xs text-slate-400">Connectez l'application à votre dépôt.</p>
+               </div>
+           </div>
+           <div class="space-y-4 text-xs">
+               <div>
+                   <label class="block font-semibold text-slate-300 mb-1">Nom d'utilisateur GitHub</label>
+                   <input type="text" id="ghUsername" placeholder="ex: mon-pseudo" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500">
+               </div>
+               <div>
+                   <label class="block font-semibold text-slate-300 mb-1">Nom du Dépôt (Repository)</label>
+                   <input type="text" id="ghRepo" placeholder="ex: socialsync-hub" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500">
+               </div>
+               <div>
+                   <label class="block font-semibold text-slate-300 mb-1">GitHub Personal Access Token (PAT)</label>
+                   <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500">
+                   <p class="text-[10px] text-slate-500 mt-1">Nécessite le droit <code class="text-indigo-400">repo</code> ou <code class="text-indigo-400">contents:write</code>.</p>
+               </div>
+           </div>
+           <div class="pt-3 border-t border-slate-800 flex justify-end gap-3">
+               <button onclick="closeConfigModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg text-xs font-semibold hover:bg-slate-700">Annuler</button>
+               <button onclick="saveGitHubConfig()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-500 shadow-lg shadow-indigo-900/40">Tester & Enregistrer</button>
+           </div>
+       </div>
+   </div>
+
+   <!-- MODAL IMPORT SEO -->
+   <div id="seoImportModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+       <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl relative">
+           <button onclick="closeSeoImportModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+           <div class="flex items-center gap-3">
+               <div class="bg-fuchsia-950/50 border border-fuchsia-800/50 p-3 rounded-xl text-fuchsia-400"><i class="fa-solid fa-wand-magic-sparkles text-xl"></i></div>
+               <div>
+                   <h3 class="font-bold text-lg text-white">Import Automatique Package SEO</h3>
+                   <p class="text-xs text-slate-400">Collez votre texte brut ou bloc de code SEO pour remplir automatiquement tous les champs.</p>
+               </div>
+           </div>
+           <div>
+               <textarea id="seoBulkInput" oninput="previewSeoPackage()" rows="8" placeholder="Collez ici votre texte SEO..." class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-xs text-slate-100 focus:outline-none focus:border-fuchsia-500 resize-y font-mono"></textarea>
+           </div>
+           <div id="seoImportStatus" class="text-xs min-h-[20px]"></div>
+           <div class="pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3">
+               <div class="flex gap-2">
+                   <button onclick="pasteSeoFromClipboard()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium transition flex items-center gap-1.5">
+                       <i class="fa-regular fa-clipboard"></i> Coller
+                   </button>
+                   <button onclick="clearSeoImportInput()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium transition flex items-center gap-1.5">
+                       <i class="fa-solid fa-eraser"></i> Vider
+                   </button>
+               </div>
+               <div class="flex gap-2">
+                   <button onclick="closeSeoImportModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg text-xs font-semibold hover:bg-slate-700">Annuler</button>
+                   <button onclick="applySeoPackage()" class="px-4 py-2 bg-gradient-to-r from-fuchsia-600 to-purple-600 hover:from-fuchsia-500 hover:to-purple-500 text-white rounded-lg text-xs font-semibold shadow-lg">Appliquer le Package</button>
+               </div>
+           </div>
+       </div>
+   </div>
+
+   <!-- MODAL VUE SEO -->
+   <div id="seoViewModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+       <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl relative">
+           <button onclick="closeSeoView()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+           <div id="seoViewContent"></div>
+       </div>
+   </div>
+
+   <div id="toast" class="fixed bottom-5 right-5 bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-2xl transition-all duration-300 opacity-0 translate-y-10 pointer-events-none flex items-center gap-3 z-50">
+       <i id="toastIcon" class="fa-solid fa-circle-check text-xl"></i>
+       <span id="toastMsg" class="text-sm font-semibold">Action réussie !</span>
+   </div>
+
+   <script>
+       const platformsConfig = [
+           { id: 'yt', name: 'YouTube Shorts', icon: 'fa-brands fa-youtube', color: 'from-red-600/20 to-red-900/10 border-red-500/40', badgeColor: 'bg-red-500/20 text-red-400 border-red-500/30', calendarColor: '#ef4444', dayOffset: 0, timeSlot: '16h00 - 17h00', startTime: '16:00', endTime: '17:00', kpi: 'CTR & Abonnés', strategy: 'Point de départ. Fin d\'après-midi.' },
+           { id: 'pin', name: 'Pinterest (Pin YT)', icon: 'fa-brands fa-pinterest', color: 'from-rose-600/20 to-rose-900/10 border-rose-500/40', badgeColor: 'bg-rose-500/20 text-rose-400 border-rose-500/30', calendarColor: '#e11d48', dayOffset: 0, timeSlot: '18h00 - 20h00', startTime: '18:00', endTime: '20:00', kpi: 'Saves & Trafic', strategy: 'Épingle avec lien direct YT.' },
+           { id: 'tiktok', name: 'TikTok', icon: 'fa-brands fa-tiktok', color: 'from-cyan-600/20 to-slate-900/10 border-cyan-500/40', badgeColor: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30', calendarColor: '#06b6d4', dayOffset: 0, timeSlot: '19h00 - 21h00', startTime: '19:00', endTime: '21:00', kpi: 'Rétention (>70%)', strategy: 'Accroche 2s, audio tendance.' },
+           { id: 'fb', name: 'Facebook Reels', icon: 'fa-brands fa-facebook', color: 'from-blue-600/20 to-blue-900/10 border-blue-500/40', badgeColor: 'bg-blue-500/20 text-blue-400 border-blue-500/30', calendarColor: '#3b82f6', dayOffset: 1, timeSlot: '11h30 - 13h30', startTime: '11:30', endTime: '13:30', kpi: 'Commentaires', strategy: 'Pause déjeuner. Poser question.' },
+           { id: 'ig', name: 'Instagram Reels', icon: 'fa-brands fa-instagram', color: 'from-fuchsia-600/20 to-fuchsia-900/10 border-fuchsia-500/40', badgeColor: 'bg-fuchsia-500/20 text-fuchsia-400 border-fuchsia-500/30', calendarColor: '#d946ef', dayOffset: 1, timeSlot: '18h30 - 20h30', startTime: '18:30', endTime: '20:30', kpi: 'Partages DM & Saves', strategy: 'Usage détente du soir.' }
+       ];
+
+       const seoFieldsConfig = {
+           yt: { label: 'YouTube', fields: ['Script Start', 'Title', 'Description', 'Tags', 'Pinned Comment'] },
+           tiktok: { label: 'TikTok', fields: ['Script Start', 'Title/Caption', 'Hook', 'Hashtags'] },
+           ig: { label: 'Instagram', fields: ['Script Start', 'Caption', 'Hashtags', 'Call To Action'] },
+           fb: { label: 'Facebook', fields: ['Script Start', 'Post copy', 'Hashtags', 'Engagement Question'] },
+           pin: { label: 'Pinterest', fields: ['Script Start', 'Pin Title', 'Pin Description', 'Hashtags'] }
+       };
+
+       // ===== DÉBUT MODIFICATION : statuts plateforme (dropdown 3 choix) =====
+       const PLATFORM_STATUS = {
+           a_planifier: { label: 'À planifier', emoji: '📝', classes: 'bg-slate-800 text-slate-300 border-slate-700' },
+           programme:   { label: 'Programmé',   emoji: '📅', classes: 'bg-amber-500/15 text-amber-300 border-amber-500/40' },
+           publie:      { label: 'Publié',      emoji: '📤', classes: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40' }
+       };
+       function getPlatStatus(proj, platId) {
+           if (proj.status && proj.status[platId]) return proj.status[platId];
+           if (proj.validations && proj.validations[platId]) return 'publie';
+           return 'a_planifier';
+       }
+       function statusConfig(s) { return PLATFORM_STATUS[s] || PLATFORM_STATUS.a_planifier; }
+       function statusLabel(s) { return statusConfig(s).label; }
+       function statusEmoji(s) { return statusConfig(s).emoji; }
+       function statusSelectClasses(s) { return statusConfig(s).classes; }
+       // ===== FIN MODIFICATION =====
+
+       let projects = [];
+       let currentSha = null;
+       let calendar = null;
+       let currentEditProjectId = null;
+
+       const FILE_PATH = 'data/publications.json';
+       const dateInput = document.getElementById('launchDate');
+       dateInput.value = new Date().toISOString().split('T')[0];
+
+       window.addEventListener('DOMContentLoaded', () => {
+           loadGitHubConfigInputs();
+           checkGitHubConnectionAndLoad();
+           renderGrid();
+           renderSeoFields();
+           if (dateInput) {
+               dateInput.addEventListener('change', renderGrid);
+           }
+           const titleInput = document.getElementById('videoTitle');
+           if (titleInput) titleInput.addEventListener('input', renderGrid);
+       });
+
+       // --- SEO FIELDS RENDERING ---
+       function renderSeoFields() {
+           const container = document.getElementById('seoFieldsContainer');
+           container.innerHTML = '';
+           for (const [platId, config] of Object.entries(seoFieldsConfig)) {
+               const platInfo = platformsConfig.find(p => p.id === platId);
+               let fieldsHtml = config.fields.map(f => `
+                   <div class="mb-2">
+                       <label class="block text-[10px] font-semibold text-slate-400 mb-0.5">${f}</label>
+                       <textarea id="seo_${platId}_${f.replace(/[\s\/]/g, '_')}" rows="2" placeholder="${f}..." class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-fuchsia-500 resize-y"></textarea>
+                   </div>
+               `).join('');
+               container.innerHTML += `
+                   <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
+                       <div class="flex items-center gap-2 mb-2">
+                           <i class="${platInfo.icon} text-sm text-slate-200"></i>
+                           <span class="font-bold text-xs text-white">${config.label}</span>
+                       </div>
+                       ${fieldsHtml}
+                   </div>
+               `;
+           }
+       }
+
+       function toggleSeoSection() {
+           const section = document.getElementById('seoSection');
+           const btn = document.getElementById('seoToggleBtn');
+           if (section.classList.contains('hidden')) {
+               section.classList.remove('hidden');
+               btn.innerHTML = '<i class="fa-solid fa-chevron-up text-[10px]"></i> <span>Masquer</span>';
+           } else {
+               section.classList.add('hidden');
+               btn.innerHTML = '<i class="fa-solid fa-chevron-down text-[10px]"></i> <span>Afficher</span>';
+           }
+       }
+
+       function getSeoData() {
+           const seo = { playlist: document.getElementById('seoPlaylist').value.trim() };
+           for (const [platId, config] of Object.entries(seoFieldsConfig)) {
+               seo[platId] = {};
+               config.fields.forEach(f => {
+                   const el = document.getElementById(`seo_${platId}_${f.replace(/[\s\/]/g, '_')}`);
+                   seo[platId][f] = el ? el.value : '';
+               });
+           }
+           return seo;
+       }
+
+       function loadSeoData(seo) {
+           if (!seo) return;
+           document.getElementById('seoPlaylist').value = seo.playlist || '';
+           for (const [platId, config] of Object.entries(seoFieldsConfig)) {
+               config.fields.forEach(f => {
+                   const el = document.getElementById(`seo_${platId}_${f.replace(/[\s\/]/g, '_')}`);
+                   if (el && seo[platId]) el.value = seo[platId][f] || '';
+               });
+           }
+           const section = document.getElementById('seoSection');
+           if (seo.playlist || Object.values(seo).some(v => typeof v === 'object' && Object.values(v).some(t => t))) {
+               section.classList.remove('hidden');
+               document.getElementById('seoToggleBtn').innerHTML = '<i class="fa-solid fa-chevron-up text-[10px]"></i> <span>Masquer</span>';
+           }
+       }
+
+       function clearSeoFields() {
+           document.getElementById('seoPlaylist').value = '';
+           for (const [platId, config] of Object.entries(seoFieldsConfig)) {
+               config.fields.forEach(f => {
+                   const el = document.getElementById(`seo_${platId}_${f.replace(/[\s\/]/g, '_')}`);
+                   if (el) el.value = '';
+               });
+           }
+       }
+
+       // --- IMPORT PACKAGE SEO ---
+       const seoSectionAliases = { 'youtube': 'yt', 'tiktok': 'tiktok', 'instagram': 'ig', 'facebook': 'fb', 'pinterest': 'pin' };
+       const seoFieldAliases = {
+           'playlist': '__PLAYLIST__',
+           'script start': 'Script Start', 'script': 'Script Start',
+           'title': 'Title', 'description': 'Description',
+           'tags': 'Tags', 'tag': 'Tags',
+           'pinned comment': 'Pinned Comment', 'pinned': 'Pinned Comment',
+           'title/caption': 'Title/Caption', 'title / caption': 'Title/Caption',
+           'hook': 'Hook',
+           'hashtags': 'Hashtags', 'hashtag': 'Hashtags',
+           'caption': 'Caption',
+           'call to action': 'Call To Action', 'cta': 'Call To Action',
+           'post copy': 'Post copy', 'post': 'Post copy',
+           'engagement question': 'Engagement Question',
+           'pin title': 'Pin Title', 'pin description': 'Pin Description'
+       };
+       function normSeoLine(s) { return s.toLowerCase().replace(/[*_#`~>]/g, '').replace(/\s+/g, ' ').trim(); }
+
+       function parseSeoPackage(rawText) {
+           const parsed = { playlist: '', yt: {}, tiktok: {}, ig: {}, fb: {}, pin: {} };
+           let currentSection = null;
+
+           const blockRegex = /```[\w+-]*[^\S\r\n]*\r?\n([\s\S]*?)```/g;
+           let match, lastIndex = 0, foundBlocks = false;
+           const entries = [];
+           while ((match = blockRegex.exec(rawText)) !== null) {
+               foundBlocks = true;
+               const lines = rawText.slice(lastIndex, match.index).split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+               let label = null;
+               for (const line of lines) {
+                   const n = normSeoLine(line);
+                   if (seoSectionAliases[n]) { currentSection = seoSectionAliases[n]; label = null; }
+                   else if (seoFieldAliases[n]) { label = seoFieldAliases[n]; }
+               }
+               entries.push({ section: currentSection, label, content: match[1].trim() });
+               lastIndex = blockRegex.lastIndex;
+           }
+           if (foundBlocks) {
+               entries.forEach(e => {
+                   if (!e.label) return;
+                   if (e.label === '__PLAYLIST__') parsed.playlist = e.content;
+                   else if (e.section) parsed[e.section][e.label] = e.content;
+               });
+               return parsed;
+           }
+
+           let pendingField = null;
+           const flushPending = () => {
+               if (!pendingField) return;
+               const content = pendingField.buffer.join('\n').trim();
+               if (pendingField.label === '__PLAYLIST__') parsed.playlist = content;
+               else if (pendingField.section) parsed[pendingField.section][pendingField.label] = content;
+               pendingField = null;
+           };
+           rawText.split(/\r?\n/).forEach(rawLine => {
+               const n = normSeoLine(rawLine);
+               if (seoSectionAliases[n]) { flushPending(); currentSection = seoSectionAliases[n]; }
+               else if (seoFieldAliases[n]) { flushPending(); pendingField = { section: currentSection, label: seoFieldAliases[n], buffer: [] }; }
+               else if (pendingField) pendingField.buffer.push(rawLine);
+           });
+           flushPending();
+           return parsed;
+       }
+
+       function flashSeoField(el) {
+           el.classList.add('border-fuchsia-500', 'ring-1', 'ring-fuchsia-500/50');
+           setTimeout(() => el.classList.remove('border-fuchsia-500', 'ring-1', 'ring-fuchsia-500/50'), 1600);
+       }
+
+       function applyParsedSeo(parsed) {
+           let filled = 0;
+           if (parsed.playlist) {
+               const el = document.getElementById('seoPlaylist');
+               el.value = parsed.playlist; flashSeoField(el); filled++;
+           }
+           for (const [platId, config] of Object.entries(seoFieldsConfig)) {
+               const platData = parsed[platId] || {};
+               const keys = Object.keys(platData);
+               if (!keys.length) continue;
+               config.fields.forEach(f => {
+                   const el = document.getElementById(`seo_${platId}_${f.replace(/[\s\/]/g, '_')}`);
+                   if (!el) return;
+                   const target = f.toLowerCase();
+                   let key = keys.find(k => k.toLowerCase() === target);
+                   if (!key) {
+                       const base = target.split('/')[0].trim();
+                       key = keys.find(k => k.toLowerCase() === base || k.toLowerCase().includes(base));
+                   }
+                   if (key && platData[key]) { el.value = platData[key]; flashSeoField(el); filled++; }
+               });
+           }
+           return filled;
+       }
+
+       function openSeoImportModal() {
+           document.getElementById('seoImportModal').classList.remove('hidden');
+           const section = document.getElementById('seoSection');
+           if (section.classList.contains('hidden')) toggleSeoSection();
+           setTimeout(() => document.getElementById('seoBulkInput').focus(), 60);
+       }
+       function closeSeoImportModal() { document.getElementById('seoImportModal').classList.add('hidden'); }
+       function clearSeoImportInput() {
+           document.getElementById('seoBulkInput').value = '';
+           document.getElementById('seoImportStatus').innerHTML = '';
+       }
+       async function pasteSeoFromClipboard() {
+           try {
+               const text = await navigator.clipboard.readText();
+               if (text) { document.getElementById('seoBulkInput').value = text; previewSeoPackage(); }
+               else showToast("Le presse-papiers est vide.");
+           } catch (e) { showToast("Collage bloqué par le navigateur — utilisez Ctrl+V."); }
+       }
+       function previewSeoPackage() {
+           const raw = document.getElementById('seoBulkInput').value;
+           const statusEl = document.getElementById('seoImportStatus');
+           if (!raw.trim()) { statusEl.innerHTML = ''; return; }
+           const parsed = parseSeoPackage(raw);
+           let count = (parsed.playlist ? 1 : 0);
+           const secs = parsed.playlist ? ['Playlist'] : [];
+           for (const [platId, cfg] of Object.entries(seoFieldsConfig)) {
+               const n = Object.keys(parsed[platId] || {}).length;
+               if (n) { count += n; secs.push(cfg.label); }
+           }
+           statusEl.innerHTML = count
+               ? `<span class="text-emerald-400 font-semibold"><i class="fa-solid fa-circle-check"></i> ${count} champ(s) détecté(s) :</span> <span class="text-slate-300">${secs.join(' · ')}</span>`
+               : `<span class="text-amber-400"><i class="fa-solid fa-triangle-exclamation"></i> Aucun champ reconnu pour le moment…</span>`;
+       }
+       function applySeoPackage() {
+           const raw = document.getElementById('seoBulkInput').value;
+           if (!raw.trim()) { showToast("Collez d'abord le package SEO."); return; }
+           const filled = applyParsedSeo(parseSeoPackage(raw));
+           if (filled === 0) { showToast("Format non reconnu — vérifiez le package collé."); return; }
+           closeSeoImportModal();
+           clearSeoImportInput();
+           showToast(`${filled} champ(s) SEO rempli(s) automatiquement !`);
+       }
+
+       // --- GITHUB API ---
+       function getGitHubConfig() {
+           return { username: localStorage.getItem('gh_user') || '', repo: localStorage.getItem('gh_repo') || '', token: localStorage.getItem('gh_token') || '' };
+       }
+       function loadGitHubConfigInputs() {
+           const conf = getGitHubConfig();
+           document.getElementById('ghUsername').value = conf.username;
+           document.getElementById('ghRepo').value = conf.repo;
+           document.getElementById('ghToken').value = conf.token;
+       }
+       function openConfigModal() { document.getElementById('configModal').classList.remove('hidden'); }
+       function closeConfigModal() { document.getElementById('configModal').classList.add('hidden'); }
+
+       async function saveGitHubConfig() {
+           const username = document.getElementById('ghUsername').value.trim();
+           const repo = document.getElementById('ghRepo').value.trim();
+           const token = document.getElementById('ghToken').value.trim();
+           if (!username || !repo || !token) { showToast('Tous les champs sont requis.', 'error'); return; }
+           try {
+               const res = await fetch(`https://api.github.com/repos/${username}/${repo}`, {
+                   headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' }
+               });
+               if (!res.ok) throw new Error('Dépôt inaccessible (HTTP ' + res.status + ')');
+               localStorage.setItem('gh_user', username);
+               localStorage.setItem('gh_repo', repo);
+               localStorage.setItem('gh_token', token);
+               closeConfigModal();
+               showToast('Connexion GitHub validée !');
+               await syncFromGitHub(true);
+           } catch (e) {
+               showToast('Test échoué : ' + e.message, 'error');
+           }
+       }
+
+       async function checkGitHubConnectionAndLoad() {
+           const { username, repo, token } = getGitHubConfig();
+           if (username && repo && token) {
+               await syncFromGitHub(true);
+           } else {
+               openConfigModal();
+           }
+       }
+
+       function utf8ToBase64(str) {
+           const bytes = new TextEncoder().encode(str);
+           let binary = '';
+           const chunkSize = 0x8000;
+           for (let i = 0; i < bytes.length; i += chunkSize) {
+               binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+           }
+           return btoa(binary);
+       }
+
+       async function fetchDataFromGitHub() {
+           const { username, repo, token } = getGitHubConfig();
+           const url = `https://api.github.com/repos/${username}/${repo}/contents/${FILE_PATH}?t=${Date.now()}`;
+           const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' } });
+           if (res.status === 404) return null;
+           if (!res.ok) throw new Error('Lecture GitHub impossible (HTTP ' + res.status + ')');
+           const json = await res.json();
+           currentSha = json.sha;
+           try {
+               const bytes = Uint8Array.from(atob(json.content.replace(/\s/g, '')), c => c.charCodeAt(0));
+               return JSON.parse(new TextDecoder().decode(bytes));
+           } catch (e) { throw new Error('Fichier JSON illisible.'); }
+       }
+
+       async function pushDataToGitHub(message) {
+           const { username, repo, token } = getGitHubConfig();
+           if (!username || !repo || !token) throw new Error('GitHub non configuré');
+           let sha = null;
+           try {
+               const resGet = await fetch(`https://api.github.com/repos/${username}/${repo}/contents/${FILE_PATH}`, {
+                   headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' }
+               });
+               if (resGet.ok) sha = (await resGet.json()).sha;
+           } catch (e) { /* fichier peut-être inexistant */ }
+           const payload = {
+               message: message || 'Mise à jour publications.json',
+               content: utf8ToBase64(JSON.stringify({ projects }, null, 2))
+           };
+           if (sha) payload.sha = sha;
+           const res = await fetch(`https://api.github.com/repos/${username}/${repo}/contents/${FILE_PATH}`, {
+               method: 'PUT',
+               headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json' },
+               body: JSON.stringify(payload)
+           });
+           if (!res.ok) throw new Error('Écriture GitHub impossible (HTTP ' + res.status + ')');
+           const j = await res.json();
+           if (j.content && j.content.sha) currentSha = j.content.sha;
+           return true;
+       }
+
+       async function syncFromGitHub(silent = false) {
+           try {
+               const data = await fetchDataFromGitHub();
+               projects = Array.isArray(data) ? data : (Array.isArray(data && data.projects) ? data.projects : []);
+               renderProjectsList();
+               refreshCalendarEvents();
+               updateBadge();
+               if (!silent) showToast(`${projects.length} projet(s) synchronisé(s) depuis GitHub !`);
+           } catch (e) {
+               if (!silent) showToast('Synchro échouée : ' + e.message, 'error');
+           }
+       }
+
+       // --- PLANIFICATEUR ---
+       function renderGrid() {
+           const grid = document.getElementById('scheduleGrid');
+           const date = dateInput.value;
+           const title = document.getElementById('videoTitle').value.trim() || 'Vidéo sans titre';
+           grid.innerHTML = platformsConfig.map(pl => {
+               const d = addDaysToDate(date, pl.dayOffset);
+               return `
+               <div class="rounded-2xl p-5 shadow-xl bg-gradient-to-br ${pl.color} border bg-slate-900">
+                   <div class="flex items-center justify-between mb-3">
+                       <div class="flex items-center gap-2.5">
+                           <div class="bg-slate-950/60 w-9 h-9 rounded-xl flex items-center justify-center"><i class="${pl.icon} text-lg"></i></div>
+                           <span class="font-bold text-sm text-white">${pl.name}</span>
+                       </div>
+                       <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border ${pl.badgeColor}">J+${pl.dayOffset}</span>
+                   </div>
+                   <div class="bg-slate-950/50 rounded-xl p-3.5 space-y-2 text-xs">
+                       <p class="text-slate-300"><i class="fa-regular fa-calendar-days text-slate-500 mr-1.5"></i>${formatDateFr(d)}</p>
+                       <p class="text-slate-300"><i class="fa-regular fa-clock text-slate-500 mr-1.5"></i>${pl.timeSlot}</p>
+                       <p class="text-slate-300"><i class="fa-solid fa-chart-line text-slate-500 mr-1.5"></i>KPI : ${pl.kpi}</p>
+                       <p class="text-slate-400 italic pt-1.5 border-t border-slate-800">${pl.strategy}</p>
+                   </div>
+               </div>`;
+           }).join('');
+       }
+
+       function copyPlanningText() {
+           const title = document.getElementById('videoTitle').value.trim();
+           const date = dateInput.value;
+           if (!title || !date) { showToast('Renseignez le titre et la date.', 'error'); return; }
+           const seo = getSeoData();
+           let txt = `PLANNING — ${title}\nLancement YouTube (J0) : ${formatDateFr(date)}\n`;
+           if (seo.playlist) txt += `Playlist : ${seo.playlist}\n`;
+           txt += `\n`;
+           platformsConfig.forEach(pl => {
+               const d = addDaysToDate(date, pl.dayOffset);
+               txt += `${pl.name} — ${formatDateFr(d)} (${pl.timeSlot}) [J+${pl.dayOffset}]\n`;
+               const fields = (seoFieldsConfig[pl.id] && seoFieldsConfig[pl.id].fields) || [];
+               fields.forEach(f => { if (seo[pl.id] && seo[pl.id][f]) txt += `   • ${f} : ${seo[pl.id][f]}\n`; });
+               txt += `\n`;
+           });
+           navigator.clipboard.writeText(txt)
+               .then(() => showToast('Planning copié dans le presse-papiers !'))
+               .catch(() => showToast('Copie impossible.', 'error'));
+       }
+
+       function exportICalendar() {
+           const title = document.getElementById('videoTitle').value.trim();
+           const date = dateInput.value;
+           if (!title || !date) { showToast('Renseignez le titre et la date.', 'error'); return; }
+           const stamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+           const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//SocialSync Hub//FR', 'CALSCALE:GREGORIAN'];
+           platformsConfig.forEach(pl => {
+               const d = addDaysToDate(date, pl.dayOffset).replace(/-/g, '');
+               const desc = `Créneau: ${pl.timeSlot} | KPI: ${pl.kpi} | Stratégie: ${pl.strategy}`
+                   .replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,');
+               const sum = `${pl.name} - ${title}`.replace(/[,;\\]/g, m => '\\' + m);
+               lines.push(
+                   'BEGIN:VEVENT',
+                   `UID:${Date.now()}-${pl.id}@socialsync`,
+                   `DTSTAMP:${stamp}`,
+                   `DTSTART:${d}T${pl.startTime.replace(':', '')}00`,
+                   `DTEND:${d}T${pl.endTime.replace(':', '')}00`,
+                   `SUMMARY:${sum}`,
+                   `DESCRIPTION:${desc}`,
+                   'END:VEVENT'
+               );
+           });
+           lines.push('END:VCALENDAR');
+           const blob = new Blob([lines.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
+           const a = document.createElement('a');
+           a.href = URL.createObjectURL(blob);
+           a.download = `planning_${date}.ics`;
+           a.click();
+           URL.revokeObjectURL(a.href);
+           showToast('Fichier .ICS exporté !');
+       }
+
+       async function saveProject() {
+           const title = document.getElementById('videoTitle').value.trim();
+           const date = dateInput.value;
+           if (!title) { showToast('Le titre de la vidéo est requis.', 'error'); return; }
+           if (!date) { showToast('La date de lancement est requise.', 'error'); return; }
+           const project = {
+               id: 'proj_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+               title,
+               date,
+               seo: getSeoData(),
+               validations: {},
+               status: {},
+               createdAt: new Date().toISOString()
+           };
+           projects.push(project);
+           const btn = document.getElementById('saveBtn');
+           btn.disabled = true;
+           btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sauvegarde...';
+           try {
+               await pushDataToGitHub(`SocialSync : nouvelle programmation "${title}" (${date})`);
+               showToast('Projet sauvegardé dans GitHub !');
+               clearPlannerForm();
+           } catch (e) {
+               projects = projects.filter(p => p.id !== project.id);
+               showToast('Sauvegarde échouée : ' + e.message, 'error');
+           }
+           btn.disabled = false;
+           btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Sauvegarder dans GitHub';
+           renderProjectsList();
+           refreshCalendarEvents();
+           updateBadge();
+           renderGrid();
+       }
+
+       function clearPlannerForm() {
+           document.getElementById('videoTitle').value = '';
+           clearSeoFields();
+       }
+
+       // --- CALENDRIER ---
+       function getCalendarEvents() {
+           const events = [];
+           projects.forEach(proj => {
+               platformsConfig.forEach(plat => {
+                   const d = addDaysToDate(proj.date, plat.dayOffset);
+                   events.push({
+                       id: `${proj.id}__${plat.id}`,
+                       title: `${plat.name} — ${proj.title}`,
+                       start: `${d}T${plat.startTime}:00`,
+                       end: `${d}T${plat.endTime}:00`,
+                       backgroundColor: plat.calendarColor,
+                       borderColor: plat.calendarColor,
+                       extendedProps: {
+                           projectId: proj.id,
+                           platformId: plat.id,
+                           projectTitle: proj.title,
+                           validated: getPlatStatus(proj, plat.id) === 'publie'
+                       }
+                   });
+               });
+           });
+           return events;
+       }
+
+       function initCalendar() {
+           const calEl = document.getElementById('calendar');
+           calendar = new FullCalendar.Calendar(calEl, {
+               initialView: 'dayGridMonth',
+               locale: 'fr',
+               height: 650,
+               expandRows: true,
+               headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
+               buttonText: { today: "Aujourd'hui", month: 'Mois', week: 'Semaine', day: 'Jour' },
+               allDaySlot: false,
+               nowIndicator: true,
+               navLinks: true,
+               fixedWeekCount: false,
+               dayMaxEvents: 4,
+               stickyHeaderDates: true,
+               slotEventOverlap: false,
+               eventMinHeight: 40,
+               slotLabelFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
+               eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
+               events: getCalendarEvents(),
+               eventContent: renderEventContent,
+               eventDidMount: (info) => {
+                   info.el.classList.toggle('ssync-ev-validated', !!info.event.extendedProps.validated);
+               },
+               eventClick: (info) => {
+                   viewSeo(info.event.extendedProps.projectId);
+               }
+           });
+           calendar.render();
+       }
+
+       function renderEventContent(arg) {
+           const props = arg.event.extendedProps;
+           const plat = platformsConfig.find(p => p.id === props.platformId);
+           if (!plat) return true;
+           const platShort = plat.name.split(' ')[0];
+           const timeText = arg.timeText ? `<div class="ssync-ev-time">${arg.timeText}</div>` : '';
+           return {
+               html: `
+               <div class="ssync-event${props.validated ? ' ssync-validated' : ''}" title="${plat.name} — cliquez pour voir le package SEO">
+                   <div class="ssync-ev-head">
+                       <input type="checkbox" class="ssync-check" ${props.validated ? 'checked' : ''}
+                           title="Cocher = 📤 Publié"
+                           onclick="event.stopPropagation(); togglePlatformValidation('${props.projectId}', '${props.platformId}', this.checked, this)">
+                       <span class="ssync-ev-plat"><i class="${plat.icon} ssync-ev-ico"></i> ${platShort}</span>
+                   </div>
+                   ${timeText}
+                   <div class="ssync-ev-title">${escapeHtml(props.projectTitle || '')}</div>
+               </div>`
+           };
+       }
+
+       async function togglePlatformValidation(projectId, platformId, checked, inputEl) {
+           const proj = projects.find(p => p.id === projectId);
+           if (!proj) return;
+           const plat = platformsConfig.find(p => p.id === platformId);
+           const prevValidated = !!(proj.validations && proj.validations[platformId]);
+           const prevStatus = getPlatStatus(proj, platformId);
+           proj.validations = proj.validations || {};
+           proj.status = proj.status || {};
+           proj.validations[platformId] = checked;
+           proj.status[platformId] = checked ? 'publie' : 'a_planifier';
+           const ev = calendar ? calendar.getEventById(`${projectId}__${platformId}`) : null;
+           if (ev) {
+               ev.setExtendedProp('validated', checked);
+           } else if (inputEl) {
+               const box = inputEl.closest('.ssync-event');
+               if (box) box.classList.toggle('ssync-validated', checked);
+           }
+           renderProjectsList();
+           try {
+               await pushDataToGitHub(`${checked ? '📤 Publié' : '📝 À planifier'} : ${plat.name} — ${proj.title}`);
+           } catch (e) {
+               proj.validations[platformId] = prevValidated;
+               proj.status[platformId] = prevStatus;
+               if (ev) ev.setExtendedProp('validated', prevValidated);
+               renderProjectsList();
+               showToast('Mise à jour GitHub échouée : ' + e.message, 'error');
+           }
+       }
+
+       function refreshCalendarEvents() {
+           if (!calendar) return;
+           calendar.setOption('events', getCalendarEvents());
+       }
+
+       // ===== DÉBUT MODIFICATION : dropdown statut (Publié / Programmé / À planifier) =====
+       async function setPlatformStatus(projectId, platformId, newStatus, selectEl) {
+           const proj = projects.find(p => p.id === projectId);
+           if (!proj) return;
+           const plat = platformsConfig.find(p => p.id === platformId);
+           const prevStatus = getPlatStatus(proj, platformId);
+           if (prevStatus === newStatus) return;
+           proj.status = proj.status || {};
+           proj.validations = proj.validations || {};
+           proj.status[platformId] = newStatus;
+           proj.validations[platformId] = (newStatus === 'publie');
+           const ev = calendar ? calendar.getEventById(`${projectId}__${platformId}`) : null;
+           if (ev) ev.setExtendedProp('validated', newStatus === 'publie');
+           if (selectEl) selectEl.className = `ssync-status-select text-[11px] font-semibold rounded-lg border px-2.5 py-1.5 focus:outline-none ${statusSelectClasses(newStatus)}`;
+           renderProjectsList();
+           try {
+               await pushDataToGitHub(`${statusEmoji(newStatus)} ${statusLabel(newStatus)} : ${plat.name} — ${proj.title}`);
+               showToast(`${plat.name} : ${statusEmoji(newStatus)} ${statusLabel(newStatus)}`);
+           } catch (e) {
+               proj.status[platformId] = prevStatus;
+               proj.validations[platformId] = (prevStatus === 'publie');
+               if (ev) ev.setExtendedProp('validated', prevStatus === 'publie');
+               if (selectEl) {
+                   selectEl.value = prevStatus;
+                   selectEl.className = `ssync-status-select text-[11px] font-semibold rounded-lg border px-2.5 py-1.5 focus:outline-none ${statusSelectClasses(prevStatus)}`;
+               }
+               renderProjectsList();
+               showToast('Mise à jour GitHub échouée : ' + e.message, 'error');
+           }
+       }
+       // ===== FIN MODIFICATION =====
+
+       // --- PROJETS ---
+       function renderProjectsList() {
+           const list = document.getElementById('projectsList');
+           if (!projects.length) {
+               list.innerHTML = `<div class="text-center text-slate-500 text-xs py-10"><i class="fa-regular fa-folder-open text-3xl mb-3 block"></i>Aucun projet enregistré.<br>Créez une programmation dans le Planificateur.</div>`;
+               return;
+           }
+           const sorted = [...projects].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+           list.innerHTML = sorted.map(proj => {
+               const total = platformsConfig.length;
+               const done = platformsConfig.filter(pl => proj.validations && proj.validations[pl.id]).length;
+               const badges = platformsConfig.map(pl => {
+                   const v = proj.validations && proj.validations[pl.id];
+                   return `<span title="${pl.name}${v ? ' — Planifié ✓' : ''}" class="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border ${v ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : pl.badgeColor}">
+                       <i class="${pl.icon}"></i>${v ? '<i class="fa-solid fa-check"></i>' : ''}</span>`;
+               }).join('');
+               return `
+               <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-2.5">
+                   <div class="flex items-start justify-between gap-2">
+                       <div class="min-w-0">
+                           <p class="font-semibold text-sm text-white truncate">${escapeHtml(proj.title)}</p>
+                           <p class="text-[11px] text-slate-400"><i class="fa-regular fa-calendar mr-1"></i>${formatDateFr(proj.date)}</p>
+                       </div>
+                       <div class="flex items-center gap-1 flex-shrink-0">
+                           <button onclick="viewSeo('${proj.id}')" title="Voir le package SEO" class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs"><i class="fa-regular fa-eye"></i></button>
+                           <button onclick="deleteProject('${proj.id}')" title="Supprimer" class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-red-900/60 text-slate-300 hover:text-red-300 text-xs"><i class="fa-regular fa-trash-can"></i></button>
+                       </div>
+                   </div>
+                   <div class="flex flex-wrap gap-1.5">${badges}</div>
+                   <div class="flex items-center justify-between text-[10px] text-slate-400">
+                       <span>Progression publication</span>
+                       <span class="font-semibold ${done === total ? 'text-emerald-400' : 'text-slate-300'}">${done}/${total}</span>
+                   </div>
+                   <div class="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                       <div class="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all" style="width:${Math.round(done / total * 100)}%"></div>
+                   </div>
+               </div>`;
+           }).join('');
+       }
+
+       async function deleteProject(id) {
+           const proj = projects.find(p => p.id === id);
+           if (!proj) return;
+           if (!confirm(`Supprimer le projet "${proj.title}" ?`)) return;
+           const idx = projects.findIndex(p => p.id === id);
+           const removed = projects.splice(idx, 1)[0];
+           try {
+               await pushDataToGitHub(`SocialSync : suppression du projet "${removed.title}"`);
+               showToast('Projet supprimé.');
+           } catch (e) {
+               projects.splice(idx, 0, removed);
+               showToast('Suppression échouée : ' + e.message, 'error');
+           }
+           renderProjectsList();
+           refreshCalendarEvents();
+           updateBadge();
+       }
+
+       function viewSeo(projectId) {
+           const proj = projects.find(p => p.id === projectId);
+           if (!proj) return;
+           let html = `
+           <div class="space-y-5">
+               <div>
+                   <h3 class="text-xl font-bold text-white flex items-center gap-2"><i class="fa-solid fa-video text-indigo-400"></i> ${escapeHtml(proj.title)}</h3>
+                   <p class="text-xs text-slate-400 mt-1"><i class="fa-regular fa-calendar mr-1"></i>Lancement YT (J0) : ${formatDateFr(proj.date)}</p>
+                   <p class="text-xs text-fuchsia-400 mt-0.5"><i class="fa-solid fa-list mr-1"></i>Playlist : ${escapeHtml((proj.seo && proj.seo.playlist) || '—')}</p>
+               </div>`;
+           for (const [platId, cfg] of Object.entries(seoFieldsConfig)) {
+               const plat = platformsConfig.find(p => p.id === platId);
+               const d = addDaysToDate(proj.date, plat.dayOffset);
+               const st = getPlatStatus(proj, platId);
+               html += `
+               <div class="bg-slate-950 border border-slate-800 rounded-xl p-4">
+                   <div class="flex items-center justify-between gap-2 mb-3 flex-wrap">
+                       <div class="flex items-center gap-2 flex-wrap">
+                           <i class="${plat.icon} text-sm"></i>
+                           <span class="font-bold text-sm text-white">${cfg.label}</span>
+                           <span class="text-[10px] text-slate-400">J+${plat.dayOffset} · ${formatDateFr(d)} · ${plat.timeSlot}</span>
+                       </div>
+                       <select onchange="setPlatformStatus('${proj.id}', '${platId}', this.value, this)"
+                               class="ssync-status-select text-[11px] font-semibold rounded-lg border px-2.5 py-1.5 focus:outline-none ${statusSelectClasses(st)}"
+                               title="Statut de publication">
+                           <option value="a_planifier" ${st === 'a_planifier' ? 'selected' : ''}>📝 À planifier</option>
+                           <option value="programme" ${st === 'programme' ? 'selected' : ''}>📅 Programmé</option>
+                           <option value="publie" ${st === 'publie' ? 'selected' : ''}>📤 Publié</option>
+                       </select>
+                   </div>`;
+               cfg.fields.forEach(f => {
+                   const val = (proj.seo && proj.seo[platId] && proj.seo[proj ? platId : platId] && proj.seo[platId][f]) || '';
+                   html += `<div class="mb-2"><p class="text-[10px] font-semibold text-slate-400">${f}</p><p class="text-xs text-slate-200 whitespace-pre-wrap">${escapeHtml(val || '—')}</p></div>`;
+               });
+               html += `</div>`;
+           }
+           html += `</div>`;
+           document.getElementById('seoViewContent').innerHTML = html;
+           document.getElementById('seoViewModal').classList.remove('hidden');
+       }
+       function closeSeoView() { document.getElementById('seoViewModal').classList.add('hidden'); }
+
+       // --- DATA IMPORT / EXPORT ---
+       function exportAllData() {
+           const blob = new Blob([JSON.stringify({ projects }, null, 2)], { type: 'application/json' });
+           const a = document.createElement('a');
+           a.href = URL.createObjectURL(blob);
+           a.download = `socialsync_export_${new Date().toISOString().split('T')[0]}.json`;
+           a.click();
+           URL.revokeObjectURL(a.href);
+           showToast('Export JSON téléchargé !');
+       }
+
+       async function importAllData(event) {
+           const file = event.target.files[0];
+           if (!file) return;
+           try {
+               const data = JSON.parse(await file.text());
+               const imported = Array.isArray(data) ? data : (Array.isArray(data.projects) ? data.projects : null);
+               if (!imported) throw new Error('Format invalide');
+               projects = imported;
+               await pushDataToGitHub(`SocialSync : import JSON (${projects.length} projet(s))`);
+               renderProjectsList();
+               refreshCalendarEvents();
+               updateBadge();
+               showToast('Import réussi et synchronisé !');
+           } catch (e) {
+               showToast('Import échoué : ' + e.message, 'error');
+           }
+           event.target.value = '';
+       }
+
+       // --- UI GLOBAL ---
+       function switchTab(tab) {
+           const planner = document.getElementById('tabPlanner');
+           const cal = document.getElementById('tabCalendar');
+           const bP = document.getElementById('tabBtnPlanner');
+           const bC = document.getElementById('tabBtnCalendar');
+           if (tab === 'planner') {
+               planner.classList.remove('hidden');
+               cal.classList.add('hidden');
+               bP.classList.add('bg-indigo-600', 'text-white', 'shadow-md');
+               bP.classList.remove('text-slate-400', 'hover:text-white');
+               bC.classList.remove('bg-indigo-600', 'text-white', 'shadow-md');
+               bC.classList.add('text-slate-400', 'hover:text-white');
+           } else {
+               cal.classList.remove('hidden');
+               planner.classList.add('hidden');
+               bC.classList.add('bg-indigo-600', 'text-white', 'shadow-md');
+               bC.classList.remove('text-slate-400', 'hover:text-white');
+               bP.classList.remove('bg-indigo-600', 'text-white', 'shadow-md');
+               bP.classList.add('text-slate-400', 'hover:text-white');
+               if (!calendar) initCalendar();
+               else {
+                   calendar.render();
+                   refreshCalendarEvents();
+               }
+           }
+       }
+
+       function updateBadge() {
+           const badge = document.getElementById('savedCountBadge');
+           if (badge) badge.textContent = projects.length;
+       }
+
+       let toastTimer = null;
+       function showToast(msg, type = 'success') {
+           const t = document.getElementById('toast');
+           const i = document.getElementById('toastIcon');
+           const m = document.getElementById('toastMsg');
+           m.textContent = msg;
+           if (type === 'error') {
+               t.classList.remove('bg-emerald-600'); t.classList.add('bg-red-600');
+               i.className = 'fa-solid fa-circle-exclamation text-xl';
+           } else {
+               t.classList.remove('bg-red-600'); t.classList.add('bg-emerald-600');
+               i.className = 'fa-solid fa-circle-check text-xl';
+           }
+           t.classList.remove('opacity-0', 'translate-y-10');
+           clearTimeout(toastTimer);
+           toastTimer = setTimeout(() => t.classList.add('opacity-0', 'translate-y-10'), 3000);
+       }
+
+       // --- UTILS ---
+       function escapeHtml(s) {
+           return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+       }
+       function formatDateFr(dateStr) {
+           if (!dateStr) return '—';
+           const parts = dateStr.split('-');
+           return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : dateStr;
+       }
+       function addDaysToDate(dateStr, offset) {
+           if (!dateStr) return '';
+           const d = new Date(dateStr + 'T00:00:00');
+           d.setDate(d.getDate() + (offset || 0));
+           const y = d.getFullYear();
+           const m = String(d.getMonth() + 1).padStart(2, '0');
+           const day = String(d.getDate()).padStart(2, '0');
+           return `${y}-${m}-${day}`;
+       }
+   </script>
 </body>
 </html>
