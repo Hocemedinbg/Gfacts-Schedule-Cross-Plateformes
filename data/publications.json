@@ -38,8 +38,12 @@
           "Hashtags": "#GhostGirls #DarkHistory #1920sHistory #HistoricalFacts #HistoryBuff #TrueStories #HistoricalDocumentary #VintageHistory #HistoricalStories #ScienceHistory #LaborHistory"
         }
       },
-      "validations": {},
-      "status": {},
+      "validations": {
+        "yt": false
+      },
+      "status": {
+        "yt": "programme"
+      },
       "createdAt": "2026-09-15T07:04:15.752Z"
     }
   ]
