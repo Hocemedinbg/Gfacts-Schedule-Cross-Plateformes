@@ -105,7 +105,6 @@
                        </div>
                    </div>
                </div>
-               <!-- ===== MODIFICATION SECRETS : note sur la clé depuis les secrets du dépôt ===== -->
                <p class="text-[10px] text-slate-500 mt-3">Clé gratuite sur <code class="text-indigo-400">openrouter.ai/keys</code> · Modèle par défaut : <code class="text-indigo-400">meta-llama/llama-3.3-70b-instruct</code> (ajoutez <code class="text-indigo-400">:free</code> pour la variante gratuite si disponible). Si les <span class="text-indigo-300">secrets du dépôt</span> sont configurés, le champ clé peut rester vide.</p>
            </div>
 
@@ -307,7 +306,6 @@
                    <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500">
                    <p class="text-[10px] text-slate-500 mt-1">Nécessite le droit <code class="text-indigo-400">repo</code> ou <code class="text-indigo-400">contents:write</code>. Si les secrets du dépôt sont configurés, ce champ peut rester vide.</p>
                </div>
-               <!-- ===== DÉBUT MODIFICATION SECRETS : guide stockage tokens en secrets du dépôt ===== -->
                <details class="bg-slate-950 border border-slate-800 rounded-xl p-3">
                    <summary class="cursor-pointer text-[11px] font-semibold text-indigo-300">🔒 Guide — stocker les tokens en secrets du dépôt</summary>
                    <ol class="list-decimal list-inside space-y-1 mt-2 text-[10px] text-slate-400">
@@ -318,7 +316,6 @@
                    </ol>
                    <p class="text-[10px] text-amber-400 mt-2">⚠️ Le dépôt doit rester <b>PRIVÉ</b> : le fichier généré contient les tokens. Utilisez un PAT "fine-grained" limité à ce dépôt uniquement.</p>
                </details>
-               <!-- ===== FIN MODIFICATION SECRETS ===== -->
            </div>
            <div class="pt-3 border-t border-slate-800 flex justify-end gap-3">
                <button onclick="closeConfigModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg text-xs font-semibold hover:bg-slate-700">Annuler</button>
@@ -454,7 +451,7 @@
        let calendar = null;
        let currentEditProjectId = null;
 
-       // ===== DÉBUT MODIFICATION SECRETS : configuration runtime chargée depuis le dépôt =====
+       // ===== configuration runtime chargée depuis le dépôt (secrets) =====
        let runtimeConfig = { gh_token: '', or_api_key: '' };
        async function loadRuntimeConfig() {
            try {
@@ -472,7 +469,6 @@
        function getOpenRouterKey() {
            return localStorage.getItem('or_api_key') || runtimeConfig.or_api_key || '';
        }
-       // ===== FIN MODIFICATION SECRETS =====
 
        const FILE_PATH = 'data/publications.json';
        const dateInput = document.getElementById('launchDate');
@@ -992,7 +988,6 @@ content
        async function generateSeoWithAi() {
            const script = document.getElementById('aiScriptInput').value.trim();
            if (!script) { showToast("Collez d'abord le script de la vidéo.", 'error'); return; }
-           // ===== MODIFICATION SECRETS : repli sur la clé des secrets du dépôt =====
            const apiKey = document.getElementById('orApiKey').value.trim() || getOpenRouterKey();
            if (!apiKey) { showToast("Renseignez votre clé API OpenRouter (ou configurez les secrets du dépôt).", 'error'); return; }
            const model = document.getElementById('orModel').value.trim() || AI_DEFAULT_MODEL;
@@ -1292,7 +1287,6 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
        }
 
        async function generateScriptWithAi(zone) {
-           // ===== MODIFICATION SECRETS : repli sur la clé des secrets du dépôt =====
            const apiKey = document.getElementById('scriptsApiKey').value.trim() || getOpenRouterKey();
            if (!apiKey) { showToast('Renseignez votre clé API OpenRouter (ou configurez les secrets du dépôt).', 'error'); return; }
            const model = document.getElementById('scriptsModel').value.trim() || AI_DEFAULT_MODEL;
@@ -1360,10 +1354,11 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
        }
 
        // --- GITHUB API ---
+       // ===== DÉBUT CORRECTIF : token des secrets du dépôt = priorité absolue =====
        function getGitHubConfig() {
-           // ===== MODIFICATION SECRETS : repli sur le token des secrets du dépôt =====
-           return { username: localStorage.getItem('gh_user') || '', repo: localStorage.getItem('gh_repo') || '', token: localStorage.getItem('gh_token') || runtimeConfig.gh_token || '' };
+           return { username: localStorage.getItem('gh_user') || '', repo: localStorage.getItem('gh_repo') || '', token: runtimeConfig.gh_token || localStorage.getItem('gh_token') || '' };
        }
+       // ===== FIN CORRECTIF =====
        function loadGitHubConfigInputs() {
            const conf = getGitHubConfig();
            document.getElementById('ghUsername').value = conf.username;
@@ -1373,11 +1368,13 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
        function openConfigModal() { document.getElementById('configModal').classList.remove('hidden'); }
        function closeConfigModal() { document.getElementById('configModal').classList.add('hidden'); }
 
+       // ===== DÉBUT CORRECTIF : token facultatif si les secrets du dépôt le fournissent =====
        async function saveGitHubConfig() {
            const username = document.getElementById('ghUsername').value.trim();
            const repo = document.getElementById('ghRepo').value.trim();
-           const token = document.getElementById('ghToken').value.trim();
-           if (!username || !repo || !token) { showToast('Tous les champs sont requis.', 'error'); return; }
+           const tokenInput = document.getElementById('ghToken').value.trim();
+           const token = tokenInput || runtimeConfig.gh_token;
+           if (!username || !repo || !token) { showToast('Utilisateur et dépôt requis. Token : laissez vide si les secrets sont configurés.', 'error'); return; }
            try {
                const res = await fetch(`https://api.github.com/repos/${username}/${repo}`, {
                    headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' }
@@ -1385,14 +1382,16 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                if (!res.ok) throw new Error('Dépôt inaccessible (HTTP ' + res.status + ')');
                localStorage.setItem('gh_user', username);
                localStorage.setItem('gh_repo', repo);
-               localStorage.setItem('gh_token', token);
+               if (tokenInput) localStorage.setItem('gh_token', tokenInput);
+               else localStorage.removeItem('gh_token');
                closeConfigModal();
-               showToast('Connexion GitHub validée !');
+               showToast('Connexion GitHub validée !' + (tokenInput ? '' : ' (token via secrets du dépôt)'));
                await syncFromGitHub(true);
            } catch (e) {
                showToast('Test échoué : ' + e.message, 'error');
            }
        }
+       // ===== FIN CORRECTIF =====
 
        async function checkGitHubConnectionAndLoad() {
            const { username, repo, token } = getGitHubConfig();
@@ -1413,7 +1412,7 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
            return btoa(binary);
        }
 
-       // ===== DÉBUT MODIFICATION ASSETS : helpers fichiers (base64 binaire, upload/suppression GitHub) =====
+       // ===== helpers fichiers (base64 binaire, upload/suppression GitHub) =====
        function bytesToBase64(bytes) {
            let binary = '';
            const chunkSize = 0x8000;
@@ -1463,7 +1462,6 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
            });
            if (!res.ok && res.status !== 404) throw new Error('Suppression GitHub impossible (HTTP ' + res.status + ')');
        }
-       // ===== FIN MODIFICATION ASSETS =====
 
        async function fetchDataFromGitHub() {
            const { username, repo, token } = getGitHubConfig();
@@ -1596,20 +1594,18 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
            showToast('Fichier .ICS exporté !');
        }
 
-       // ===== DÉBUT MODIFICATION NOM UNIQUE : vérification d'unicité du titre =====
+       // ===== vérification d'unicité du titre =====
        function projectNameExists(name, excludeId) {
            const n = String(name || '').trim().toLowerCase();
            if (!n) return false;
            return projects.some(p => p.title.trim().toLowerCase() === n && p.id !== excludeId);
        }
-       // ===== FIN MODIFICATION NOM UNIQUE =====
 
        async function saveProject() {
            const title = document.getElementById('videoTitle').value.trim();
            const date = dateInput.value;
            if (!title) { showToast('Le titre de la vidéo est requis.', 'error'); return; }
            if (!date) { showToast('La date de lancement est requise.', 'error'); return; }
-           // ===== MODIFICATION NOM UNIQUE : blocage d'un projet avec un même nom =====
            if (projectNameExists(title)) {
                showToast('Un projet avec ce nom existe déjà — choisissez un autre titre.', 'error');
                return;
@@ -1815,9 +1811,7 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                        </div>
                        <div class="flex items-center gap-1 flex-shrink-0">
                            <button onclick="viewSeo('${proj.id}')" title="Voir le package SEO" class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs"><i class="fa-regular fa-eye"></i></button>
-                           <!-- ===== DÉBUT MODIFICATION DUPLIQUER : icône dupliquer le projet ===== -->
                            <button onclick="duplicateProject('${proj.id}')" title="Dupliquer le projet (renommage obligatoire)" class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs"><i class="fa-regular fa-clone"></i></button>
-                           <!-- ===== FIN MODIFICATION DUPLIQUER ===== -->
                            <button onclick="deleteProject('${proj.id}')" title="Supprimer" class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-red-900/60 text-slate-300 hover:text-red-300 text-xs"><i class="fa-regular fa-trash-can"></i></button>
                        </div>
                    </div>
@@ -1833,7 +1827,7 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
            }).join('');
        }
 
-       // ===== DÉBUT MODIFICATION DUPLIQUER : duplication avec renommage + unicité =====
+       // ===== duplication avec renommage + unicité =====
        async function duplicateProject(id) {
            const proj = projects.find(p => p.id === id);
            if (!proj) return;
@@ -1867,7 +1861,6 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                showToast('Duplication échouée : ' + e.message, 'error');
            }
        }
-       // ===== FIN MODIFICATION DUPLIQUER =====
 
        async function deleteProject(id) {
            const proj = projects.find(p => p.id === id);
@@ -1887,7 +1880,7 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
            updateBadge();
        }
 
-       // ===== DÉBUT MODIFICATION ASSETS : gestion des assets (drag & drop, upload GitHub / Base64) =====
+       // ===== gestion des assets (drag & drop, upload GitHub / Base64) =====
        function renderAssetsSection(proj, platformId) {
            const key = `${proj.id}_${platformId}`;
            const list = (proj.assets && proj.assets[platformId]) || [];
@@ -2018,7 +2011,6 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
            }
            viewSeoForPlatform(projectId, platformId);
        }
-       // ===== FIN MODIFICATION ASSETS =====
 
        function viewSeo(projectId) {
            const proj = projects.find(p => p.id === projectId);
@@ -2056,7 +2048,6 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                });
                html += `</div>`;
            }
-           // ===== DÉBUT MODIFICATION ASSETS : récapitulatif des assets dans la fiche projet =====
            const recap = [];
            for (const pl of platformsConfig) {
                ((proj.assets && proj.assets[pl.id]) || []).forEach(a => recap.push({ pl, a }));
@@ -2072,7 +2063,6 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                    </div>`).join('')}</div>`
                : `<p class="text-[10px] text-slate-500">Aucun asset. Glissez-déposez vos fichiers dans la fiche d'une plateforme (clic sur un événement du calendrier).</p>`}
            </div>`;
-           // ===== FIN MODIFICATION ASSETS =====
            html += `</div>`;
            document.getElementById('seoViewContent').innerHTML = html;
            document.getElementById('seoViewModal').classList.remove('hidden');
@@ -2116,9 +2106,7 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                html += `<div class="mb-2"><p class="text-[10px] font-semibold text-slate-400">${f}</p><p class="text-xs text-slate-200 whitespace-pre-wrap">${escapeHtml(val || '—')}</p></div>`;
            });
            html += `</div>`;
-           // ===== DÉBUT MODIFICATION ASSETS : section assets dans la fiche de la plateforme (événement calendrier) =====
            html += renderAssetsSection(proj, platformId);
-           // ===== FIN MODIFICATION ASSETS =====
            html += `</div>`;
            document.getElementById('seoViewContent').innerHTML = html;
            document.getElementById('seoViewModal').classList.remove('hidden');
