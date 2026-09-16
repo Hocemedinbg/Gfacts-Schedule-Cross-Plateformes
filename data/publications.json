@@ -41,12 +41,12 @@
       "validations": {
         "yt": false,
         "fb": true,
-        "ig": true
+        "ig": false
       },
       "status": {
         "yt": "programme",
         "fb": "publie",
-        "ig": "publie"
+        "ig": "a_planifier"
       },
       "createdAt": "2026-09-15T07:04:15.752Z"
     }
