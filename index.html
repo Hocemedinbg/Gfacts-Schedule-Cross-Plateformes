@@ -9,7 +9,6 @@
    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/locales/fr.global.min.js"></script>
-   <!-- ===== MODIFICATION : PDF.js pour extraction texte des PDF uploadés ===== -->
    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
    <style>
@@ -67,7 +66,6 @@
                </div>
                <div class="flex items-center gap-3">
                    <nav class="flex space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
-                       <!-- ===== MODIFICATION : onglet Scripts placé en premier ===== -->
                        <button id="tabBtnScripts" onclick="switchTab('scripts')" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-2 text-slate-400 hover:text-white">
                            <i class="fa-solid fa-clapperboard"></i><span>Scripts</span>
                        </button>
@@ -86,7 +84,7 @@
 
    <main class="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
 
-       <!-- ===== DÉBUT MODIFICATION : ONGLET 0 : GÉNÉRATEUR DE SCRIPTS IA (PDF → OpenRouter) ===== -->
+       <!-- ONGLET 0 : GÉNÉRATEUR DE SCRIPTS IA (PDF → OpenRouter) -->
        <section id="tabScripts" class="hidden space-y-6">
            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
                <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -107,7 +105,8 @@
                        </div>
                    </div>
                </div>
-               <p class="text-[10px] text-slate-500 mt-3">Clé gratuite sur <code class="text-indigo-400">openrouter.ai/keys</code> · Modèle par défaut : <code class="text-indigo-400">meta-llama/llama-3.3-70b-instruct</code> (ajoutez <code class="text-indigo-400">:free</code> pour la variante gratuite si disponible).</p>
+               <!-- ===== MODIFICATION SECRETS : note sur la clé depuis les secrets du dépôt ===== -->
+               <p class="text-[10px] text-slate-500 mt-3">Clé gratuite sur <code class="text-indigo-400">openrouter.ai/keys</code> · Modèle par défaut : <code class="text-indigo-400">meta-llama/llama-3.3-70b-instruct</code> (ajoutez <code class="text-indigo-400">:free</code> pour la variante gratuite si disponible). Si les <span class="text-indigo-300">secrets du dépôt</span> sont configurés, le champ clé peut rester vide.</p>
            </div>
 
            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -176,7 +175,6 @@
                </div>
            </div>
        </section>
-       <!-- ===== FIN MODIFICATION : ONGLET SCRIPTS ===== -->
 
        <!-- ONGLET 1 : PLANIFICATEUR -->
        <section id="tabPlanner" class="space-y-6">
@@ -307,8 +305,20 @@
                <div>
                    <label class="block font-semibold text-slate-300 mb-1">GitHub Personal Access Token (PAT)</label>
                    <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500">
-                   <p class="text-[10px] text-slate-500 mt-1">Nécessite le droit <code class="text-indigo-400">repo</code> ou <code class="text-indigo-400">contents:write</code>.</p>
+                   <p class="text-[10px] text-slate-500 mt-1">Nécessite le droit <code class="text-indigo-400">repo</code> ou <code class="text-indigo-400">contents:write</code>. Si les secrets du dépôt sont configurés, ce champ peut rester vide.</p>
                </div>
+               <!-- ===== DÉBUT MODIFICATION SECRETS : guide stockage tokens en secrets du dépôt ===== -->
+               <details class="bg-slate-950 border border-slate-800 rounded-xl p-3">
+                   <summary class="cursor-pointer text-[11px] font-semibold text-indigo-300">🔒 Guide — stocker les tokens en secrets du dépôt</summary>
+                   <ol class="list-decimal list-inside space-y-1 mt-2 text-[10px] text-slate-400">
+                       <li>Dépôt → <b>Settings → Secrets and variables → Actions</b> → <b>New repository secret</b> : <code class="text-indigo-300">GH_TOKEN</code> (votre PAT) puis <code class="text-indigo-300">OPENROUTER_API_KEY</code> (votre clé OpenRouter).</li>
+                       <li>Créez le fichier <code class="text-indigo-300">.github/workflows/inject-secrets.yml</code> (contenu fourni dans la documentation de l'app).</li>
+                       <li>Onglet <b>Actions</b> → "Inject secrets" → <b>Run workflow</b> : il génère <code class="text-indigo-300">config/runtime-config.json</code> dans le dépôt.</li>
+                       <li>Rechargez l'application : les tokens sont chargés automatiquement, tous les champs de clé peuvent rester vides.</li>
+                   </ol>
+                   <p class="text-[10px] text-amber-400 mt-2">⚠️ Le dépôt doit rester <b>PRIVÉ</b> : le fichier généré contient les tokens. Utilisez un PAT "fine-grained" limité à ce dépôt uniquement.</p>
+               </details>
+               <!-- ===== FIN MODIFICATION SECRETS ===== -->
            </div>
            <div class="pt-3 border-t border-slate-800 flex justify-end gap-3">
                <button onclick="closeConfigModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg text-xs font-semibold hover:bg-slate-700">Annuler</button>
@@ -370,7 +380,7 @@
                    <input type="text" id="orModel" placeholder="meta-llama/llama-3.3-70b-instruct" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
                </div>
            </div>
-           <p class="text-[10px] text-slate-500">Clé gratuite sur <code class="text-indigo-400">openrouter.ai/keys</code> · Modèle par défaut : <code class="text-indigo-400">meta-llama/llama-3.3-70b-instruct</code> (modifiable — ajoutez <code class="text-indigo-400">:free</code> pour la variante gratuite si disponible).</p>
+           <p class="text-[10px] text-slate-500">Clé gratuite sur <code class="text-indigo-400">openrouter.ai/keys</code> · Modèle par défaut : <code class="text-indigo-400">meta-llama/llama-3.3-70b-instruct</code> (modifiable — ajoutez <code class="text-indigo-400">:free</code> pour la variante gratuite si disponible). Si les secrets du dépôt sont configurés, le champ clé peut rester vide.</p>
            <div>
                <label class="block text-xs font-semibold text-slate-400 mb-1">Script de la vidéo (ou sujet) <span class="text-red-400">*</span></label>
                <textarea id="aiScriptInput" rows="8" placeholder="Collez ici le script complet de la vidéo (ou décrivez son sujet)..." class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 resize-y font-mono"></textarea>
@@ -444,16 +454,37 @@
        let calendar = null;
        let currentEditProjectId = null;
 
+       // ===== DÉBUT MODIFICATION SECRETS : configuration runtime chargée depuis le dépôt =====
+       let runtimeConfig = { gh_token: '', or_api_key: '' };
+       async function loadRuntimeConfig() {
+           try {
+               const res = await fetch('config/runtime-config.json', { cache: 'no-store' });
+               if (!res.ok) return;
+               const cfg = await res.json();
+               const dec = (v) => { try { return v ? decodeURIComponent(escape(atob(v))) : ''; } catch (e) { return v || ''; } };
+               if (cfg.gh_token_b64) runtimeConfig.gh_token = dec(cfg.gh_token_b64);
+               else if (cfg.gh_token) runtimeConfig.gh_token = cfg.gh_token;
+               if (cfg.or_api_key_b64) runtimeConfig.or_api_key = dec(cfg.or_api_key_b64);
+               else if (cfg.or_api_key) runtimeConfig.or_api_key = cfg.or_api_key;
+               if (runtimeConfig.gh_token || runtimeConfig.or_api_key) showToast('🔑 Secrets du dépôt chargés !');
+           } catch (e) { /* pas de config runtime — entrée manuelle */ }
+       }
+       function getOpenRouterKey() {
+           return localStorage.getItem('or_api_key') || runtimeConfig.or_api_key || '';
+       }
+       // ===== FIN MODIFICATION SECRETS =====
+
        const FILE_PATH = 'data/publications.json';
        const dateInput = document.getElementById('launchDate');
        dateInput.value = new Date().toISOString().split('T')[0];
 
-       window.addEventListener('DOMContentLoaded', () => {
+       window.addEventListener('DOMContentLoaded', async () => {
            if (window.pdfjsLib) {
                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
            }
            loadGitHubConfigInputs();
            loadScriptConfigInputs();
+           await loadRuntimeConfig();
            checkGitHubConnectionAndLoad();
            renderGrid();
            renderSeoFields();
@@ -677,7 +708,6 @@
        }
 
        // ===== GÉNÉRATION IA PACKAGE SEO (OpenRouter) =====
-       // ===== MODIFICATION : modèle par défaut = meta-llama/llama-3.3-70b-instruct =====
        const AI_DEFAULT_MODEL = 'meta-llama/llama-3.3-70b-instruct';
 
        const AI_SYSTEM_PROMPT = `You are a viral content strategist and SEO expert specializing in cross-platform video distribution. Your expertise spans YouTube algorithm optimization, TikTok virality mechanics, Instagram Reels engagement patterns, Facebook video performance, and Pinterest discovery systems.
@@ -962,8 +992,9 @@ content
        async function generateSeoWithAi() {
            const script = document.getElementById('aiScriptInput').value.trim();
            if (!script) { showToast("Collez d'abord le script de la vidéo.", 'error'); return; }
-           const apiKey = document.getElementById('orApiKey').value.trim();
-           if (!apiKey) { showToast("Renseignez votre clé API OpenRouter.", 'error'); return; }
+           // ===== MODIFICATION SECRETS : repli sur la clé des secrets du dépôt =====
+           const apiKey = document.getElementById('orApiKey').value.trim() || getOpenRouterKey();
+           if (!apiKey) { showToast("Renseignez votre clé API OpenRouter (ou configurez les secrets du dépôt).", 'error'); return; }
            const model = document.getElementById('orModel').value.trim() || AI_DEFAULT_MODEL;
            localStorage.setItem('or_api_key', apiKey);
            localStorage.setItem('or_model', model);
@@ -1013,7 +1044,7 @@ content
            btn.innerHTML = '✨ Générer avec l\'IA';
        }
 
-       // ===== DÉBUT MODIFICATION : GÉNÉRATEUR DE SCRIPTS (PDF → IA OpenRouter) =====
+       // ===== GÉNÉRATEUR DE SCRIPTS (PDF → IA OpenRouter) =====
        const PDF_MAX_CHARS = 180000;
        const pdfState = { short: { text: '', name: '' }, long: { text: '', name: '' } };
 
@@ -1261,8 +1292,9 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
        }
 
        async function generateScriptWithAi(zone) {
-           const apiKey = document.getElementById('scriptsApiKey').value.trim();
-           if (!apiKey) { showToast('Renseignez votre clé API OpenRouter.', 'error'); return; }
+           // ===== MODIFICATION SECRETS : repli sur la clé des secrets du dépôt =====
+           const apiKey = document.getElementById('scriptsApiKey').value.trim() || getOpenRouterKey();
+           if (!apiKey) { showToast('Renseignez votre clé API OpenRouter (ou configurez les secrets du dépôt).', 'error'); return; }
            const model = document.getElementById('scriptsModel').value.trim() || AI_DEFAULT_MODEL;
            localStorage.setItem('or_api_key', apiKey);
            localStorage.setItem('or_model', model);
@@ -1326,17 +1358,17 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                .then(() => showToast('Scripts copiés dans le presse-papiers !'))
                .catch(() => showToast('Copie impossible.', 'error'));
        }
-       // ===== FIN MODIFICATION : GÉNÉRATEUR DE SCRIPTS =====
 
        // --- GITHUB API ---
        function getGitHubConfig() {
-           return { username: localStorage.getItem('gh_user') || '', repo: localStorage.getItem('gh_repo') || '', token: localStorage.getItem('gh_token') || '' };
+           // ===== MODIFICATION SECRETS : repli sur le token des secrets du dépôt =====
+           return { username: localStorage.getItem('gh_user') || '', repo: localStorage.getItem('gh_repo') || '', token: localStorage.getItem('gh_token') || runtimeConfig.gh_token || '' };
        }
        function loadGitHubConfigInputs() {
            const conf = getGitHubConfig();
            document.getElementById('ghUsername').value = conf.username;
            document.getElementById('ghRepo').value = conf.repo;
-           document.getElementById('ghToken').value = conf.token;
+           document.getElementById('ghToken').value = localStorage.getItem('gh_token') || '';
        }
        function openConfigModal() { document.getElementById('configModal').classList.remove('hidden'); }
        function closeConfigModal() { document.getElementById('configModal').classList.add('hidden'); }
@@ -1380,6 +1412,58 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
            }
            return btoa(binary);
        }
+
+       // ===== DÉBUT MODIFICATION ASSETS : helpers fichiers (base64 binaire, upload/suppression GitHub) =====
+       function bytesToBase64(bytes) {
+           let binary = '';
+           const chunkSize = 0x8000;
+           for (let i = 0; i < bytes.length; i += chunkSize) {
+               binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+           }
+           return btoa(binary);
+       }
+       function safeFileName(name) {
+           const ext = name.includes('.') ? name.slice(name.lastIndexOf('.')) : '';
+           const base = (name.slice(0, name.length - ext.length).replace(/[^a-zA-Z0-9_-]+/g, '_').slice(0, 60)) || 'asset';
+           return base + ext.toLowerCase();
+       }
+       function formatFileSize(b) {
+           if (b < 1024) return b + ' o';
+           if (b < 1048576) return (b / 1024).toFixed(1) + ' Ko';
+           return (b / 1048576).toFixed(1) + ' Mo';
+       }
+       function fileToDataUrl(file) {
+           return new Promise((resolve, reject) => {
+               const r = new FileReader();
+               r.onload = () => resolve(r.result);
+               r.onerror = () => reject(new Error('Lecture du fichier impossible.'));
+               r.readAsDataURL(file);
+           });
+       }
+       async function uploadFileToGitHub(path, file) {
+           const { username, repo, token } = getGitHubConfig();
+           if (!username || !repo || !token) throw new Error('GitHub non configuré');
+           const bytes = new Uint8Array(await file.arrayBuffer());
+           const res = await fetch(`https://api.github.com/repos/${username}/${repo}/contents/${path}`, {
+               method: 'PUT',
+               headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json' },
+               body: JSON.stringify({ message: `SocialSync : ajout asset ${path}`, content: bytesToBase64(bytes) })
+           });
+           if (!res.ok) throw new Error('Upload GitHub impossible (HTTP ' + res.status + ')');
+           const j = await res.json();
+           return { url: (j.content && (j.content.download_url || j.content.html_url)) || '', sha: j.content && j.content.sha };
+       }
+       async function deleteFileFromGitHub(path, sha) {
+           const { username, repo, token } = getGitHubConfig();
+           if (!username || !repo || !token) throw new Error('GitHub non configuré');
+           const res = await fetch(`https://api.github.com/repos/${username}/${repo}/contents/${path}`, {
+               method: 'DELETE',
+               headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json' },
+               body: JSON.stringify({ message: `SocialSync : suppression asset ${path}`, sha })
+           });
+           if (!res.ok && res.status !== 404) throw new Error('Suppression GitHub impossible (HTTP ' + res.status + ')');
+       }
+       // ===== FIN MODIFICATION ASSETS =====
 
        async function fetchDataFromGitHub() {
            const { username, repo, token } = getGitHubConfig();
@@ -1512,11 +1596,24 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
            showToast('Fichier .ICS exporté !');
        }
 
+       // ===== DÉBUT MODIFICATION NOM UNIQUE : vérification d'unicité du titre =====
+       function projectNameExists(name, excludeId) {
+           const n = String(name || '').trim().toLowerCase();
+           if (!n) return false;
+           return projects.some(p => p.title.trim().toLowerCase() === n && p.id !== excludeId);
+       }
+       // ===== FIN MODIFICATION NOM UNIQUE =====
+
        async function saveProject() {
            const title = document.getElementById('videoTitle').value.trim();
            const date = dateInput.value;
            if (!title) { showToast('Le titre de la vidéo est requis.', 'error'); return; }
            if (!date) { showToast('La date de lancement est requise.', 'error'); return; }
+           // ===== MODIFICATION NOM UNIQUE : blocage d'un projet avec un même nom =====
+           if (projectNameExists(title)) {
+               showToast('Un projet avec ce nom existe déjà — choisissez un autre titre.', 'error');
+               return;
+           }
            const project = {
                id: 'proj_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
                title,
@@ -1524,6 +1621,7 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                seo: getSeoData(),
                validations: {},
                status: {},
+               assets: {},
                createdAt: new Date().toISOString()
            };
            projects.push(project);
@@ -1717,6 +1815,9 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                        </div>
                        <div class="flex items-center gap-1 flex-shrink-0">
                            <button onclick="viewSeo('${proj.id}')" title="Voir le package SEO" class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs"><i class="fa-regular fa-eye"></i></button>
+                           <!-- ===== DÉBUT MODIFICATION DUPLIQUER : icône dupliquer le projet ===== -->
+                           <button onclick="duplicateProject('${proj.id}')" title="Dupliquer le projet (renommage obligatoire)" class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs"><i class="fa-regular fa-clone"></i></button>
+                           <!-- ===== FIN MODIFICATION DUPLIQUER ===== -->
                            <button onclick="deleteProject('${proj.id}')" title="Supprimer" class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-red-900/60 text-slate-300 hover:text-red-300 text-xs"><i class="fa-regular fa-trash-can"></i></button>
                        </div>
                    </div>
@@ -1731,6 +1832,42 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                </div>`;
            }).join('');
        }
+
+       // ===== DÉBUT MODIFICATION DUPLIQUER : duplication avec renommage + unicité =====
+       async function duplicateProject(id) {
+           const proj = projects.find(p => p.id === id);
+           if (!proj) return;
+           let newName = prompt('Nouveau nom pour la copie du projet (renommage obligatoire) :', proj.title + ' (copie)');
+           if (newName === null) return;
+           newName = newName.trim();
+           if (!newName) { showToast('Le nom de la copie ne peut pas être vide.', 'error'); return; }
+           if (projectNameExists(newName)) {
+               showToast('Un projet porte déjà ce nom — la copie doit avoir un nom unique.', 'error');
+               return;
+           }
+           const copy = JSON.parse(JSON.stringify(proj));
+           copy.id = 'proj_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+           copy.title = newName;
+           copy.validations = {};
+           copy.status = {};
+           copy.assets = {};
+           copy.createdAt = new Date().toISOString();
+           projects.push(copy);
+           renderProjectsList();
+           refreshCalendarEvents();
+           updateBadge();
+           try {
+               await pushDataToGitHub(`SocialSync : duplication du projet "${proj.title}" en "${newName}"`);
+               showToast('Projet dupliqué (statuts réinitialisés) !');
+           } catch (e) {
+               projects = projects.filter(p => p.id !== copy.id);
+               renderProjectsList();
+               refreshCalendarEvents();
+               updateBadge();
+               showToast('Duplication échouée : ' + e.message, 'error');
+           }
+       }
+       // ===== FIN MODIFICATION DUPLIQUER =====
 
        async function deleteProject(id) {
            const proj = projects.find(p => p.id === id);
@@ -1749,6 +1886,139 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
            refreshCalendarEvents();
            updateBadge();
        }
+
+       // ===== DÉBUT MODIFICATION ASSETS : gestion des assets (drag & drop, upload GitHub / Base64) =====
+       function renderAssetsSection(proj, platformId) {
+           const key = `${proj.id}_${platformId}`;
+           const list = (proj.assets && proj.assets[platformId]) || [];
+           const items = list.map((a, i) => {
+               const t = a.type || '';
+               const isImg = t.startsWith('image/');
+               const preview = isImg
+                   ? `<img src="${escapeHtml(a.url || '')}" class="w-8 h-8 object-cover rounded-lg border border-slate-700 flex-shrink-0" alt="">`
+                   : `<span class="w-8 h-8 rounded-lg border border-slate-700 flex items-center justify-center flex-shrink-0 bg-slate-900"><i class="fa-solid ${t.includes('pdf') ? 'fa-file-pdf text-red-400' : (t.startsWith('text/') ? 'fa-file-lines text-slate-300' : 'fa-file text-slate-400')} text-xs"></i></span>`;
+               return `
+               <div class="flex items-center gap-2 bg-slate-900 border border-slate-800 rounded-lg px-2 py-1.5">
+                   ${preview}
+                   <a href="${escapeHtml(a.url || '#')}" target="_blank" rel="noopener" class="text-[11px] text-indigo-300 hover:text-indigo-200 truncate flex-1 min-w-0" title="${escapeHtml(a.name)}">${escapeHtml(a.name)}</a>
+                   <span class="text-[10px] text-slate-500 flex-shrink-0">${formatFileSize(a.size || 0)}</span>
+                   <button onclick="deleteAsset('${proj.id}', '${platformId}', ${i})" title="Supprimer l'asset" class="w-6 h-6 flex items-center justify-center rounded bg-slate-800 hover:bg-red-900/60 text-slate-400 hover:text-red-300 text-[10px] flex-shrink-0"><i class="fa-regular fa-trash-can"></i></button>
+               </div>`;
+           }).join('');
+           return `
+           <div class="bg-slate-950 border border-slate-800 rounded-xl p-4">
+               <p class="text-xs font-bold text-white mb-2"><i class="fa-solid fa-paperclip text-indigo-400 mr-1"></i> Assets de la plateforme</p>
+               <div class="border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-xl p-3 text-center cursor-pointer transition"
+                    onclick="document.getElementById('assetFile_${key}').click()"
+                    ondragover="event.preventDefault(); this.classList.add('border-indigo-500');"
+                    ondragleave="this.classList.remove('border-indigo-500');"
+                    ondrop="handleAssetDrop(event, '${proj.id}', '${platformId}')">
+                   <i class="fa-solid fa-cloud-arrow-up text-slate-500 mb-1 block"></i>
+                   <p class="text-[11px] text-slate-300 font-semibold">Glissez-déposez une miniature, un .txt ou un PDF</p>
+                   <p class="text-[10px] text-slate-500 mt-0.5">Sauvegardé dans le dépôt GitHub (<code>assets/</code>) — ou Base64 si GitHub n'est pas configuré (max 2 Mo).</p>
+               </div>
+               <input type="file" id="assetFile_${key}" class="hidden" accept="image/*,.txt,.pdf" multiple onchange="handleAssetSelect(event, '${proj.id}', '${platformId}')">
+               <div id="assetStatus_${key}" class="text-xs min-h-[16px] mt-1"></div>
+               ${list.length ? `<div class="space-y-1.5 mt-2">${items}</div>` : `<p class="text-[10px] text-slate-500 mt-2 text-center">Aucun asset pour le moment.</p>`}
+           </div>`;
+       }
+
+       async function createAssetEntry(projectId, platformId, file) {
+           const gh = getGitHubConfig();
+           const ghReady = !!(gh.username && gh.repo && gh.token);
+           const MAX_GH = 20 * 1048576, MAX_B64 = 2 * 1048576;
+           if (ghReady && file.size > MAX_GH) throw new Error(`trop volumineux (${formatFileSize(file.size)}, max 20 Mo via GitHub)`);
+           if (!ghReady && file.size > MAX_B64) throw new Error(`trop volumineux (${formatFileSize(file.size)} — sans config GitHub, max 2 Mo en Base64)`);
+           const safeName = Date.now() + '_' + safeFileName(file.name);
+           const asset = { name: file.name, type: file.type || 'application/octet-stream', size: file.size, addedAt: new Date().toISOString() };
+           if (ghReady) {
+               const repoPath = `assets/${projectId}/${platformId}/${safeName}`;
+               const up = await uploadFileToGitHub(repoPath, file);
+               asset.url = up.url;
+               asset.sha = up.sha;
+               asset.repoPath = repoPath;
+           } else {
+               asset.url = await fileToDataUrl(file);
+           }
+           return asset;
+       }
+
+       async function addAssets(projectId, platformId, files) {
+           const proj = projects.find(p => p.id === projectId);
+           if (!proj || !files || !files.length) return;
+           const plat = platformsConfig.find(p => p.id === platformId);
+           const statusEl = document.getElementById(`assetStatus_${projectId}_${platformId}`);
+           let ok = 0;
+           const added = [];
+           for (const file of files) {
+               if (statusEl) statusEl.innerHTML = `<span class="text-indigo-300"><i class="fa-solid fa-spinner fa-spin"></i> Upload de ${escapeHtml(file.name)}…</span>`;
+               try {
+                   const asset = await createAssetEntry(projectId, platformId, file);
+                   proj.assets = proj.assets || {};
+                   proj.assets[platformId] = proj.assets[platformId] || [];
+                   proj.assets[platformId].push(asset);
+                   added.push(asset);
+                   ok++;
+               } catch (e) {
+                   showToast(`${file.name} : ${e.message}`, 'error');
+               }
+           }
+           if (ok) {
+               try {
+                   await pushDataToGitHub(`SocialSync : ${ok} asset(s) ajouté(s) — ${plat.name} — ${proj.title}`);
+                   showToast(`✅ ${ok} asset(s) ajouté(s) et sauvegardé(s) !`);
+               } catch (e) {
+                   proj.assets[platformId] = (proj.assets[platformId] || []).filter(a => !added.includes(a));
+                   added.forEach(a => { if (a.repoPath && a.sha) deleteFileFromGitHub(a.repoPath, a.sha).catch(() => {}); });
+                   showToast('Synchronisation des assets échouée : ' + e.message, 'error');
+               }
+           }
+           if (statusEl) statusEl.innerHTML = '';
+           viewSeoForPlatform(projectId, platformId);
+       }
+
+       function handleAssetDrop(event, projectId, platformId) {
+           event.preventDefault();
+           const zone = event.currentTarget;
+           if (zone) zone.classList.remove('border-indigo-500');
+           const files = event.dataTransfer && event.dataTransfer.files ? Array.from(event.dataTransfer.files) : [];
+           if (!files.length) return;
+           addAssets(projectId, platformId, files);
+       }
+
+       function handleAssetSelect(event, projectId, platformId) {
+           const files = Array.from(event.target.files || []);
+           event.target.value = '';
+           if (!files.length) return;
+           addAssets(projectId, platformId, files);
+       }
+
+       async function deleteAsset(projectId, platformId, index) {
+           const proj = projects.find(p => p.id === projectId);
+           if (!proj) return;
+           const arr = (proj.assets && proj.assets[platformId]) || [];
+           const asset = arr[index];
+           if (!asset) return;
+           if (!confirm(`Supprimer l'asset "${asset.name}" ?`)) return;
+           if (asset.repoPath && asset.sha) {
+               try {
+                   await deleteFileFromGitHub(asset.repoPath, asset.sha);
+               } catch (e) {
+                   showToast('Suppression du fichier GitHub échouée : ' + e.message, 'error');
+                   return;
+               }
+           }
+           arr.splice(index, 1);
+           try {
+               await pushDataToGitHub(`SocialSync : suppression asset "${asset.name}" — ${proj.title}`);
+               showToast('Asset supprimé.');
+           } catch (e) {
+               arr.splice(index, 0, asset);
+               showToast('Synchronisation échouée : ' + e.message, 'error');
+           }
+           viewSeoForPlatform(projectId, platformId);
+       }
+       // ===== FIN MODIFICATION ASSETS =====
 
        function viewSeo(projectId) {
            const proj = projects.find(p => p.id === projectId);
@@ -1786,6 +2056,23 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                });
                html += `</div>`;
            }
+           // ===== DÉBUT MODIFICATION ASSETS : récapitulatif des assets dans la fiche projet =====
+           const recap = [];
+           for (const pl of platformsConfig) {
+               ((proj.assets && proj.assets[pl.id]) || []).forEach(a => recap.push({ pl, a }));
+           }
+           html += `
+           <div class="bg-slate-950 border border-slate-800 rounded-xl p-4">
+               <p class="text-xs font-bold text-white mb-2"><i class="fa-solid fa-paperclip text-indigo-400 mr-1"></i> Assets du projet (${recap.length})</p>
+               ${recap.length ? `<div class="space-y-1.5">${recap.map(({ pl, a }) => `
+                   <div class="flex items-center gap-2">
+                       <i class="${pl.icon} text-[10px] text-slate-400 w-4 flex-shrink-0"></i>
+                       <a href="${escapeHtml(a.url || '#')}" target="_blank" rel="noopener" class="text-[11px] text-indigo-300 hover:text-indigo-200 truncate flex-1 min-w-0" title="${escapeHtml(a.name)}">${escapeHtml(a.name)}</a>
+                       <span class="text-[10px] text-slate-500 flex-shrink-0">${formatFileSize(a.size || 0)}</span>
+                   </div>`).join('')}</div>`
+               : `<p class="text-[10px] text-slate-500">Aucun asset. Glissez-déposez vos fichiers dans la fiche d'une plateforme (clic sur un événement du calendrier).</p>`}
+           </div>`;
+           // ===== FIN MODIFICATION ASSETS =====
            html += `</div>`;
            document.getElementById('seoViewContent').innerHTML = html;
            document.getElementById('seoViewModal').classList.remove('hidden');
@@ -1828,7 +2115,11 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                const val = (proj.seo && proj.seo[platformId] && proj.seo[platformId][f]) || '';
                html += `<div class="mb-2"><p class="text-[10px] font-semibold text-slate-400">${f}</p><p class="text-xs text-slate-200 whitespace-pre-wrap">${escapeHtml(val || '—')}</p></div>`;
            });
-           html += `</div></div>`;
+           html += `</div>`;
+           // ===== DÉBUT MODIFICATION ASSETS : section assets dans la fiche de la plateforme (événement calendrier) =====
+           html += renderAssetsSection(proj, platformId);
+           // ===== FIN MODIFICATION ASSETS =====
+           html += `</div>`;
            document.getElementById('seoViewContent').innerHTML = html;
            document.getElementById('seoViewModal').classList.remove('hidden');
        }
@@ -1866,7 +2157,6 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
        }
 
        // --- UI GLOBAL ---
-       // ===== MODIFICATION : gestion de 3 onglets (Scripts | Planificateur | Calendrier) =====
        function switchTab(tab) {
            const planner = document.getElementById('tabPlanner');
            const cal = document.getElementById('tabCalendar');
