@@ -40,11 +40,11 @@
       },
       "validations": {
         "yt": true,
-        "fb": false
+        "fb": true
       },
       "status": {
         "yt": "publie",
-        "fb": "programme"
+        "fb": "publie"
       },
       "assets": {
         "yt": [
