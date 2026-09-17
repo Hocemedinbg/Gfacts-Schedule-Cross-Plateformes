@@ -42,13 +42,13 @@
         "yt": true,
         "fb": true,
         "ig": true,
-        "tiktok": false
+        "tiktok": true
       },
       "status": {
         "yt": "publie",
         "fb": "publie",
         "ig": "publie",
-        "tiktok": "programme"
+        "tiktok": "publie"
       },
       "assets": {
         "yt": [
