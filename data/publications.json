@@ -41,12 +41,12 @@
       "validations": {
         "yt": true,
         "fb": true,
-        "ig": false
+        "ig": true
       },
       "status": {
         "yt": "publie",
         "fb": "publie",
-        "ig": "programme"
+        "ig": "publie"
       },
       "assets": {
         "yt": [
