@@ -40,11 +40,13 @@
       },
       "validations": {
         "yt": true,
-        "fb": true
+        "fb": true,
+        "ig": false
       },
       "status": {
         "yt": "publie",
-        "fb": "publie"
+        "fb": "publie",
+        "ig": "programme"
       },
       "assets": {
         "yt": [
