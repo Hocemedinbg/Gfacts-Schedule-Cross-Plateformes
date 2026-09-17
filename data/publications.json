@@ -39,10 +39,12 @@
         }
       },
       "validations": {
-        "yt": true
+        "yt": true,
+        "fb": false
       },
       "status": {
-        "yt": "publie"
+        "yt": "publie",
+        "fb": "programme"
       },
       "assets": {
         "yt": [
