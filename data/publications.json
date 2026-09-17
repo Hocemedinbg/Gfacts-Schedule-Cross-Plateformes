@@ -38,8 +38,12 @@
           "Hashtags": "#DustBowl #AmericanHistory #HistoricalPhotos #1930sHistory #GreatDepression #HistoricalDocumentary #LastManClub #HistoryFacts #VintageHistory #HistoricalStories"
         }
       },
-      "validations": {},
-      "status": {},
+      "validations": {
+        "yt": false
+      },
+      "status": {
+        "yt": "programme"
+      },
       "assets": {
         "yt": [
           {
