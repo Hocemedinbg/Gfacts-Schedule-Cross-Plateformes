@@ -182,7 +182,19 @@
       },
       "validations": {},
       "status": {},
-      "assets": {},
+      "assets": {
+        "yt": [
+          {
+            "name": "ChatGPT Image Sep 18, 2026, 09_28_10 AM.png",
+            "type": "image/png",
+            "size": 2564718,
+            "addedAt": "2026-09-18T07:31:28.306Z",
+            "url": "https://raw.githubusercontent.com/Hocemedinbg/Gfacts-Schedule-Cross-Plateformes/main/assets/proj_1789714495137_l3427/yt/1789716688306_ChatGPT_Image_Sep_18_2026_09_28_10_AM.png",
+            "sha": "809b219cbc9df9176973738d75480399869b52ab",
+            "repoPath": "assets/proj_1789714495137_l3427/yt/1789716688306_ChatGPT_Image_Sep_18_2026_09_28_10_AM.png"
+          }
+        ]
+      },
       "createdAt": "2026-09-18T06:54:55.137Z"
     }
   ]
