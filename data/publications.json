@@ -127,7 +127,19 @@
       },
       "validations": {},
       "status": {},
-      "assets": {},
+      "assets": {
+        "yt": [
+          {
+            "name": "In 1917, a fourteen-year-old.png",
+            "type": "image/png",
+            "size": 2611475,
+            "addedAt": "2026-09-18T06:53:20.638Z",
+            "url": "https://raw.githubusercontent.com/Hocemedinbg/Gfacts-Schedule-Cross-Plateformes/main/assets/proj_1789713529043_o4i1p/yt/1789714400637_In_1917_a_fourteen-year-old.png",
+            "sha": "c10216577baef469c24b7efb2f5d18268f87e916",
+            "repoPath": "assets/proj_1789713529043_o4i1p/yt/1789714400637_In_1917_a_fourteen-year-old.png"
+          }
+        ]
+      },
       "createdAt": "2026-09-18T06:38:49.044Z"
     }
   ]
