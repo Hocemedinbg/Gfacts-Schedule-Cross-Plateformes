@@ -183,12 +183,14 @@
       "validations": {
         "yt": true,
         "fb": true,
-        "ig": true
+        "ig": true,
+        "tiktok": true
       },
       "status": {
         "yt": "publie",
         "fb": "publie",
-        "ig": "publie"
+        "ig": "publie",
+        "tiktok": "publie"
       },
       "assets": {},
       "createdAt": "2026-09-19T18:01:20.109Z"
