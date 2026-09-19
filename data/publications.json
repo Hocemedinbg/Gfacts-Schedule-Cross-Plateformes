@@ -254,6 +254,17 @@
             "sha": "2d103dd583a6d8f8a85d1ef9f866fe42d7e5ff99",
             "repoPath": "assets/proj_1789844373631_ii7hh/yt/1789845257441_What_happens_when_the_government.png"
           }
+        ],
+        "fb": [
+          {
+            "name": "What happens when the government.png",
+            "type": "image/png",
+            "size": 2872819,
+            "addedAt": "2026-09-19T19:50:14.134Z",
+            "url": "https://raw.githubusercontent.com/Hocemedinbg/Gfacts-Schedule-Cross-Plateformes/main/assets/proj_1789844373631_ii7hh/fb/1789847414134_What_happens_when_the_government.png",
+            "sha": "2d103dd583a6d8f8a85d1ef9f866fe42d7e5ff99",
+            "repoPath": "assets/proj_1789844373631_ii7hh/fb/1789847414134_What_happens_when_the_government.png"
+          }
         ]
       },
       "createdAt": "2026-09-19T18:59:33.632Z"
