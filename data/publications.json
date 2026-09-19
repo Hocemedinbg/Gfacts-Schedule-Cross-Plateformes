@@ -235,8 +235,12 @@
           "Hashtags": "#DustBowl #AmericanHistory #HistoricalPhotos #1930sHistory #FilmHistory #HistoricalDocumentary #VintageFilm #HistoryFacts #HistoricalStories #Cinematography #GreatDepression"
         }
       },
-      "validations": {},
-      "status": {},
+      "validations": {
+        "yt": true
+      },
+      "status": {
+        "yt": "publie"
+      },
       "assets": {},
       "createdAt": "2026-09-19T18:59:33.632Z"
     }
