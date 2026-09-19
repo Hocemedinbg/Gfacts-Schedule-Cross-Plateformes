@@ -181,10 +181,12 @@
         }
       },
       "validations": {
-        "yt": true
+        "yt": true,
+        "fb": true
       },
       "status": {
-        "yt": "publie"
+        "yt": "publie",
+        "fb": "publie"
       },
       "assets": {},
       "createdAt": "2026-09-19T18:01:20.109Z"
