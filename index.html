@@ -567,6 +567,7 @@
 
        // --- IMPORT PACKAGE SEO ---
        const seoSectionAliases = { 'youtube': 'yt', 'tiktok': 'tiktok', 'instagram': 'ig', 'facebook': 'fb', 'pinterest': 'pin' };
+       // ===== DÉBUT MODIFICATION : reconnaissance des variantes "Hashtag strategy" etc. =====
        const seoFieldAliases = {
            'playlist': '__PLAYLIST__',
            'script start': 'Script Start', 'script': 'Script Start',
@@ -576,13 +577,21 @@
            'title/caption': 'Title/Caption', 'title / caption': 'Title/Caption',
            'hook': 'Hook',
            'hashtags': 'Hashtags', 'hashtag': 'Hashtags',
+           'hashtag strategy': 'Hashtags', 'hashtags strategy': 'Hashtags',
+           'hashtag strategies': 'Hashtags', 'hashtags strategies': 'Hashtags',
+           'hashtag strategy mix': 'Hashtags', 'hashtag mix': 'Hashtags',
+           'hashtag set': 'Hashtags', 'hashtags set': 'Hashtags',
+           'hashtag list': 'Hashtags', 'hashtags list': 'Hashtags',
            'caption': 'Caption',
            'call to action': 'Call To Action', 'cta': 'Call To Action',
            'post copy': 'Post copy', 'post': 'Post copy',
            'engagement question': 'Engagement Question',
            'pin title': 'Pin Title', 'pin description': 'Pin Description'
        };
-       function normSeoLine(s) { return s.toLowerCase().replace(/[*_#`~>]/g, '').replace(/\s+/g, ' ').trim(); }
+       // ===== FIN MODIFICATION =====
+       // ===== DÉBUT MODIFICATION : suppression des ":" finaux ("Title:", "Hashtag strategy:"...) =====
+       function normSeoLine(s) { return s.toLowerCase().replace(/[*_#`~>]/g, '').replace(/\s+/g, ' ').trim().replace(/\s*:$/, ''); }
+       // ===== FIN MODIFICATION =====
 
        function parseSeoPackage(rawText) {
            const parsed = { playlist: '', yt: {}, tiktok: {}, ig: {}, fb: {}, pin: {} };
@@ -1354,11 +1363,9 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
        }
 
        // --- GITHUB API ---
-       // ===== DÉBUT CORRECTIF : token des secrets du dépôt = priorité absolue =====
        function getGitHubConfig() {
            return { username: localStorage.getItem('gh_user') || '', repo: localStorage.getItem('gh_repo') || '', token: runtimeConfig.gh_token || localStorage.getItem('gh_token') || '' };
        }
-       // ===== FIN CORRECTIF =====
        function loadGitHubConfigInputs() {
            const conf = getGitHubConfig();
            document.getElementById('ghUsername').value = conf.username;
@@ -1368,7 +1375,6 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
        function openConfigModal() { document.getElementById('configModal').classList.remove('hidden'); }
        function closeConfigModal() { document.getElementById('configModal').classList.add('hidden'); }
 
-       // ===== DÉBUT CORRECTIF : token facultatif si les secrets du dépôt le fournissent =====
        async function saveGitHubConfig() {
            const username = document.getElementById('ghUsername').value.trim();
            const repo = document.getElementById('ghRepo').value.trim();
@@ -1391,7 +1397,6 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                showToast('Test échoué : ' + e.message, 'error');
            }
        }
-       // ===== FIN CORRECTIF =====
 
        async function checkGitHubConnectionAndLoad() {
            const { username, repo, token } = getGitHubConfig();
