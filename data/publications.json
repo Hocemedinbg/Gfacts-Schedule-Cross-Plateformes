@@ -180,8 +180,12 @@
           "Hashtags": "#DustBowl #AmericanHistory #HistoricalPhotos #1930sHistory #GreatDepression #HistoricalDocumentary #RoaringTwenties #HistoryFacts #VintageHistory #HistoricalStories"
         }
       },
-      "validations": {},
-      "status": {},
+      "validations": {
+        "yt": true
+      },
+      "status": {
+        "yt": "publie"
+      },
       "assets": {
         "yt": [
           {
