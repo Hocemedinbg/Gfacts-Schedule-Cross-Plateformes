@@ -238,12 +238,14 @@
       "validations": {
         "yt": true,
         "fb": true,
-        "ig": true
+        "ig": true,
+        "tiktok": true
       },
       "status": {
         "yt": "publie",
         "fb": "publie",
-        "ig": "publie"
+        "ig": "publie",
+        "tiktok": "publie"
       },
       "assets": {
         "yt": [
