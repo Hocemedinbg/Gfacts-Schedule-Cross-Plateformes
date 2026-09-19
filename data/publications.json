@@ -237,11 +237,13 @@
       },
       "validations": {
         "yt": true,
-        "fb": true
+        "fb": true,
+        "ig": true
       },
       "status": {
         "yt": "publie",
-        "fb": "publie"
+        "fb": "publie",
+        "ig": "publie"
       },
       "assets": {
         "yt": [
