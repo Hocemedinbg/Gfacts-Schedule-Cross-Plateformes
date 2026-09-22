@@ -422,13 +422,15 @@
            { id: 'ig', name: 'Instagram Reels', icon: 'fa-brands fa-instagram', color: 'from-fuchsia-600/20 to-fuchsia-900/10 border-fuchsia-500/40', badgeColor: 'bg-fuchsia-500/20 text-fuchsia-400 border-fuchsia-500/30', calendarColor: '#d946ef', dayOffset: 1, timeSlot: '18h30 - 20h30', startTime: '18:30', endTime: '20:30', kpi: 'Partages DM & Saves', strategy: 'Usage détente du soir.' }
        ];
 
+       // ===== DÉBUT MODIFICATION ALT TEXT : ajout du champ "ALT Text" (Instagram, Facebook, Pinterest) =====
        const seoFieldsConfig = {
            yt: { label: 'YouTube', fields: ['Script Start', 'Title', 'Description', 'Tags', 'Pinned Comment'] },
            tiktok: { label: 'TikTok', fields: ['Script Start', 'Title/Caption', 'Hook', 'Hashtags'] },
-           ig: { label: 'Instagram', fields: ['Script Start', 'Caption', 'Hashtags', 'Call To Action'] },
-           fb: { label: 'Facebook', fields: ['Script Start', 'Post copy', 'Hashtags', 'Engagement Question'] },
-           pin: { label: 'Pinterest', fields: ['Script Start', 'Pin Title', 'Pin Description', 'Hashtags'] }
+           ig: { label: 'Instagram', fields: ['Script Start', 'Caption', 'Hashtags', 'Call To Action', 'ALT Text'] },
+           fb: { label: 'Facebook', fields: ['Script Start', 'Post copy', 'Hashtags', 'Engagement Question', 'ALT Text'] },
+           pin: { label: 'Pinterest', fields: ['Script Start', 'Pin Title', 'Pin Description', 'Hashtags', 'ALT Text'] }
        };
+       // ===== FIN MODIFICATION ALT TEXT =====
 
        // ===== statuts plateforme (dropdown 3 choix) =====
        const PLATFORM_STATUS = {
@@ -567,9 +569,9 @@
 
        // --- IMPORT PACKAGE SEO ---
        const seoSectionAliases = { 'youtube': 'yt', 'tiktok': 'tiktok', 'instagram': 'ig', 'facebook': 'fb', 'pinterest': 'pin' };
-       // ===== DÉBUT MODIFICATION : reconnaissance des variantes "Hashtag strategy" etc. =====
+       // ===== DÉBUT MODIFICATION ALT TEXT : alias 'alt text', 'alt' et 'playlist name' =====
        const seoFieldAliases = {
-           'playlist': '__PLAYLIST__',
+           'playlist': '__PLAYLIST__', 'playlist name': '__PLAYLIST__',
            'script start': 'Script Start', 'script': 'Script Start',
            'title': 'Title', 'description': 'Description',
            'tags': 'Tags', 'tag': 'Tags',
@@ -577,23 +579,44 @@
            'title/caption': 'Title/Caption', 'title / caption': 'Title/Caption',
            'hook': 'Hook',
            'hashtags': 'Hashtags', 'hashtag': 'Hashtags',
-           'hashtag strategy': 'Hashtags', 'hashtags strategy': 'Hashtags',
-           'hashtag strategies': 'Hashtags', 'hashtags strategies': 'Hashtags',
-           'hashtag strategy mix': 'Hashtags', 'hashtag mix': 'Hashtags',
-           'hashtag set': 'Hashtags', 'hashtags set': 'Hashtags',
-           'hashtag list': 'Hashtags', 'hashtags list': 'Hashtags',
            'caption': 'Caption',
            'call to action': 'Call To Action', 'cta': 'Call To Action',
            'post copy': 'Post copy', 'post': 'Post copy',
            'engagement question': 'Engagement Question',
-           'pin title': 'Pin Title', 'pin description': 'Pin Description'
+           'pin title': 'Pin Title', 'pin description': 'Pin Description',
+           'alt text': 'ALT Text', 'alt': 'ALT Text'
        };
-       // ===== FIN MODIFICATION =====
-       // ===== DÉBUT MODIFICATION : suppression des ":" finaux ("Title:", "Hashtag strategy:"...) =====
-       function normSeoLine(s) { return s.toLowerCase().replace(/[*_#`~>]/g, '').replace(/\s+/g, ' ').trim().replace(/\s*:$/, ''); }
-       // ===== FIN MODIFICATION =====
+       // ===== FIN MODIFICATION ALT TEXT =====
+       function normSeoLine(s) { return s.toLowerCase().replace(/[*_#`~>]/g, '').replace(/\s+/g, ' ').trim(); }
+
+       // ===== DÉBUT MODIFICATION BLOCS IMBRIQUÉS : normalisation des doubles fences (```text dans ```text) =====
+       function normalizeNestedFences(text) {
+           const lines = String(text || '').split(/\r?\n/);
+           const out = [];
+           let inFence = false;
+           for (const line of lines) {
+               const t = line.trim();
+               if (/^```/.test(t)) {
+                   if (!inFence) {
+                       inFence = true;
+                       out.push(line);
+                   } else if (/^```[\w+-]+$/.test(t)) {
+                       continue; // ouverture imbriquée (ex: ```text à l'intérieur d'un bloc) → supprimée
+                   } else {
+                       inFence = false;
+                       out.push(line);
+                   }
+               } else {
+                   out.push(line);
+               }
+           }
+           return out.join('\n');
+       }
+       // ===== FIN MODIFICATION BLOCS IMBRIQUÉS =====
 
        function parseSeoPackage(rawText) {
+           // ===== MODIFICATION BLOCS IMBRIQUÉS : normalisation avant parsing =====
+           rawText = normalizeNestedFences(rawText);
            const parsed = { playlist: '', yt: {}, tiktok: {}, ig: {}, fb: {}, pin: {} };
            let currentSection = null;
 
@@ -887,13 +910,16 @@ content
                'pin description': 'Pin Description',
                'caption': 'Caption',
                'post copy': 'Post copy', 'post': 'Post copy',
-               'playlist': '__PLAYLIST__'
+               // ===== MODIFICATION ALT TEXT : labels ajoutés =====
+               'alt text': 'ALT Text', 'alt': 'ALT Text', 'alt-text': 'ALT Text',
+               'playlist': '__PLAYLIST__', 'playlist name': '__PLAYLIST__'
            };
            return map[n] || null;
        }
 
        function parseAiSeoPackage(raw) {
-           let text = String(raw || '').replace(/\[\/?COPY BOX\]/gi, '').trim();
+           // ===== MODIFICATION BLOCS IMBRIQUÉS : normalisation avant parsing =====
+           let text = normalizeNestedFences(String(raw || '').replace(/\[\/?COPY BOX\]/gi, '')).trim();
            const parsed = { playlist: '', yt: {}, tiktok: {}, ig: {}, fb: {}, pin: {} };
 
            const lower = text.toLowerCase();
@@ -1363,6 +1389,7 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
        }
 
        // --- GITHUB API ---
+       // ===== token des secrets du dépôt = priorité absolue =====
        function getGitHubConfig() {
            return { username: localStorage.getItem('gh_user') || '', repo: localStorage.getItem('gh_repo') || '', token: runtimeConfig.gh_token || localStorage.getItem('gh_token') || '' };
        }
@@ -1375,6 +1402,7 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
        function openConfigModal() { document.getElementById('configModal').classList.remove('hidden'); }
        function closeConfigModal() { document.getElementById('configModal').classList.add('hidden'); }
 
+       // ===== token facultatif si les secrets du dépôt le fournissent =====
        async function saveGitHubConfig() {
            const username = document.getElementById('ghUsername').value.trim();
            const repo = document.getElementById('ghRepo').value.trim();
