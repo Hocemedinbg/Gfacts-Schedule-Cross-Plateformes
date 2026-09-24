@@ -422,7 +422,7 @@
            { id: 'ig', name: 'Instagram Reels', icon: 'fa-brands fa-instagram', color: 'from-fuchsia-600/20 to-fuchsia-900/10 border-fuchsia-500/40', badgeColor: 'bg-fuchsia-500/20 text-fuchsia-400 border-fuchsia-500/30', calendarColor: '#d946ef', dayOffset: 1, timeSlot: '18h30 - 20h30', startTime: '18:30', endTime: '20:30', kpi: 'Partages DM & Saves', strategy: 'Usage détente du soir.' }
        ];
 
-       // ===== DÉBUT MODIFICATION ALT TEXT : ajout du champ "ALT Text" (Instagram, Facebook, Pinterest) =====
+       // ===== champ "ALT Text" présent pour Instagram, Facebook et Pinterest =====
        const seoFieldsConfig = {
            yt: { label: 'YouTube', fields: ['Script Start', 'Title', 'Description', 'Tags', 'Pinned Comment'] },
            tiktok: { label: 'TikTok', fields: ['Script Start', 'Title/Caption', 'Hook', 'Hashtags'] },
@@ -430,7 +430,6 @@
            fb: { label: 'Facebook', fields: ['Script Start', 'Post copy', 'Hashtags', 'Engagement Question', 'ALT Text'] },
            pin: { label: 'Pinterest', fields: ['Script Start', 'Pin Title', 'Pin Description', 'Hashtags', 'ALT Text'] }
        };
-       // ===== FIN MODIFICATION ALT TEXT =====
 
        // ===== statuts plateforme (dropdown 3 choix) =====
        const PLATFORM_STATUS = {
@@ -569,7 +568,7 @@
 
        // --- IMPORT PACKAGE SEO ---
        const seoSectionAliases = { 'youtube': 'yt', 'tiktok': 'tiktok', 'instagram': 'ig', 'facebook': 'fb', 'pinterest': 'pin' };
-       // ===== DÉBUT MODIFICATION ALT TEXT : alias 'alt text', 'alt' et 'playlist name' =====
+       // ===== DÉBUT MODIFICATION ALT TEXT : alias 'alt text'/'alt', 'hashtag strategy', 'playlist name' =====
        const seoFieldAliases = {
            'playlist': '__PLAYLIST__', 'playlist name': '__PLAYLIST__',
            'script start': 'Script Start', 'script': 'Script Start',
@@ -579,17 +578,18 @@
            'title/caption': 'Title/Caption', 'title / caption': 'Title/Caption',
            'hook': 'Hook',
            'hashtags': 'Hashtags', 'hashtag': 'Hashtags',
+           'hashtag strategy': 'Hashtags', 'hashtags strategy': 'Hashtags',
            'caption': 'Caption',
            'call to action': 'Call To Action', 'cta': 'Call To Action',
            'post copy': 'Post copy', 'post': 'Post copy',
            'engagement question': 'Engagement Question',
            'pin title': 'Pin Title', 'pin description': 'Pin Description',
-           'alt text': 'ALT Text', 'alt': 'ALT Text'
+           'alt text': 'ALT Text', 'alt': 'ALT Text', 'alt-text': 'ALT Text'
        };
        // ===== FIN MODIFICATION ALT TEXT =====
        function normSeoLine(s) { return s.toLowerCase().replace(/[*_#`~>]/g, '').replace(/\s+/g, ' ').trim(); }
 
-       // ===== DÉBUT MODIFICATION BLOCS IMBRIQUÉS : normalisation des doubles fences (```text dans ```text) =====
+       // ===== normalisation des doubles fences (```text imbriqués) =====
        function normalizeNestedFences(text) {
            const lines = String(text || '').split(/\r?\n/);
            const out = [];
@@ -601,7 +601,7 @@
                        inFence = true;
                        out.push(line);
                    } else if (/^```[\w+-]+$/.test(t)) {
-                       continue; // ouverture imbriquée (ex: ```text à l'intérieur d'un bloc) → supprimée
+                       continue; // ouverture imbriquée à l'intérieur d'un bloc → supprimée
                    } else {
                        inFence = false;
                        out.push(line);
@@ -612,10 +612,8 @@
            }
            return out.join('\n');
        }
-       // ===== FIN MODIFICATION BLOCS IMBRIQUÉS =====
 
        function parseSeoPackage(rawText) {
-           // ===== MODIFICATION BLOCS IMBRIQUÉS : normalisation avant parsing =====
            rawText = normalizeNestedFences(rawText);
            const parsed = { playlist: '', yt: {}, tiktok: {}, ig: {}, fb: {}, pin: {} };
            let currentSection = null;
@@ -738,6 +736,7 @@
        // ===== GÉNÉRATION IA PACKAGE SEO (OpenRouter) =====
        const AI_DEFAULT_MODEL = 'meta-llama/llama-3.3-70b-instruct';
 
+       // ===== DÉBUT MODIFICATION ALT TEXT : le prompt IA demande maintenant l'ALT Text (IG, FB, Pinterest) =====
        const AI_SYSTEM_PROMPT = `You are a viral content strategist and SEO expert specializing in cross-platform video distribution. Your expertise spans YouTube algorithm optimization, TikTok virality mechanics, Instagram Reels engagement patterns, Facebook video performance, and Pinterest discovery systems.
 
 # Task
@@ -761,16 +760,19 @@ For each platform, provide copy in its own clearly labeled section. Include:
 - Caption (2,200 characters max, story-driven, emoji placement for scannability)
 - Hashtag strategy (30 hashtags, mixed reach tiers)
 - Call-to-action placement
+- ALT Text (concise visual description for accessibility, 1-2 sentences)
 
 **Facebook:**
 - Post copy (conversational tone, benefit-focused)
 - Hashtag strategy (5-8 relevant hashtags)
 - Engagement question or hook
+- ALT Text (concise visual description for accessibility, 1-2 sentences)
 
 **Pinterest:**
 - Pin title (100 characters max, SEO-optimized)
 - Pin description (500 characters, keyword-rich for discovery)
 - Hashtags (10-15 pins-specific hashtags)
+- ALT Text (concise visual description for accessibility, 1-2 sentences)
 
 # Style & Tone
 - Speak directly to the target audience's pain points, desires, or curiosity
@@ -812,7 +814,7 @@ For each platform section, first display:
 Script Start:
 [first 6 words extracted from the user's script]
 
-Then output every generated asset (title, description, tags, hashtags, keywords, comments, hooks, etc.) in separate one-click copy boxes. Each box must contain only the exact text to be copied and no markdown syntax, explanations, labels, numbering, quotes, or additional formatting.
+Then output every generated asset (title, description, tags, hashtags, keywords, comments, hooks, alt text, etc.) in separate one-click copy boxes. Each box must contain only the exact text to be copied and no markdown syntax, explanations, labels, numbering, quotes, or additional formatting.
 
 IMPORTANT:
 
@@ -857,6 +859,7 @@ Required labels include (when applicable):
 - Engagement Question
 - Pin Title
 - Pin Description
+- ALT Text
 
 Do not merge multiple fields together.
 
@@ -879,6 +882,7 @@ Field Name
 \`\`\`text
 content
 \`\`\``;
+       // ===== FIN MODIFICATION ALT TEXT =====
 
        const AI_PLAYLISTS = [
            "History's Greatest Mysteries & Strange Stories",
@@ -910,7 +914,6 @@ content
                'pin description': 'Pin Description',
                'caption': 'Caption',
                'post copy': 'Post copy', 'post': 'Post copy',
-               // ===== MODIFICATION ALT TEXT : labels ajoutés =====
                'alt text': 'ALT Text', 'alt': 'ALT Text', 'alt-text': 'ALT Text',
                'playlist': '__PLAYLIST__', 'playlist name': '__PLAYLIST__'
            };
@@ -918,7 +921,6 @@ content
        }
 
        function parseAiSeoPackage(raw) {
-           // ===== MODIFICATION BLOCS IMBRIQUÉS : normalisation avant parsing =====
            let text = normalizeNestedFences(String(raw || '').replace(/\[\/?COPY BOX\]/gi, '')).trim();
            const parsed = { playlist: '', yt: {}, tiktok: {}, ig: {}, fb: {}, pin: {} };
 
