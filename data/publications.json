@@ -314,8 +314,12 @@
           "ALT Text": "A vintage-style aesthetic photo of old confidential archive files and a reel-to-reel tape recorder representing hidden historical records."
         }
       },
-      "validations": {},
-      "status": {},
+      "validations": {
+        "ig": true
+      },
+      "status": {
+        "ig": "publie"
+      },
       "assets": {},
       "createdAt": "2026-09-25T06:29:22.129Z"
     }
