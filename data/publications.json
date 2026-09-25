@@ -324,7 +324,19 @@
         "yt": "publie",
         "fb": "programme"
       },
-      "assets": {},
+      "assets": {
+        "yt": [
+          {
+            "name": "In the year 2000, a professor.png",
+            "type": "image/png",
+            "size": 2793067,
+            "addedAt": "2026-09-25T07:09:20.563Z",
+            "url": "https://raw.githubusercontent.com/Hocemedinbg/Gfacts-Schedule-Cross-Plateformes/main/assets/proj_1790317762129_u6x05/yt/1790320160563_In_the_year_2000_a_professor.png",
+            "sha": "9c175fff63f169d64316e1492eee2084b36be574",
+            "repoPath": "assets/proj_1790317762129_u6x05/yt/1790320160563_In_the_year_2000_a_professor.png"
+          }
+        ]
+      },
       "createdAt": "2026-09-25T06:29:22.129Z"
     }
   ]
