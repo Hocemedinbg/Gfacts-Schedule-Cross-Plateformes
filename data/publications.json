@@ -315,10 +315,12 @@
         }
       },
       "validations": {
-        "ig": true
+        "ig": true,
+        "yt": true
       },
       "status": {
-        "ig": "publie"
+        "ig": "publie",
+        "yt": "publie"
       },
       "assets": {},
       "createdAt": "2026-09-25T06:29:22.129Z"
