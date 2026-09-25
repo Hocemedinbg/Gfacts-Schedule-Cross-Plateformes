@@ -316,11 +316,13 @@
       },
       "validations": {
         "ig": true,
-        "yt": true
+        "yt": true,
+        "fb": false
       },
       "status": {
         "ig": "publie",
-        "yt": "publie"
+        "yt": "publie",
+        "fb": "programme"
       },
       "assets": {},
       "createdAt": "2026-09-25T06:29:22.129Z"
