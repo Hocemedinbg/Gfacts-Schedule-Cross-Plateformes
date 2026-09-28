@@ -400,6 +400,36 @@
        </div>
    </div>
 
+   <!-- ===== DÉBUT MODIFICATION DUPLICATION : modal nom + date pour la copie du projet ===== -->
+   <div id="duplicateModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+       <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl relative">
+           <button onclick="closeDuplicateModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+           <div class="flex items-center gap-3">
+               <div class="bg-slate-800 p-3 rounded-xl text-white"><i class="fa-regular fa-clone text-2xl"></i></div>
+               <div>
+                   <h3 class="font-bold text-lg text-white">Dupliquer le projet</h3>
+                   <p class="text-xs text-slate-400">Le nom doit être unique — choisissez librement la date de lancement.</p>
+               </div>
+           </div>
+           <div class="space-y-4 text-xs">
+               <div>
+                   <label class="block font-semibold text-slate-300 mb-1">Nom du projet copié <span class="text-red-400">*</span></label>
+                   <input type="text" id="dupName" placeholder="Ex: Ma vidéo (copie)" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500">
+               </div>
+               <div>
+                   <label class="block font-semibold text-slate-300 mb-1">Date Lancement YT (J0) <span class="text-red-400">*</span></label>
+                   <input type="date" id="dupDate" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500">
+                   <p class="text-[10px] text-slate-500 mt-1">Les 5 événements plateformes seront replacés sur cette nouvelle date (J+0 et J+1).</p>
+               </div>
+           </div>
+           <div class="pt-3 border-t border-slate-800 flex justify-end gap-3">
+               <button onclick="closeDuplicateModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg text-xs font-semibold hover:bg-slate-700">Annuler</button>
+               <button onclick="confirmDuplicateProject()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-500 shadow-lg shadow-indigo-900/40">Dupliquer</button>
+           </div>
+       </div>
+   </div>
+   <!-- ===== FIN MODIFICATION DUPLICATION ===== -->
+
    <!-- MODAL VUE SEO -->
    <div id="seoViewModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl relative">
@@ -451,6 +481,8 @@
        let currentSha = null;
        let calendar = null;
        let currentEditProjectId = null;
+       // ===== MODIFICATION DUPLICATION : source en cours de duplication =====
+       let duplicateSourceId = null;
 
        // ===== configuration runtime chargée depuis le dépôt (secrets) =====
        let runtimeConfig = { gh_token: '', or_api_key: '' };
@@ -568,7 +600,7 @@
 
        // --- IMPORT PACKAGE SEO ---
        const seoSectionAliases = { 'youtube': 'yt', 'tiktok': 'tiktok', 'instagram': 'ig', 'facebook': 'fb', 'pinterest': 'pin' };
-       // ===== DÉBUT MODIFICATION ALT TEXT : alias 'alt text'/'alt', 'hashtag strategy', 'playlist name' =====
+       // ===== alias 'alt text'/'alt', 'hashtag strategy', 'playlist name' =====
        const seoFieldAliases = {
            'playlist': '__PLAYLIST__', 'playlist name': '__PLAYLIST__',
            'script start': 'Script Start', 'script': 'Script Start',
@@ -586,7 +618,6 @@
            'pin title': 'Pin Title', 'pin description': 'Pin Description',
            'alt text': 'ALT Text', 'alt': 'ALT Text', 'alt-text': 'ALT Text'
        };
-       // ===== FIN MODIFICATION ALT TEXT =====
        function normSeoLine(s) { return s.toLowerCase().replace(/[*_#`~>]/g, '').replace(/\s+/g, ' ').trim(); }
 
        // ===== normalisation des doubles fences (```text imbriqués) =====
@@ -736,7 +767,7 @@
        // ===== GÉNÉRATION IA PACKAGE SEO (OpenRouter) =====
        const AI_DEFAULT_MODEL = 'meta-llama/llama-3.3-70b-instruct';
 
-       // ===== DÉBUT MODIFICATION ALT TEXT : le prompt IA demande maintenant l'ALT Text (IG, FB, Pinterest) =====
+       // ===== prompt IA incluant l'ALT Text (IG, FB, Pinterest) =====
        const AI_SYSTEM_PROMPT = `You are a viral content strategist and SEO expert specializing in cross-platform video distribution. Your expertise spans YouTube algorithm optimization, TikTok virality mechanics, Instagram Reels engagement patterns, Facebook video performance, and Pinterest discovery systems.
 
 # Task
@@ -882,7 +913,6 @@ Field Name
 \`\`\`text
 content
 \`\`\``;
-       // ===== FIN MODIFICATION ALT TEXT =====
 
        const AI_PLAYLISTS = [
            "History's Greatest Mysteries & Strange Stories",
@@ -1846,7 +1876,7 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                        </div>
                        <div class="flex items-center gap-1 flex-shrink-0">
                            <button onclick="viewSeo('${proj.id}')" title="Voir le package SEO" class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs"><i class="fa-regular fa-eye"></i></button>
-                           <button onclick="duplicateProject('${proj.id}')" title="Dupliquer le projet (renommage obligatoire)" class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs"><i class="fa-regular fa-clone"></i></button>
+                           <button onclick="duplicateProject('${proj.id}')" title="Dupliquer le projet (nom unique + date libre)" class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs"><i class="fa-regular fa-clone"></i></button>
                            <button onclick="deleteProject('${proj.id}')" title="Supprimer" class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-red-900/60 text-slate-300 hover:text-red-300 text-xs"><i class="fa-regular fa-trash-can"></i></button>
                        </div>
                    </div>
@@ -1862,21 +1892,36 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
            }).join('');
        }
 
-       // ===== duplication avec renommage + unicité =====
-       async function duplicateProject(id) {
+       // ===== DÉBUT MODIFICATION DUPLICATION : ouverture du modal (nom + date libre) =====
+       function duplicateProject(id) {
            const proj = projects.find(p => p.id === id);
            if (!proj) return;
-           let newName = prompt('Nouveau nom pour la copie du projet (renommage obligatoire) :', proj.title + ' (copie)');
-           if (newName === null) return;
-           newName = newName.trim();
+           duplicateSourceId = id;
+           document.getElementById('dupName').value = proj.title + ' (copie)';
+           document.getElementById('dupDate').value = proj.date || new Date().toISOString().split('T')[0];
+           document.getElementById('duplicateModal').classList.remove('hidden');
+           setTimeout(() => document.getElementById('dupName').focus(), 60);
+       }
+       function closeDuplicateModal() {
+           document.getElementById('duplicateModal').classList.add('hidden');
+           duplicateSourceId = null;
+       }
+       async function confirmDuplicateProject() {
+           const proj = projects.find(p => p.id === duplicateSourceId);
+           if (!proj) { closeDuplicateModal(); return; }
+           const newName = document.getElementById('dupName').value.trim();
+           const newDate = document.getElementById('dupDate').value;
            if (!newName) { showToast('Le nom de la copie ne peut pas être vide.', 'error'); return; }
            if (projectNameExists(newName)) {
                showToast('Un projet porte déjà ce nom — la copie doit avoir un nom unique.', 'error');
                return;
            }
+           if (!newDate) { showToast('La date de lancement est requise.', 'error'); return; }
+           closeDuplicateModal();
            const copy = JSON.parse(JSON.stringify(proj));
            copy.id = 'proj_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
            copy.title = newName;
+           copy.date = newDate;
            copy.validations = {};
            copy.status = {};
            copy.assets = {};
@@ -1886,8 +1931,8 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
            refreshCalendarEvents();
            updateBadge();
            try {
-               await pushDataToGitHub(`SocialSync : duplication du projet "${proj.title}" en "${newName}"`);
-               showToast('Projet dupliqué (statuts réinitialisés) !');
+               await pushDataToGitHub(`SocialSync : duplication du projet "${proj.title}" en "${newName}" (${newDate})`);
+               showToast('Projet dupliqué — statuts réinitialisés, nouvelle date appliquée !');
            } catch (e) {
                projects = projects.filter(p => p.id !== copy.id);
                renderProjectsList();
@@ -1896,6 +1941,7 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                showToast('Duplication échouée : ' + e.message, 'error');
            }
        }
+       // ===== FIN MODIFICATION DUPLICATION =====
 
        async function deleteProject(id) {
            const proj = projects.find(p => p.id === id);
