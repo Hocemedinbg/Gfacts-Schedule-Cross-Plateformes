@@ -54,7 +54,7 @@
        .seo-copy:hover { background: rgba(99,102,241,.18); }
        .copied-flash { background: rgba(16,185,129,.28) !important; }
 
-       /* ===== DÉBUT MODIFICATION RESPONSIVE : calendrier & boxes adaptés au mobile ===== */
+       /* responsive : calendrier & boxes adaptés au mobile */
        @media (max-width: 640px) {
            .fc .fc-toolbar.fc-header-toolbar { flex-direction: column; gap: 8px; margin-bottom: 8px; }
            .fc .fc-toolbar-chunk { display: flex; justify-content: center; }
@@ -71,13 +71,11 @@
            .ssync-ev-title { font-size: 8.5px; -webkit-line-clamp: 2; }
            .ssync-check { width: 11px; height: 11px; min-width: 11px; }
        }
-       /* ===== FIN MODIFICATION RESPONSIVE ===== */
    </style>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍓</text></svg>">
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col">
 
-   <!-- ===== MODIFICATION RESPONSIVE : header compact sur mobile (icônes seules + sous-titre masqué) ===== -->
    <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-50">
        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
            <div class="flex items-center justify-between h-14 sm:h-16 gap-2">
@@ -106,7 +104,6 @@
        </div>
    </header>
 
-   <!-- ===== MODIFICATION RESPONSIVE : padding principal fluide ===== -->
    <main class="flex-grow max-w-7xl w-full mx-auto p-3 sm:p-6 lg:p-8">
 
        <!-- ONGLET 0 : GÉNÉRATEUR DE SCRIPTS IA (PDF → OpenRouter) -->
@@ -293,14 +290,25 @@
            </div>
 
            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-               <!-- ===== MODIFICATION RESPONSIVE : padding et panneau projets fluides ===== -->
                <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-3 sm:p-5 shadow-xl">
                    <div id="calendar"></div>
                </div>
                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl flex flex-col h-[500px] sm:h-[650px]">
-                   <h3 class="font-bold text-base sm:text-lg text-white mb-4 flex items-center justify-between">
+                   <h3 class="font-bold text-base sm:text-lg text-white mb-3 flex items-center justify-between">
                        <span><i class="fa-solid fa-list-check text-indigo-400 mr-2"></i>Projets Enregistrés</span>
                    </h3>
+                   <!-- ===== DÉBUT MODIFICATION RECHERCHE : barre de recherche par nom ===== -->
+                   <div class="relative mb-3">
+                       <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs pointer-events-none"></i>
+                       <input type="text" id="projectSearchInput" oninput="handleProjectSearch(this.value)"
+                              placeholder="Rechercher un projet par son nom..."
+                              class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-9 pr-8 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+                       <button id="projectSearchClear" onclick="clearProjectSearch()" title="Effacer la recherche"
+                               class="hidden absolute right-1.5 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center text-slate-500 hover:text-white rounded hover:bg-slate-800 transition">
+                           <i class="fa-solid fa-xmark text-xs"></i>
+                       </button>
+                   </div>
+                   <!-- ===== FIN MODIFICATION RECHERCHE ===== -->
                    <div id="projectsList" class="flex-grow overflow-y-auto space-y-4 pr-1"></div>
                </div>
            </div>
@@ -460,9 +468,10 @@
        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-4 sm:p-6 space-y-5 shadow-2xl relative max-h-[92vh] overflow-y-auto">
            <button onclick="closeEditDateModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
            <div class="flex items-center gap-3">
-               <div class="bg-slate-800 p-3 rounded-xl text-white"><i class="fa-solid fa-calendar-days text-2xl"></i></div>
+               <!-- ===== MODIFICATION CRAYON : icône crayon au lieu du calendrier ===== -->
+               <div class="bg-slate-800 p-3 rounded-xl text-white"><i class="fa-solid fa-pencil text-2xl"></i></div>
                <div>
-                   <h3 class="font-bold text-lg text-white">Changer la date du projet</h3>
+                   <h3 class="font-bold text-lg text-white">Modifier le projet</h3>
                    <p class="text-xs text-slate-400 truncate" id="editDateProjTitle"></p>
                </div>
            </div>
@@ -530,7 +539,7 @@
        // ===== palette variée pour les boxes du calendrier =====
        const CALENDAR_PALETTE = ['#6366f1', '#06b6d4', '#f59e0b', '#10b981', '#ec4899', '#8b5cf6', '#f97316'];
 
-       // ===== MODIFICATION RESPONSIVE : détection mobile réutilisable =====
+       // détection mobile réutilisable
        function isMobileViewport() {
            return window.matchMedia('(max-width: 640px)').matches;
        }
@@ -541,6 +550,8 @@
        let currentEditProjectId = null;
        let duplicateSourceId = null;
        let editDateProjectId = null;
+       // ===== MODIFICATION RECHERCHE : terme de recherche des projets =====
+       let projectSearchTerm = '';
 
        // stockage des valeurs + copie en un clic
        let seoCopyStore = {};
@@ -1840,7 +1851,7 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
 
        function initCalendar() {
            const calEl = document.getElementById('calendar');
-           // ===== MODIFICATION RESPONSIVE : hauteur auto sur mobile, 650px sur desktop =====
+           // hauteur auto sur mobile, 650px sur desktop
            calendar = new FullCalendar.Calendar(calEl, {
                initialView: 'dayGridMonth',
                locale: 'fr',
@@ -1866,7 +1877,7 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                eventClick: (info) => {
                    viewSeoForPlatform(info.event.extendedProps.projectId, info.event.extendedProps.platformId);
                },
-               // ===== MODIFICATION RESPONSIVE : réajustement à la rotation / redimensionnement =====
+               // réajustement à la rotation / redimensionnement
                windowResize: () => {
                    if (!calendar) return;
                    const newH = isMobileViewport() ? 'auto' : 650;
@@ -1962,13 +1973,36 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
        }
 
        // --- PROJETS ---
+       // ===== DÉBUT MODIFICATION RECHERCHE : filtre des projets par nom =====
+       function handleProjectSearch(value) {
+           projectSearchTerm = value || '';
+           renderProjectsList();
+       }
+       function clearProjectSearch() {
+           projectSearchTerm = '';
+           const input = document.getElementById('projectSearchInput');
+           if (input) input.value = '';
+           renderProjectsList();
+       }
+       // ===== FIN MODIFICATION RECHERCHE =====
+
        function renderProjectsList() {
            const list = document.getElementById('projectsList');
+           // ===== MODIFICATION RECHERCHE : visibilité du bouton d'effacement =====
+           const clearBtn = document.getElementById('projectSearchClear');
+           if (clearBtn) clearBtn.classList.toggle('hidden', !projectSearchTerm);
            if (!projects.length) {
                list.innerHTML = `<div class="text-center text-slate-500 text-xs py-10"><i class="fa-regular fa-folder-open text-3xl mb-3 block"></i>Aucun projet enregistré.<br>Créez une programmation dans le Planificateur.</div>`;
                return;
            }
-           const sorted = [...projects].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+           // ===== MODIFICATION RECHERCHE : filtrage insensible à la casse =====
+           const term = projectSearchTerm.trim().toLowerCase();
+           let sorted = [...projects].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+           if (term) sorted = sorted.filter(p => (p.title || '').toLowerCase().includes(term));
+           if (!sorted.length) {
+               list.innerHTML = `<div class="text-center text-slate-500 text-xs py-10"><i class="fa-solid fa-magnifying-glass text-3xl mb-3 block"></i>Aucun projet ne correspond à votre recherche.</div>`;
+               return;
+           }
            list.innerHTML = sorted.map(proj => {
                const total = platformsConfig.length;
                const done = platformsConfig.filter(pl => proj.validations && proj.validations[pl.id]).length;
@@ -1986,7 +2020,8 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                        </div>
                        <div class="flex items-center gap-1 flex-shrink-0">
                            <button onclick="viewSeo('${proj.id}')" title="Voir le package SEO" class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs"><i class="fa-regular fa-eye"></i></button>
-                           <button onclick="openEditDateModal('${proj.id}')" title="Changer la date du projet" class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs"><i class="fa-solid fa-calendar-days"></i></button>
+                           <!-- ===== MODIFICATION CRAYON : icône crayon pour la modification du projet ===== -->
+                           <button onclick="openEditDateModal('${proj.id}')" title="Modifier le projet (date)" class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs"><i class="fa-solid fa-pencil"></i></button>
                            <button onclick="duplicateProject('${proj.id}')" title="Dupliquer le projet (nom unique + date libre)" class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs"><i class="fa-regular fa-clone"></i></button>
                            <button onclick="deleteProject('${proj.id}')" title="Supprimer" class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-red-900/60 text-slate-300 hover:text-red-300 text-xs"><i class="fa-regular fa-trash-can"></i></button>
                        </div>
