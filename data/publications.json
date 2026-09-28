@@ -380,8 +380,12 @@
           "ALT Text": "Vintage-style historical graphic showing the silhouette of West Belfast streets with bold typography highlighting the Price sisters' IRA history."
         }
       },
-      "validations": {},
-      "status": {},
+      "validations": {
+        "yt": true
+      },
+      "status": {
+        "yt": "publie"
+      },
       "assets": {},
       "createdAt": "2026-09-28T07:16:35.687Z"
     }
