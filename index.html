@@ -522,10 +522,30 @@
 
        // ===== DÉBUT MODIFICATION COPIE CLIC : stockage des valeurs + copie en un clic =====
        let seoCopyStore = {};
+       // ===== copie universelle : Clipboard API + repli compatible mobile/file:// =====
+       function copyTextUniversal(text) {
+           if (navigator.clipboard && window.isSecureContext) {
+               return navigator.clipboard.writeText(text);
+           }
+           return new Promise((resolve, reject) => {
+               try {
+                   const ta = document.createElement('textarea');
+                   ta.value = text;
+                   ta.style.position = 'fixed';
+                   ta.style.opacity = '0';
+                   document.body.appendChild(ta);
+                   ta.focus();
+                   ta.select();
+                   const ok = document.execCommand('copy');
+                   document.body.removeChild(ta);
+                   ok ? resolve() : reject(new Error('execCommand failed'));
+               } catch (e) { reject(e); }
+           });
+       }
        function copySeoFieldValue(copyId, el) {
            const val = seoCopyStore[copyId];
            if (!val) { showToast('Rien à copier.', 'error'); return; }
-           navigator.clipboard.writeText(val)
+           copyTextUniversal(val)
                .then(() => {
                    showToast('Copié dans le presse-papiers !');
                    if (el) {
@@ -533,24 +553,7 @@
                        setTimeout(() => el.classList.remove('copied-flash'), 900);
                    }
                })
-               .catch(() => showToast('Copie impossible.', 'error'));
-       }
-       // ===== FIN MODIFICATION COPIE CLIC =====
-
-       // ===== configuration runtime chargée depuis le dépôt (secrets) =====
-       let runtimeConfig = { gh_token: '', or_api_key: '' };
-       async function loadRuntimeConfig() {
-           try {
-               const res = await fetch('config/runtime-config.json', { cache: 'no-store' });
-               if (!res.ok) return;
-               const cfg = await res.json();
-               const dec = (v) => { try { return v ? decodeURIComponent(escape(atob(v))) : ''; } catch (e) { return v || ''; } };
-               if (cfg.gh_token_b64) runtimeConfig.gh_token = dec(cfg.gh_token_b64);
-               else if (cfg.gh_token) runtimeConfig.gh_token = cfg.gh_token;
-               if (cfg.or_api_key_b64) runtimeConfig.or_api_key = dec(cfg.or_api_key_b64);
-               else if (cfg.or_api_key) runtimeConfig.or_api_key = cfg.or_api_key;
-               if (runtimeConfig.gh_token || runtimeConfig.or_api_key) showToast('🔑 Secrets du dépôt chargés !');
-           } catch (e) { /* pas de config runtime — entrée manuelle */ }
+               .catch(() => showToast('Copie impossible — appuyez longuement pour sélectionner le texte.', 'error'));
        }
        function getOpenRouterKey() {
            return localStorage.getItem('or_api_key') || runtimeConfig.or_api_key || '';
