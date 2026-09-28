@@ -48,7 +48,7 @@
        .ssync-status-select { color-scheme: dark; cursor: pointer; }
        .ssync-status-select option { background: #0f172a; color: #e2e8f0; }
    </style>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍿</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍓</text></svg>">
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col">
 
@@ -400,7 +400,7 @@
        </div>
    </div>
 
-   <!-- ===== DÉBUT MODIFICATION DUPLICATION : modal nom + date pour la copie du projet ===== -->
+   <!-- MODAL DUPLICATION (nom + date libre) -->
    <div id="duplicateModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl relative">
            <button onclick="closeDuplicateModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
@@ -428,7 +428,32 @@
            </div>
        </div>
    </div>
-   <!-- ===== FIN MODIFICATION DUPLICATION ===== -->
+
+   <!-- ===== DÉBUT MODIFICATION ÉDITION DATE : modal changement de date d'un projet existant ===== -->
+   <div id="editDateModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+       <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl relative">
+           <button onclick="closeEditDateModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+           <div class="flex items-center gap-3">
+               <div class="bg-slate-800 p-3 rounded-xl text-white"><i class="fa-solid fa-calendar-days text-2xl"></i></div>
+               <div>
+                   <h3 class="font-bold text-lg text-white">Changer la date du projet</h3>
+                   <p class="text-xs text-slate-400 truncate" id="editDateProjTitle"></p>
+               </div>
+           </div>
+           <div class="space-y-4 text-xs">
+               <div>
+                   <label class="block font-semibold text-slate-300 mb-1">Nouvelle Date Lancement YT (J0) <span class="text-red-400">*</span></label>
+                   <input type="date" id="editDateValue" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500">
+                   <p class="text-[10px] text-slate-500 mt-1">Les 5 événements plateformes (J+0 et J+1) seront déplacés sur cette nouvelle date.</p>
+               </div>
+           </div>
+           <div class="pt-3 border-t border-slate-800 flex justify-end gap-3">
+               <button onclick="closeEditDateModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg text-xs font-semibold hover:bg-slate-700">Annuler</button>
+               <button onclick="confirmEditDate()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-500 shadow-lg shadow-indigo-900/40">Enregistrer</button>
+           </div>
+       </div>
+   </div>
+   <!-- ===== FIN MODIFICATION ÉDITION DATE ===== -->
 
    <!-- MODAL VUE SEO -->
    <div id="seoViewModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
@@ -481,8 +506,9 @@
        let currentSha = null;
        let calendar = null;
        let currentEditProjectId = null;
-       // ===== MODIFICATION DUPLICATION : source en cours de duplication =====
        let duplicateSourceId = null;
+       // ===== MODIFICATION ÉDITION DATE : projet en cours d'édition de date =====
+       let editDateProjectId = null;
 
        // ===== configuration runtime chargée depuis le dépôt (secrets) =====
        let runtimeConfig = { gh_token: '', or_api_key: '' };
@@ -1876,6 +1902,9 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                        </div>
                        <div class="flex items-center gap-1 flex-shrink-0">
                            <button onclick="viewSeo('${proj.id}')" title="Voir le package SEO" class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs"><i class="fa-regular fa-eye"></i></button>
+                           <!-- ===== DÉBUT MODIFICATION ÉDITION DATE : bouton changer la date ===== -->
+                           <button onclick="openEditDateModal('${proj.id}')" title="Changer la date du projet" class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs"><i class="fa-solid fa-calendar-days"></i></button>
+                           <!-- ===== FIN MODIFICATION ÉDITION DATE ===== -->
                            <button onclick="duplicateProject('${proj.id}')" title="Dupliquer le projet (nom unique + date libre)" class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs"><i class="fa-regular fa-clone"></i></button>
                            <button onclick="deleteProject('${proj.id}')" title="Supprimer" class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-red-900/60 text-slate-300 hover:text-red-300 text-xs"><i class="fa-regular fa-trash-can"></i></button>
                        </div>
@@ -1892,7 +1921,7 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
            }).join('');
        }
 
-       // ===== DÉBUT MODIFICATION DUPLICATION : ouverture du modal (nom + date libre) =====
+       // ===== duplication avec renommage + unicité + date libre =====
        function duplicateProject(id) {
            const proj = projects.find(p => p.id === id);
            if (!proj) return;
@@ -1941,7 +1970,42 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                showToast('Duplication échouée : ' + e.message, 'error');
            }
        }
-       // ===== FIN MODIFICATION DUPLICATION =====
+
+       // ===== DÉBUT MODIFICATION ÉDITION DATE : changer la date d'un projet existant =====
+       function openEditDateModal(id) {
+           const proj = projects.find(p => p.id === id);
+           if (!proj) return;
+           editDateProjectId = id;
+           document.getElementById('editDateProjTitle').textContent = proj.title;
+           document.getElementById('editDateValue').value = proj.date || '';
+           document.getElementById('editDateModal').classList.remove('hidden');
+       }
+       function closeEditDateModal() {
+           document.getElementById('editDateModal').classList.add('hidden');
+           editDateProjectId = null;
+       }
+       async function confirmEditDate() {
+           const proj = projects.find(p => p.id === editDateProjectId);
+           if (!proj) { closeEditDateModal(); return; }
+           const newDate = document.getElementById('editDateValue').value;
+           if (!newDate) { showToast('La nouvelle date est requise.', 'error'); return; }
+           if (newDate === proj.date) { closeEditDateModal(); return; }
+           const prevDate = proj.date;
+           proj.date = newDate;
+           renderProjectsList();
+           refreshCalendarEvents();
+           closeEditDateModal();
+           try {
+               await pushDataToGitHub(`SocialSync : date du projet "${proj.title}" déplacée au ${newDate}`);
+               showToast(`Date mise à jour : ${formatDateFr(newDate)} !`);
+           } catch (e) {
+               proj.date = prevDate;
+               renderProjectsList();
+               refreshCalendarEvents();
+               showToast('Mise à jour GitHub échouée : ' + e.message, 'error');
+           }
+       }
+       // ===== FIN MODIFICATION ÉDITION DATE =====
 
        async function deleteProject(id) {
            const proj = projects.find(p => p.id === id);
