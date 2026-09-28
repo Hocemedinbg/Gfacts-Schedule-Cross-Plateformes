@@ -39,9 +39,8 @@
        .ssync-ev-ico { font-size: 10px; }
        .ssync-ev-time { font-size: 9.5px; opacity: .85; }
        .ssync-ev-title { font-size: 10px; opacity: .92; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-       /* ===== DÉBUT MODIFICATION COULEURS : overlay validé neutre (la couleur de la palette reste visible, l'état validé reste marqué par l'anneau émeraude + texte barré) ===== */
+       /* overlay validé neutre (la couleur de la palette reste visible, l'état validé reste marqué par l'anneau émeraude + texte barré) */
        .ssync-validated { background: rgba(15,23,42,.40) !important; }
-       /* ===== FIN MODIFICATION COULEURS ===== */
        .ssync-validated .ssync-ev-title,
        .ssync-validated .ssync-ev-plat,
        .ssync-validated .ssync-ev-time { text-decoration: line-through; opacity: .75; }
@@ -50,11 +49,10 @@
        .ssync-status-select { color-scheme: dark; cursor: pointer; }
        .ssync-status-select option { background: #0f172a; color: #e2e8f0; }
 
-       /* ===== DÉBUT MODIFICATION COPIE CLIC : contenu de section copiable en un clic ===== */
+       /* contenu de section copiable en un clic */
        .seo-copy { cursor: pointer; border-radius: 6px; padding: 2px 6px; margin: 0 -6px; transition: background .15s ease; }
        .seo-copy:hover { background: rgba(99,102,241,.18); }
        .copied-flash { background: rgba(16,185,129,.28) !important; }
-       /* ===== FIN MODIFICATION COPIE CLIC ===== */
    </style>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍓</text></svg>">
 </head>
@@ -509,9 +507,8 @@
        function statusEmoji(s) { return statusConfig(s).emoji; }
        function statusSelectClasses(s) { return statusConfig(s).classes; }
 
-       // ===== DÉBUT MODIFICATION COULEURS : palette variée pour les boxes du calendrier =====
+       // ===== palette variée pour les boxes du calendrier =====
        const CALENDAR_PALETTE = ['#6366f1', '#06b6d4', '#f59e0b', '#10b981', '#ec4899', '#8b5cf6', '#f97316'];
-       // ===== FIN MODIFICATION COULEURS =====
 
        let projects = [];
        let currentSha = null;
@@ -520,9 +517,9 @@
        let duplicateSourceId = null;
        let editDateProjectId = null;
 
-       // ===== DÉBUT MODIFICATION COPIE CLIC : stockage des valeurs + copie en un clic =====
+       // stockage des valeurs + copie en un clic
        let seoCopyStore = {};
-       // ===== copie universelle : Clipboard API + repli compatible mobile/file:// =====
+       // ===== DÉBUT CORRECTIF : copie universelle — Clipboard API + repli compatible mobile / file:// =====
        function copyTextUniversal(text) {
            if (navigator.clipboard && window.isSecureContext) {
                return navigator.clipboard.writeText(text);
@@ -554,6 +551,23 @@
                    }
                })
                .catch(() => showToast('Copie impossible — appuyez longuement pour sélectionner le texte.', 'error'));
+       }
+       // ===== FIN CORRECTIF =====
+
+       // ===== configuration runtime chargée depuis le dépôt (secrets) =====
+       let runtimeConfig = { gh_token: '', or_api_key: '' };
+       async function loadRuntimeConfig() {
+           try {
+               const res = await fetch('config/runtime-config.json', { cache: 'no-store' });
+               if (!res.ok) return;
+               const cfg = await res.json();
+               const dec = (v) => { try { return v ? decodeURIComponent(escape(atob(v))) : ''; } catch (e) { return v || ''; } };
+               if (cfg.gh_token_b64) runtimeConfig.gh_token = dec(cfg.gh_token_b64);
+               else if (cfg.gh_token) runtimeConfig.gh_token = cfg.gh_token;
+               if (cfg.or_api_key_b64) runtimeConfig.or_api_key = dec(cfg.or_api_key_b64);
+               else if (cfg.or_api_key) runtimeConfig.or_api_key = cfg.or_api_key;
+               if (runtimeConfig.gh_token || runtimeConfig.or_api_key) showToast('🔑 Secrets du dépôt chargés !');
+           } catch (e) { /* pas de config runtime — entrée manuelle */ }
        }
        function getOpenRouterKey() {
            return localStorage.getItem('or_api_key') || runtimeConfig.or_api_key || '';
@@ -1767,7 +1781,7 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
        }
 
        // --- CALENDRIER ---
-       // ===== DÉBUT MODIFICATION COULEURS : couleurs variées, jamais identiques pour des boxes contiguës =====
+       // ===== couleurs variées, jamais identiques pour des boxes contiguës =====
        function getCalendarEvents() {
            const raw = [];
            projects.forEach(proj => {
@@ -1799,7 +1813,6 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
            });
            return raw;
        }
-       // ===== FIN MODIFICATION COULEURS =====
 
        function initCalendar() {
            const calEl = document.getElementById('calendar');
@@ -2227,7 +2240,7 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                    </div>`;
                cfg.fields.forEach(f => {
                    const val = (proj.seo && proj.seo[platId] && proj.seo[platId][f]) || '';
-                   // ===== MODIFICATION COPIE CLIC : contenu copiable en un clic =====
+                   // ===== contenu copiable en un clic =====
                    if (val) {
                        const copyId = 'cp' + (Object.keys(seoCopyStore).length + 1);
                        seoCopyStore[copyId] = val;
@@ -2294,7 +2307,7 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                    </div>`;
            cfg.fields.forEach(f => {
                const val = (proj.seo && proj.seo[platformId] && proj.seo[platformId][f]) || '';
-               // ===== MODIFICATION COPIE CLIC : contenu copiable en un clic =====
+               // ===== contenu copiable en un clic =====
                if (val) {
                    const copyId = 'cp' + (Object.keys(seoCopyStore).length + 1);
                    seoCopyStore[copyId] = val;
