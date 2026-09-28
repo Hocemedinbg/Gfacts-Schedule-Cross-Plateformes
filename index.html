@@ -53,70 +53,89 @@
        .seo-copy { cursor: pointer; border-radius: 6px; padding: 2px 6px; margin: 0 -6px; transition: background .15s ease; }
        .seo-copy:hover { background: rgba(99,102,241,.18); }
        .copied-flash { background: rgba(16,185,129,.28) !important; }
+
+       /* ===== DÉBUT MODIFICATION RESPONSIVE : calendrier & boxes adaptés au mobile ===== */
+       @media (max-width: 640px) {
+           .fc .fc-toolbar.fc-header-toolbar { flex-direction: column; gap: 8px; margin-bottom: 8px; }
+           .fc .fc-toolbar-chunk { display: flex; justify-content: center; }
+           .fc .fc-toolbar-title { font-size: 1rem; text-align: center; }
+           .fc .fc-button { font-size: 10px; padding: 4px 8px; }
+           .fc .fc-col-header-cell-cushion { font-size: 10px; padding: 4px 2px; }
+           .fc .fc-daygrid-day-number { font-size: 10px; padding: 3px 4px; }
+           .fc .fc-daygrid-day-frame { min-height: 64px; }
+           .fc .fc-daygrid-event { margin: 1px 2px; }
+           .ssync-event { font-size: 9px; padding: 2px 3px; }
+           .ssync-ev-plat { font-size: 9px; }
+           .ssync-ev-ico { font-size: 8px; }
+           .ssync-ev-time { font-size: 8px; }
+           .ssync-ev-title { font-size: 8.5px; -webkit-line-clamp: 2; }
+           .ssync-check { width: 11px; height: 11px; min-width: 11px; }
+       }
+       /* ===== FIN MODIFICATION RESPONSIVE ===== */
    </style>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍓</text></svg>">
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col">
 
+   <!-- ===== MODIFICATION RESPONSIVE : header compact sur mobile (icônes seules + sous-titre masqué) ===== -->
    <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-50">
-       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-           <div class="flex items-center justify-between h-16">
-               <div class="flex items-center gap-3">
-                   <div class="bg-gradient-to-tr from-indigo-600 to-pink-500 p-2.5 rounded-xl shadow-lg">
-                       <i class="fa-solid fa-share-nodes text-white text-lg"></i>
+       <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+           <div class="flex items-center justify-between h-14 sm:h-16 gap-2">
+               <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                   <div class="bg-gradient-to-tr from-indigo-600 to-pink-500 p-2 sm:p-2.5 rounded-xl shadow-lg flex-shrink-0">
+                       <i class="fa-solid fa-share-nodes text-white text-base sm:text-lg"></i>
                    </div>
-                   <div>
-                       <span class="font-bold text-lg bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent block">SocialSync Hub</span>
-                       <span class="text-xs text-slate-400">Synchro GitHub API Active</span>
+                   <div class="min-w-0">
+                       <span class="font-bold text-sm sm:text-lg bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent block truncate">SocialSync Hub</span>
+                       <span class="text-[10px] sm:text-xs text-slate-400 hidden sm:block">Synchro GitHub API Active</span>
                    </div>
                </div>
-               <div class="flex items-center gap-3">
-                   <nav class="flex space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
-                       <button id="tabBtnScripts" onclick="switchTab('scripts')" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-2 text-slate-400 hover:text-white">
-                           <i class="fa-solid fa-clapperboard"></i><span>Scripts</span>
-                       </button>
-                       <button id="tabBtnPlanner" onclick="switchTab('planner')" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-2 bg-indigo-600 text-white shadow-md">
-                           <i class="fa-solid fa-pen-to-square"></i><span>Planificateur</span>
-                       </button>
-                       <button id="tabBtnCalendar" onclick="switchTab('calendar')" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg transition flex items-center gap-2 text-slate-400 hover:text-white">
-                           <i class="fa-solid fa-calendar-days"></i><span>Calendrier</span>
-                           <span id="savedCountBadge" class="bg-slate-800 text-indigo-400 text-[10px] px-2 py-0.5 rounded-full border border-slate-700">0</span>
-                       </button>
-                   </nav>
-               </div>
+               <nav class="flex space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800 flex-shrink-0">
+                   <button id="tabBtnScripts" onclick="switchTab('scripts')" title="Scripts" class="px-2.5 sm:px-3.5 py-1.5 text-[11px] sm:text-xs font-semibold rounded-lg transition flex items-center gap-1.5 sm:gap-2 text-slate-400 hover:text-white">
+                       <i class="fa-solid fa-clapperboard"></i><span class="hidden sm:inline">Scripts</span>
+                   </button>
+                   <button id="tabBtnPlanner" onclick="switchTab('planner')" title="Planificateur" class="px-2.5 sm:px-3.5 py-1.5 text-[11px] sm:text-xs font-semibold rounded-lg transition flex items-center gap-1.5 sm:gap-2 bg-indigo-600 text-white shadow-md">
+                       <i class="fa-solid fa-pen-to-square"></i><span class="hidden sm:inline">Planificateur</span>
+                   </button>
+                   <button id="tabBtnCalendar" onclick="switchTab('calendar')" title="Calendrier" class="px-2.5 sm:px-3.5 py-1.5 text-[11px] sm:text-xs font-semibold rounded-lg transition flex items-center gap-1.5 sm:gap-2 text-slate-400 hover:text-white">
+                       <i class="fa-solid fa-calendar-days"></i><span class="hidden sm:inline">Calendrier</span>
+                       <span id="savedCountBadge" class="bg-slate-800 text-indigo-400 text-[10px] px-2 py-0.5 rounded-full border border-slate-700">0</span>
+                   </button>
+               </nav>
            </div>
        </div>
    </header>
 
-   <main class="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+   <!-- ===== MODIFICATION RESPONSIVE : padding principal fluide ===== -->
+   <main class="flex-grow max-w-7xl w-full mx-auto p-3 sm:p-6 lg:p-8">
 
        <!-- ONGLET 0 : GÉNÉRATEUR DE SCRIPTS IA (PDF → OpenRouter) -->
        <section id="tabScripts" class="hidden space-y-6">
-           <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+           <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl">
                <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
                    <div>
-                       <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                       <h2 class="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
                            <i class="fa-solid fa-clapperboard text-indigo-400"></i> Générateur de Scripts IA
                        </h2>
                        <p class="text-xs text-slate-400 mt-0.5">Uploadez un PDF : l'IA OpenRouter analyse tout le contenu et rédige des scripts TTS prêts à l'emploi.</p>
                    </div>
-                   <div class="flex flex-wrap items-end gap-3">
-                       <div>
+                   <div class="flex flex-wrap items-end gap-3 w-full sm:w-auto">
+                       <div class="flex-1 sm:flex-none min-w-[180px]">
                            <label class="block text-xs font-semibold text-slate-400 mb-1">Clé API OpenRouter <span class="text-red-400">*</span></label>
-                           <input type="password" id="scriptsApiKey" placeholder="sk-or-v1-..." class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 w-56">
+                           <input type="password" id="scriptsApiKey" placeholder="sk-or-v1-..." class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 w-full sm:w-56">
                        </div>
-                       <div>
+                       <div class="flex-1 sm:flex-none min-w-[180px]">
                            <label class="block text-xs font-semibold text-slate-400 mb-1">Modèle</label>
-                           <input type="text" id="scriptsModel" placeholder="meta-llama/llama-3.3-70b-instruct" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 w-72">
+                           <input type="text" id="scriptsModel" placeholder="meta-llama/llama-3.3-70b-instruct" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 w-full sm:w-72">
                        </div>
                    </div>
                </div>
                <p class="text-[10px] text-slate-500 mt-3">Clé gratuite sur <code class="text-indigo-400">openrouter.ai/keys</code> · Modèle par défaut : <code class="text-indigo-400">meta-llama/llama-3.3-70b-instruct</code> (ajoutez <code class="text-indigo-400">:free</code> pour la variante gratuite si disponible). Si les <span class="text-indigo-300">secrets du dépôt</span> sont configurés, le champ clé peut rester vide.</p>
            </div>
 
-           <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+           <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                <!-- ZONE 1 : SCRIPTS SHORTS -->
-               <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+               <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl space-y-4">
                    <div>
                        <h3 class="font-bold text-white flex items-center gap-2">
                            <i class="fa-solid fa-mobile-screen-button text-cyan-400"></i> Scripts Vidéos Shorts
@@ -127,7 +146,7 @@
                         ondragover="event.preventDefault(); this.classList.add('border-indigo-500');"
                         ondragleave="this.classList.remove('border-indigo-500');"
                         ondrop="handlePdfDrop(event, 'short')"
-                        class="border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-xl p-6 text-center cursor-pointer transition">
+                        class="border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-xl p-4 sm:p-6 text-center cursor-pointer transition">
                        <i class="fa-solid fa-file-pdf text-3xl text-slate-500 mb-2 block"></i>
                        <p class="text-xs text-slate-300 font-semibold">Cliquez ou glissez-déposez votre PDF ici</p>
                        <p class="text-[10px] text-slate-500 mt-1">Le texte est extrait localement dans votre navigateur.</p>
@@ -139,7 +158,7 @@
                    </button>
                    <div id="shortGenStatus" class="text-xs min-h-[18px]"></div>
                    <textarea id="shortScriptOutput" rows="12" placeholder="Les scripts générés apparaîtront ici..." class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 resize-y font-mono"></textarea>
-                   <div class="flex items-center justify-between gap-2">
+                   <div class="flex items-center justify-between gap-2 flex-wrap">
                        <div id="shortScriptStats" class="text-[10px] text-slate-500"></div>
                        <button onclick="copyScriptOutput('short')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium transition flex items-center gap-1.5">
                            <i class="fa-regular fa-copy"></i> Copier
@@ -148,7 +167,7 @@
                </div>
 
                <!-- ZONE 2 : SCRIPT VIDÉO LONGUE -->
-               <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+               <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl space-y-4">
                    <div>
                        <h3 class="font-bold text-white flex items-center gap-2">
                            <i class="fa-solid fa-film text-fuchsia-400"></i> Script Vidéo Longue
@@ -159,7 +178,7 @@
                         ondragover="event.preventDefault(); this.classList.add('border-indigo-500');"
                         ondragleave="this.classList.remove('border-indigo-500');"
                         ondrop="handlePdfDrop(event, 'long')"
-                        class="border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-xl p-6 text-center cursor-pointer transition">
+                        class="border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-xl p-4 sm:p-6 text-center cursor-pointer transition">
                        <i class="fa-solid fa-file-pdf text-3xl text-slate-500 mb-2 block"></i>
                        <p class="text-xs text-slate-300 font-semibold">Cliquez ou glissez-déposez votre PDF ici</p>
                        <p class="text-[10px] text-slate-500 mt-1">Le texte est extrait localement dans votre navigateur.</p>
@@ -171,7 +190,7 @@
                    </button>
                    <div id="longGenStatus" class="text-xs min-h-[18px]"></div>
                    <textarea id="longScriptOutput" rows="12" placeholder="Le script généré apparaîtra ici..." class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 resize-y font-mono"></textarea>
-                   <div class="flex items-center justify-between gap-2">
+                   <div class="flex items-center justify-between gap-2 flex-wrap">
                        <div id="longScriptStats" class="text-[10px] text-slate-500"></div>
                        <button onclick="copyScriptOutput('long')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium transition flex items-center gap-1.5">
                            <i class="fa-regular fa-copy"></i> Copier
@@ -183,33 +202,33 @@
 
        <!-- ONGLET 1 : PLANIFICATEUR -->
        <section id="tabPlanner" class="space-y-6">
-           <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
+           <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl space-y-6">
                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
                    <div>
-                       <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                       <h2 class="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
                            <i class="fa-solid fa-rocket text-indigo-400"></i> Nouvelle Programmation
                        </h2>
                        <p class="text-xs text-slate-400 mt-0.5">Saisissez la date YT pour générer les créneaux multi-plateformes.</p>
                    </div>
-                   <div class="flex flex-wrap items-center gap-3">
-                       <div>
+                   <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                       <div class="flex-1 sm:flex-none min-w-[200px]">
                            <label class="block text-xs font-semibold text-slate-400 mb-1">Titre de la vidéo <span class="text-red-400">*</span></label>
-                           <input type="text" id="videoTitle" placeholder="Ex: 5 Astuces Secrètes..." class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 w-64">
+                           <input type="text" id="videoTitle" placeholder="Ex: 5 Astuces Secrètes..." class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 w-full sm:w-64">
                        </div>
-                       <div>
+                       <div class="flex-1 sm:flex-none min-w-[160px]">
                            <label class="block text-xs font-semibold text-slate-400 mb-1">Date Lancement YT (J0) <span class="text-red-400">*</span></label>
-                           <input type="date" id="launchDate" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+                           <input type="date" id="launchDate" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 w-full sm:w-auto">
                        </div>
                    </div>
                </div>
 
                <!-- SECTION PACKAGE SEO -->
                <div>
-                   <div class="flex items-center justify-between mb-4">
+                   <div class="flex items-center justify-between mb-4 gap-2 flex-wrap">
                        <h3 class="font-bold text-white flex items-center gap-2">
                            <i class="fa-solid fa-magnifying-glass-chart text-fuchsia-400"></i> Package SEO Complet
                        </h3>
-                       <div class="flex items-center gap-2">
+                       <div class="flex items-center gap-2 flex-wrap">
                            <button type="button" onclick="openSeoImportModal()" class="px-3 py-1.5 bg-gradient-to-r from-fuchsia-600 to-purple-600 hover:from-fuchsia-500 hover:to-purple-500 text-white rounded-lg text-xs font-medium transition flex items-center gap-1.5 shadow-md">
                                <i class="fa-solid fa-wand-magic-sparkles text-[10px]"></i> <span>Import auto</span>
                            </button>
@@ -233,7 +252,7 @@
                </div>
 
                <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-800 pt-5">
-                   <div class="flex gap-2">
+                   <div class="flex flex-wrap gap-2">
                        <button onclick="copyPlanningText()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium transition flex items-center gap-2">
                            <i class="fa-regular fa-copy"></i> Copier texte
                        </button>
@@ -247,38 +266,39 @@
                </div>
            </div>
 
-           <div id="scheduleGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+           <div id="scheduleGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5"></div>
        </section>
 
        <!-- ONGLET 2 : CALENDRIER & SUIVI -->
-       <section id="tabCalendar" class="hidden space-y-6">
-           <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
+       <section id="tabCalendar" class="hidden space-y-4 sm:space-y-6">
+           <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900 border border-slate-800 p-4 sm:p-6 rounded-2xl shadow-xl">
                <div>
-                   <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                   <h2 class="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
                        <i class="fa-solid fa-calendar-check text-indigo-400"></i> Suivi & Planning Global
                    </h2>
                    <p class="text-xs text-slate-400 mt-1">Synchronisé en temps réel avec votre dépôt GitHub.</p>
                </div>
-               <div class="flex items-center gap-3 flex-wrap">
-                   <button onclick="exportAllData()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold transition flex items-center gap-2">
-                       <i class="fa-solid fa-download"></i> Exporter tout (JSON)
+               <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+                   <button onclick="exportAllData()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold transition flex items-center gap-2">
+                       <i class="fa-solid fa-download"></i> <span class="hidden sm:inline">Exporter tout</span><span class="sm:hidden">Export</span>
                    </button>
-                   <label class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold transition flex items-center gap-2 cursor-pointer">
-                       <i class="fa-solid fa-upload"></i> Importer JSON
+                   <label class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold transition flex items-center gap-2 cursor-pointer">
+                       <i class="fa-solid fa-upload"></i> <span class="hidden sm:inline">Importer JSON</span><span class="sm:hidden">Import</span>
                        <input type="file" accept=".json" onchange="importAllData(event)" class="hidden">
                    </label>
-                   <button onclick="syncFromGitHub()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold transition flex items-center gap-2 shadow-md">
-                       <i class="fa-solid fa-rotate"></i> Forcer la synchro GitHub
+                   <button onclick="syncFromGitHub()" class="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold transition flex items-center gap-2 shadow-md">
+                       <i class="fa-solid fa-rotate"></i> <span class="hidden sm:inline">Forcer la synchro GitHub</span><span class="sm:hidden">Synchro</span>
                    </button>
                </div>
            </div>
 
-           <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-               <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+           <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+               <!-- ===== MODIFICATION RESPONSIVE : padding et panneau projets fluides ===== -->
+               <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-3 sm:p-5 shadow-xl">
                    <div id="calendar"></div>
                </div>
-               <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col h-[650px]">
-                   <h3 class="font-bold text-lg text-white mb-4 flex items-center justify-between">
+               <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl flex flex-col h-[500px] sm:h-[650px]">
+                   <h3 class="font-bold text-base sm:text-lg text-white mb-4 flex items-center justify-between">
                        <span><i class="fa-solid fa-list-check text-indigo-400 mr-2"></i>Projets Enregistrés</span>
                    </h3>
                    <div id="projectsList" class="flex-grow overflow-y-auto space-y-4 pr-1"></div>
@@ -288,8 +308,8 @@
    </main>
 
    <!-- MODAL DE CONFIGURATION GITHUB -->
-   <div id="configModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-       <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl relative">
+   <div id="configModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 hidden">
+       <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-4 sm:p-6 space-y-5 shadow-2xl relative max-h-[92vh] overflow-y-auto">
            <button onclick="closeConfigModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
            <div class="flex items-center gap-3">
                <div class="bg-slate-800 p-3 rounded-xl text-white"><i class="fa-brands fa-github text-2xl"></i></div>
@@ -331,8 +351,8 @@
    </div>
 
    <!-- MODAL IMPORT SEO -->
-   <div id="seoImportModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-       <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl relative">
+   <div id="seoImportModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 hidden">
+       <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-4 sm:p-6 space-y-4 shadow-2xl relative max-h-[92vh] overflow-y-auto">
            <button onclick="closeSeoImportModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
            <div class="flex items-center gap-3">
                <div class="bg-fuchsia-950/50 border border-fuchsia-800/50 p-3 rounded-xl text-fuchsia-400"><i class="fa-solid fa-wand-magic-sparkles text-xl"></i></div>
@@ -363,8 +383,8 @@
    </div>
 
    <!-- MODAL GÉNÉRATION IA (OpenRouter) -->
-   <div id="aiGenerateModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-       <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl relative">
+   <div id="aiGenerateModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 hidden">
+       <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-4 sm:p-6 space-y-4 shadow-2xl relative max-h-[92vh] overflow-y-auto">
            <button onclick="closeAiGenerateModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
            <div class="flex items-center gap-3">
                <div class="bg-indigo-950/50 border border-indigo-800/50 p-3 rounded-xl text-indigo-400"><i class="fa-solid fa-wand-magic-sparkles text-xl"></i></div>
@@ -407,8 +427,8 @@
    </div>
 
    <!-- MODAL DUPLICATION (nom + date libre) -->
-   <div id="duplicateModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-       <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl relative">
+   <div id="duplicateModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 hidden">
+       <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-4 sm:p-6 space-y-5 shadow-2xl relative max-h-[92vh] overflow-y-auto">
            <button onclick="closeDuplicateModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
            <div class="flex items-center gap-3">
                <div class="bg-slate-800 p-3 rounded-xl text-white"><i class="fa-regular fa-clone text-2xl"></i></div>
@@ -436,8 +456,8 @@
    </div>
 
    <!-- MODAL ÉDITION DATE (projet existant) -->
-   <div id="editDateModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-       <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl relative">
+   <div id="editDateModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 hidden">
+       <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-4 sm:p-6 space-y-5 shadow-2xl relative max-h-[92vh] overflow-y-auto">
            <button onclick="closeEditDateModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
            <div class="flex items-center gap-3">
                <div class="bg-slate-800 p-3 rounded-xl text-white"><i class="fa-solid fa-calendar-days text-2xl"></i></div>
@@ -461,16 +481,16 @@
    </div>
 
    <!-- MODAL VUE SEO -->
-   <div id="seoViewModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-       <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl relative">
+   <div id="seoViewModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 hidden">
+       <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-3xl w-full max-h-[92vh] overflow-y-auto p-4 sm:p-6 shadow-2xl relative">
            <button onclick="closeSeoView()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
            <div id="seoViewContent"></div>
        </div>
    </div>
 
-   <div id="toast" class="fixed bottom-5 right-5 bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-2xl transition-all duration-300 opacity-0 translate-y-10 pointer-events-none flex items-center gap-3 z-50">
-       <i id="toastIcon" class="fa-solid fa-circle-check text-xl"></i>
-       <span id="toastMsg" class="text-sm font-semibold">Action réussie !</span>
+   <div id="toast" class="fixed bottom-5 right-5 left-5 sm:left-auto bg-emerald-600 text-white px-4 sm:px-5 py-3 rounded-xl shadow-2xl transition-all duration-300 opacity-0 translate-y-10 pointer-events-none flex items-center gap-3 z-50 max-w-[90vw] sm:max-w-sm">
+       <i id="toastIcon" class="fa-solid fa-circle-check text-xl flex-shrink-0"></i>
+       <span id="toastMsg" class="text-xs sm:text-sm font-semibold">Action réussie !</span>
    </div>
 
    <script>
@@ -510,6 +530,11 @@
        // ===== palette variée pour les boxes du calendrier =====
        const CALENDAR_PALETTE = ['#6366f1', '#06b6d4', '#f59e0b', '#10b981', '#ec4899', '#8b5cf6', '#f97316'];
 
+       // ===== MODIFICATION RESPONSIVE : détection mobile réutilisable =====
+       function isMobileViewport() {
+           return window.matchMedia('(max-width: 640px)').matches;
+       }
+
        let projects = [];
        let currentSha = null;
        let calendar = null;
@@ -519,7 +544,7 @@
 
        // stockage des valeurs + copie en un clic
        let seoCopyStore = {};
-       // ===== DÉBUT CORRECTIF : copie universelle — Clipboard API + repli compatible mobile / file:// =====
+       // ===== copie universelle : Clipboard API + repli compatible mobile / file:// =====
        function copyTextUniversal(text) {
            if (navigator.clipboard && window.isSecureContext) {
                return navigator.clipboard.writeText(text);
@@ -552,7 +577,6 @@
                })
                .catch(() => showToast('Copie impossible — appuyez longuement pour sélectionner le texte.', 'error'));
        }
-       // ===== FIN CORRECTIF =====
 
        // ===== configuration runtime chargée depuis le dépôt (secrets) =====
        let runtimeConfig = { gh_token: '', or_api_key: '' };
@@ -1816,10 +1840,11 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
 
        function initCalendar() {
            const calEl = document.getElementById('calendar');
+           // ===== MODIFICATION RESPONSIVE : hauteur auto sur mobile, 650px sur desktop =====
            calendar = new FullCalendar.Calendar(calEl, {
                initialView: 'dayGridMonth',
                locale: 'fr',
-               height: 650,
+               height: isMobileViewport() ? 'auto' : 650,
                expandRows: true,
                headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
                buttonText: { today: "Aujourd'hui", month: 'Mois', week: 'Semaine', day: 'Jour' },
@@ -1840,6 +1865,12 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                },
                eventClick: (info) => {
                    viewSeoForPlatform(info.event.extendedProps.projectId, info.event.extendedProps.platformId);
+               },
+               // ===== MODIFICATION RESPONSIVE : réajustement à la rotation / redimensionnement =====
+               windowResize: () => {
+                   if (!calendar) return;
+                   const newH = isMobileViewport() ? 'auto' : 650;
+                   if (calendar.getOption('height') !== newH) calendar.setOption('height', newH);
                }
            });
            calendar.render();
@@ -2103,7 +2134,7 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                     ondrop="handleAssetDrop(event, '${proj.id}', '${platformId}')">
                    <i class="fa-solid fa-cloud-arrow-up text-slate-500 mb-1 block"></i>
                    <p class="text-[11px] text-slate-300 font-semibold">Glissez-déposez une miniature, un .txt ou un PDF</p>
-                   <p class="text-[10px] text-slate-500 mt-0.5">Sauvegardé dans le dépôt GitHub (<code>assets/</code>) — ou Base64 si GitHub n'est pas configuré (max 2 Mo).</p>
+                   <p class="text-[10px] text-slate-500 mt-0.5">Sauvegardé dans le dépôt GitHub (<code>assets/</code>) — ou Base64 si GitHub n'est pas configuré (max 2 Mo). Sur mobile : appuyez pour choisir un fichier.</p>
                </div>
                <input type="file" id="assetFile_${key}" class="hidden" accept="image/*,.txt,.pdf" multiple onchange="handleAssetSelect(event, '${proj.id}', '${platformId}')">
                <div id="assetStatus_${key}" class="text-xs min-h-[16px] mt-1"></div>
@@ -2214,7 +2245,7 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
            let html = `
            <div class="space-y-5">
                <div>
-                   <h3 class="text-xl font-bold text-white flex items-center gap-2"><i class="fa-solid fa-video text-indigo-400"></i> ${escapeHtml(proj.title)}</h3>
+                   <h3 class="text-lg sm:text-xl font-bold text-white flex items-center gap-2 pr-8"><i class="fa-solid fa-video text-indigo-400"></i> ${escapeHtml(proj.title)}</h3>
                    <p class="text-xs text-slate-400 mt-1"><i class="fa-regular fa-calendar mr-1"></i>Lancement YT (J0) : ${formatDateFr(proj.date)}</p>
                    <p class="text-xs text-fuchsia-400 mt-0.5"><i class="fa-solid fa-list mr-1"></i>Playlist : ${escapeHtml((proj.seo && proj.seo.playlist) || '—')}</p>
                </div>`;
@@ -2223,7 +2254,7 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                const d = addDaysToDate(proj.date, plat.dayOffset);
                const st = getPlatStatus(proj, platId);
                html += `
-               <div class="bg-slate-950 border border-slate-800 rounded-xl p-4">
+               <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 sm:p-4">
                    <div class="flex items-center justify-between gap-2 mb-3 flex-wrap">
                        <div class="flex items-center gap-2 flex-wrap">
                            <i class="${plat.icon} text-sm"></i>
@@ -2244,7 +2275,7 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                    if (val) {
                        const copyId = 'cp' + (Object.keys(seoCopyStore).length + 1);
                        seoCopyStore[copyId] = val;
-                       html += `<div class="mb-2"><p class="text-[10px] font-semibold text-slate-400">${f}</p><p class="seo-copy text-xs text-slate-200 whitespace-pre-wrap" title="Cliquer pour copier" onclick="copySeoFieldValue('${copyId}', this)">${escapeHtml(val)}</p></div>`;
+                       html += `<div class="mb-2"><p class="text-[10px] font-semibold text-slate-400">${f}</p><p class="seo-copy text-xs text-slate-200 whitespace-pre-wrap break-words" title="Cliquer pour copier" onclick="copySeoFieldValue('${copyId}', this)">${escapeHtml(val)}</p></div>`;
                    } else {
                        html += `<div class="mb-2"><p class="text-[10px] font-semibold text-slate-400">${f}</p><p class="text-xs text-slate-500">—</p></div>`;
                    }
@@ -2256,7 +2287,7 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                ((proj.assets && proj.assets[pl.id]) || []).forEach(a => recap.push({ pl, a }));
            }
            html += `
-           <div class="bg-slate-950 border border-slate-800 rounded-xl p-4">
+           <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 sm:p-4">
                <p class="text-xs font-bold text-white mb-2"><i class="fa-solid fa-paperclip text-indigo-400 mr-1"></i> Assets du projet (${recap.length})</p>
                ${recap.length ? `<div class="space-y-1.5">${recap.map(({ pl, a }) => `
                    <div class="flex items-center gap-2">
@@ -2283,14 +2314,14 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
            let html = `
            <div class="space-y-5">
                <div>
-                   <h3 class="text-xl font-bold text-white flex items-center gap-2"><i class="fa-solid fa-video text-indigo-400"></i> ${escapeHtml(proj.title)}</h3>
+                   <h3 class="text-lg sm:text-xl font-bold text-white flex items-center gap-2 pr-8"><i class="fa-solid fa-video text-indigo-400"></i> ${escapeHtml(proj.title)}</h3>
                    <p class="text-xs text-slate-400 mt-1"><i class="fa-regular fa-calendar mr-1"></i>Lancement YT (J0) : ${formatDateFr(proj.date)}</p>
                    <p class="text-xs text-fuchsia-400 mt-0.5"><i class="fa-solid fa-list mr-1"></i>Playlist : ${escapeHtml((proj.seo && proj.seo.playlist) || '—')}</p>
                </div>
                <button onclick="viewSeo('${proj.id}')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium transition flex items-center gap-1.5">
                    <i class="fa-solid fa-arrow-left text-[10px]"></i> Voir toutes les plateformes
                </button>
-               <div class="bg-slate-950 border border-slate-800 rounded-xl p-4">
+               <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 sm:p-4">
                    <div class="flex items-center justify-between gap-2 mb-3 flex-wrap">
                        <div class="flex items-center gap-2 flex-wrap">
                            <i class="${plat.icon} text-sm"></i>
@@ -2311,7 +2342,7 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                if (val) {
                    const copyId = 'cp' + (Object.keys(seoCopyStore).length + 1);
                    seoCopyStore[copyId] = val;
-                   html += `<div class="mb-2"><p class="text-[10px] font-semibold text-slate-400">${f}</p><p class="seo-copy text-xs text-slate-200 whitespace-pre-wrap" title="Cliquer pour copier" onclick="copySeoFieldValue('${copyId}', this)">${escapeHtml(val)}</p></div>`;
+                   html += `<div class="mb-2"><p class="text-[10px] font-semibold text-slate-400">${f}</p><p class="seo-copy text-xs text-slate-200 whitespace-pre-wrap break-words" title="Cliquer pour copier" onclick="copySeoFieldValue('${copyId}', this)">${escapeHtml(val)}</p></div>`;
                } else {
                    html += `<div class="mb-2"><p class="text-[10px] font-semibold text-slate-400">${f}</p><p class="text-xs text-slate-500">—</p></div>`;
                }
