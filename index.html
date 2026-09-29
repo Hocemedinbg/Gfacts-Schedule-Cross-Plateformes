@@ -45,7 +45,7 @@
        .ssync-validated .ssync-ev-plat,
        .ssync-validated .ssync-ev-time { text-decoration: line-through; opacity: .75; }
 
-       /* ===== DÉBUT MODIFICATION EN RETARD : liseré rouge sur les événements passés non publiés ===== */
+       /* liseré rouge sur les événements passés non publiés */
        .fc-event.ssync-ev-overdue { box-shadow: inset 0 0 0 2px rgba(239,68,68,.95) !important; animation: ssync-overdue-pulse 2.2s ease-in-out infinite; }
        @keyframes ssync-overdue-pulse {
            0%, 100% { box-shadow: inset 0 0 0 2px rgba(239,68,68,.95); }
@@ -56,7 +56,6 @@
            0%, 100% { opacity: 1; }
            50% { opacity: .35; }
        }
-       /* ===== FIN MODIFICATION EN RETARD ===== */
 
        /* dropdown statut plateforme */
        .ssync-status-select { color-scheme: dark; cursor: pointer; }
@@ -322,9 +321,8 @@
                            Inclure les passés
                        </label>
                    </div>
-                   <!-- ===== DÉBUT MODIFICATION FILTRE PLATEFORMES : chips de filtrage ===== -->
+                   <!-- chips de filtrage par plateforme -->
                    <div id="platformFilterBar" class="flex items-center gap-1.5 flex-wrap mb-3"></div>
-                   <!-- ===== FIN MODIFICATION FILTRE PLATEFORMES ===== -->
                    <div id="calendar"></div>
                    <div id="agendaView" class="hidden overflow-y-auto pr-1 max-h-[600px]"></div>
                </div>
@@ -343,9 +341,8 @@
                            <i class="fa-solid fa-xmark text-xs"></i>
                        </button>
                    </div>
-                   <!-- ===== DÉBUT MODIFICATION AUJOURD'HUI : section À publier aujourd'hui ===== -->
+                   <!-- section À publier aujourd'hui -->
                    <div id="todaySection" class="hidden mb-3"></div>
-                   <!-- ===== FIN MODIFICATION AUJOURD'HUI ===== -->
                    <div id="projectsList" class="flex-grow overflow-y-auto space-y-4 pr-1"></div>
                </div>
            </div>
@@ -596,13 +593,12 @@
        // état de la vue Calendrier | Agenda
        let calendarViewMode = 'calendar';
        let agendaShowAll = false;
-       // ===== DÉBUT MODIFICATION FILTRE PLATEFORMES : état du filtre =====
+       // état du filtre plateformes
        let platformFilter = {}; // { platId: true|false } — true = visible
        function initPlatformFilter() {
            platformsConfig.forEach(pl => { platformFilter[pl.id] = true; });
        }
        initPlatformFilter();
-       // ===== FIN MODIFICATION FILTRE PLATEFORMES =====
 
        // stockage des valeurs + copie en un clic
        let seoCopyStore = {};
@@ -681,7 +677,7 @@
            if (titleInput) titleInput.addEventListener('input', renderGrid);
        });
 
-       // ===== DÉBUT MODIFICATION FILTRE PLATEFORMES : barre de chips + bascule =====
+       // ===== barre de chips + bascule du filtre plateformes =====
        function renderPlatformFilterBar() {
            const bar = document.getElementById('platformFilterBar');
            if (!bar) return;
@@ -699,7 +695,6 @@
            renderPlatformFilterBar();
            refreshCalendarEvents();
        }
-       // ===== FIN MODIFICATION FILTRE PLATEFORMES =====
 
        // --- SEO FIELDS RENDERING ---
        function renderSeoFields() {
@@ -1888,17 +1883,17 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
        }
 
        // --- CALENDRIER ---
-       // ===== DÉBUT MODIFICATION (couleurs + en retard + filtre plateformes) : génération des événements =====
+       // ===== couleurs variées, jamais identiques pour des boxes contiguës + en retard + filtre plateformes =====
        function getCalendarEvents() {
            const raw = [];
            const todayStr = new Date().toISOString().split('T')[0];
            projects.forEach(proj => {
                platformsConfig.forEach(plat => {
-                   // ===== FILTRE PLATEFORMES : événement masqué si la plateforme est désactivée =====
+                   // FILTRE PLATEFORMES : événement masqué si la plateforme est désactivée
                    if (!platformFilter[plat.id]) return;
                    const d = addDaysToDate(proj.date, plat.dayOffset);
                    const validated = getPlatStatus(proj, plat.id) === 'publie';
-                   // ===== EN RETARD : date passée (strictement avant aujourd'hui) et non publié =====
+                   // EN RETARD : date passée (strictement avant aujourd'hui) et non publié
                    const overdue = !validated && d < todayStr;
                    raw.push({
                        id: `${proj.id}__${plat.id}`,
@@ -1966,8 +1961,6 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
            });
            calendar.render();
        }
-
-       // ===== FIN MODIFICATION (couleurs + en retard + filtre plateformes) =====
 
        // ===== vue Calendrier | Agenda =====
        function switchCalendarView(mode) {
@@ -2064,15 +2057,19 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
            host.innerHTML = html;
        }
 
+       // ===== DÉBUT CORRECTIF COULEURS VUE MOIS : la couleur de la palette est appliquée directement en style inline sur la box =====
+       // (dans la vue Mois, FullCalendar n'applique pas backgroundColor sur l'élément quand eventContent est personnalisé —
+       //  on garantit ainsi un rendu identique Mois | Semaine)
        function renderEventContent(arg) {
            const props = arg.event.extendedProps;
            const plat = platformsConfig.find(p => p.id === props.platformId);
            if (!plat) return true;
            const platShort = plat.name.split(' ')[0];
            const timeText = arg.timeText ? `<div class="ssync-ev-time">${arg.timeText}</div>` : '';
+           const bgColor = arg.event.backgroundColor || plat.calendarColor || '#6366f1';
            return {
                html: `
-               <div class="ssync-event${props.validated ? ' ssync-validated' : ''}" title="${plat.name} — cliquez pour voir le package SEO de cette plateforme">
+               <div class="ssync-event${props.validated ? ' ssync-validated' : ''}" style="background:${bgColor};" title="${plat.name} — cliquez pour voir le package SEO de cette plateforme">
                    <div class="ssync-ev-head">
                        <input type="checkbox" class="ssync-check" ${props.validated ? 'checked' : ''}
                            title="Cocher = 📤 Publié"
@@ -2084,6 +2081,7 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                </div>`
            };
        }
+       // ===== FIN CORRECTIF COULEURS VUE MOIS =====
 
        async function togglePlatformValidation(projectId, platformId, checked, inputEl) {
            const proj = projects.find(p => p.id === projectId);
@@ -2098,7 +2096,7 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
            const ev = calendar ? calendar.getEventById(`${projectId}__${platformId}`) : null;
            if (ev) {
                ev.setExtendedProp('validated', checked);
-               // ===== EN RETARD : re-évaluation du badge lors d'une publication/dépublication =====
+               // EN RETARD : re-évaluation du badge lors d'une publication/dépublication
                const evDate = ev.start ? ev.start.toISOString().split('T')[0] : '';
                const nowOverdue = !checked && evDate && evDate < new Date().toISOString().split('T')[0];
                ev.setExtendedProp('overdue', nowOverdue);
@@ -2178,7 +2176,7 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
            renderProjectsList();
        }
 
-       // ===== DÉBUT MODIFICATION AUJOURD'HUI : section "🔥 À publier aujourd'hui" + badge en retard sur les projets =====
+       // ===== section "🔥 À publier aujourd'hui" + badge en retard sur les projets =====
        function getTodayItems() {
            const todayStr = new Date().toISOString().split('T')[0];
            const items = [];
@@ -2227,7 +2225,6 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                return !platformFilter[pl.id] ? false : (d < todayStr && getPlatStatus(proj, pl.id) !== 'publie');
            }).length;
        }
-       // ===== FIN MODIFICATION AUJOURD'HUI =====
 
        function renderProjectsList() {
            const list = document.getElementById('projectsList');
@@ -2249,7 +2246,7 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
            list.innerHTML = sorted.map(proj => {
                const total = platformsConfig.length;
                const done = platformsConfig.filter(pl => proj.validations && proj.validations[pl.id]).length;
-               // ===== EN RETARD : badge ⚠️ sur les projets ayant au moins une plateforme passée non publiée =====
+               // EN RETARD : badge ⚠️ sur les projets ayant au moins une plateforme passée non publiée
                const overdueCount = countOverdueForProject(proj);
                const overdueBadge = overdueCount > 0
                    ? `<span title="${overdueCount} publication(s) en retard" class="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-red-500/40 bg-red-500/10 text-red-400 ssync-overdue-dot"><i class="fa-solid fa-triangle-exclamation"></i>${overdueCount}</span>`
