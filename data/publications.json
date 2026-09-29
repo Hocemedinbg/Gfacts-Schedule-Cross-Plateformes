@@ -434,8 +434,12 @@
           "ALT Text": "Vintage map overlay of Victorian London alongside an antique medical illustration representing the 1854 Broad Street cholera outbreak."
         }
       },
-      "validations": {},
-      "status": {},
+      "validations": {
+        "yt": true
+      },
+      "status": {
+        "yt": "publie"
+      },
       "assets": {},
       "createdAt": "2026-09-29T06:59:42.881Z"
     }
