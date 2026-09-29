@@ -440,7 +440,19 @@
       "status": {
         "yt": "publie"
       },
-      "assets": {},
+      "assets": {
+        "yt": [
+          {
+            "name": "When deaths surged in London's Broad.png",
+            "type": "image/png",
+            "size": 2586217,
+            "addedAt": "2026-09-29T07:07:31.076Z",
+            "url": "https://raw.githubusercontent.com/Hocemedinbg/Gfacts-Schedule-Cross-Plateformes/main/assets/proj_1790665182881_6ajky/yt/1790665651076_When_deaths_surged_in_London_s_Broad.png",
+            "sha": "6fd3a5617c6f73f28c47a3049fc2d4460dae0d58",
+            "repoPath": "assets/proj_1790665182881_6ajky/yt/1790665651076_When_deaths_surged_in_London_s_Broad.png"
+          }
+        ]
+      },
       "createdAt": "2026-09-29T06:59:42.881Z"
     }
   ]
