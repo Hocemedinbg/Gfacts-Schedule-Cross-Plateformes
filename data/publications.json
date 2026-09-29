@@ -317,12 +317,14 @@
       "validations": {
         "ig": true,
         "yt": true,
-        "fb": true
+        "fb": true,
+        "pin": true
       },
       "status": {
         "ig": "publie",
         "yt": "publie",
-        "fb": "publie"
+        "fb": "publie",
+        "pin": "publie"
       },
       "assets": {
         "yt": [
