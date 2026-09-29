@@ -290,9 +290,26 @@
            </div>
 
            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+               <!-- ===== DÉBUT MODIFICATION AGENDA : toggle Calendrier | Agenda au-dessus du calendrier ===== -->
                <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-3 sm:p-5 shadow-xl">
+                   <div class="flex items-center justify-between gap-2 mb-3 flex-wrap">
+                       <div class="flex space-x-1 bg-slate-950 p-1 rounded-lg border border-slate-800">
+                           <button id="viewBtnCalendar" onclick="switchCalendarView('calendar')" class="px-3 py-1 text-[11px] font-semibold rounded-md transition flex items-center gap-1.5 bg-indigo-600 text-white shadow-sm">
+                               <i class="fa-solid fa-calendar-days"></i> Calendrier
+                           </button>
+                           <button id="viewBtnAgenda" onclick="switchCalendarView('agenda')" class="px-3 py-1 text-[11px] font-semibold rounded-md transition flex items-center gap-1.5 text-slate-400 hover:text-white">
+                               <i class="fa-solid fa-list"></i> Agenda
+                           </button>
+                       </div>
+                       <label id="agendaPastToggleWrap" class="hidden items-center gap-1.5 text-[11px] text-slate-400 cursor-pointer">
+                           <input type="checkbox" id="agendaPastToggle" onchange="agendaShowAll = this.checked; renderAgenda();" class="accent-indigo-500">
+                           Inclure les passés
+                       </label>
+                   </div>
                    <div id="calendar"></div>
+                   <div id="agendaView" class="hidden overflow-y-auto pr-1 max-h-[600px]"></div>
                </div>
+               <!-- ===== FIN MODIFICATION AGENDA ===== -->
                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl flex flex-col h-[500px] sm:h-[650px]">
                    <h3 class="font-bold text-base sm:text-lg text-white mb-3 flex items-center justify-between">
                        <span><i class="fa-solid fa-list-check text-indigo-400 mr-2"></i>Projets Enregistrés</span>
@@ -462,7 +479,7 @@
        </div>
    </div>
 
-   <!-- ===== DÉBUT MODIFICATION ÉDITION : modal modification nom + date du projet existant ===== -->
+   <!-- MODAL ÉDITION (titre + date du projet existant) -->
    <div id="editDateModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 hidden">
        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-4 sm:p-6 space-y-5 shadow-2xl relative max-h-[92vh] overflow-y-auto">
            <button onclick="closeEditDateModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
@@ -491,7 +508,6 @@
            </div>
        </div>
    </div>
-   <!-- ===== FIN MODIFICATION ÉDITION ===== -->
 
    <!-- MODAL VUE SEO -->
    <div id="seoViewModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 hidden">
@@ -556,6 +572,9 @@
        let editDateProjectId = null;
        // terme de recherche des projets
        let projectSearchTerm = '';
+       // ===== MODIFICATION AGENDA : état de la vue Calendrier | Agenda =====
+       let calendarViewMode = 'calendar';
+       let agendaShowAll = false;
 
        // stockage des valeurs + copie en un clic
        let seoCopyStore = {};
@@ -1891,6 +1910,98 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
            calendar.render();
        }
 
+       // ===== DÉBUT MODIFICATION AGENDA : bascule Calendrier | Agenda + rendu de la liste chronologique =====
+       function switchCalendarView(mode) {
+           calendarViewMode = mode;
+           const cal = document.getElementById('calendar');
+           const agenda = document.getElementById('agendaView');
+           const bC = document.getElementById('viewBtnCalendar');
+           const bA = document.getElementById('viewBtnAgenda');
+           const pastWrap = document.getElementById('agendaPastToggleWrap');
+           if (mode === 'agenda') {
+               cal.classList.add('hidden');
+               agenda.classList.remove('hidden');
+               bA.classList.add('bg-indigo-600', 'text-white', 'shadow-sm');
+               bA.classList.remove('text-slate-400', 'hover:text-white');
+               bC.classList.remove('bg-indigo-600', 'text-white', 'shadow-sm');
+               bC.classList.add('text-slate-400', 'hover:text-white');
+               pastWrap.classList.remove('hidden');
+               pastWrap.classList.add('flex');
+               renderAgenda();
+           } else {
+               agenda.classList.add('hidden');
+               cal.classList.remove('hidden');
+               bC.classList.add('bg-indigo-600', 'text-white', 'shadow-sm');
+               bC.classList.remove('text-slate-400', 'hover:text-white');
+               bA.classList.remove('bg-indigo-600', 'text-white', 'shadow-sm');
+               bA.classList.add('text-slate-400', 'hover:text-white');
+               pastWrap.classList.add('hidden');
+               pastWrap.classList.remove('flex');
+               if (calendar) {
+                   calendar.render();
+                   refreshCalendarEvents();
+               }
+           }
+       }
+
+       function renderAgenda() {
+           const host = document.getElementById('agendaView');
+           if (!host) return;
+           const evs = getCalendarEvents(); // déjà triées chronologiquement, avec couleurs
+           const todayStr = new Date().toISOString().split('T')[0];
+           const list = agendaShowAll ? evs : evs.filter(e => e.start.slice(0, 10) >= todayStr);
+           if (!list.length) {
+               host.innerHTML = `<div class="text-center text-slate-500 text-xs py-10"><i class="fa-regular fa-calendar-check text-3xl mb-3 block"></i>Aucun événement ${agendaShowAll ? '' : 'à venir'}.<br>Créez une programmation dans le Planificateur.</div>`;
+               return;
+           }
+           // Groupement par date
+           const groups = {};
+           list.forEach(e => {
+               const d = e.start.slice(0, 10);
+               (groups[d] = groups[d] || []).push(e);
+           });
+           const dateFmt = (ds) => {
+               const d = new Date(ds + 'T00:00:00');
+               try {
+                   return d.toLocaleDateString('fr-FR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+               } catch (err) { return formatDateFr(ds); }
+           };
+           let html = '';
+           Object.keys(groups).sort().forEach(ds => {
+               const isToday = ds === todayStr;
+               const isPast = ds < todayStr;
+               html += `
+               <div class="mb-4">
+                   <div class="flex items-center gap-2 mb-2 py-1 border-b border-slate-800">
+                       <i class="fa-solid ${isToday ? 'fa-circle-dot text-indigo-400' : (isPast ? 'fa-circle-check text-slate-600' : 'fa-regular fa-calendar text-slate-500')} text-xs"></i>
+                       <span class="text-xs font-bold ${isToday ? 'text-indigo-300' : (isPast ? 'text-slate-500' : 'text-slate-300')} capitalize">
+                           ${isToday ? "Aujourd'hui — " : ''}${dateFmt(ds)}
+                       </span>
+                   </div>
+                   <div class="space-y-1.5">`;
+               groups[ds].forEach(e => {
+                   const plat = platformsConfig.find(p => p.id === e.extendedProps.platformId);
+                   const title = e.extendedProps.projectTitle;
+                   const time = e.start.slice(11, 16);
+                   const validated = e.extendedProps.validated;
+                   html += `
+                   <div onclick="viewSeoForPlatform('${e.extendedProps.projectId}', '${e.extendedProps.platformId}')"
+                        class="flex items-center gap-2.5 bg-slate-950 border border-slate-800 hover:border-indigo-500/60 rounded-lg px-2.5 py-2 cursor-pointer transition">
+                       <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:${e.backgroundColor}"></span>
+                       <span class="text-[11px] font-mono text-slate-400 flex-shrink-0 w-10">${time}</span>
+                       <i class="${plat.icon} text-xs ${validated ? 'text-emerald-400' : 'text-slate-300'} flex-shrink-0"></i>
+                       <span class="text-xs text-slate-200 truncate flex-1 min-w-0" title="${escapeHtml(title)}">${escapeHtml(title)}</span>
+                       ${validated
+                           ? '<i class="fa-solid fa-circle-check text-emerald-400 text-xs flex-shrink-0" title="📤 Publié"></i>'
+                           : '<i class="fa-regular fa-circle text-slate-600 text-xs flex-shrink-0" title="📝 À planifier"></i>'}
+                   </div>`;
+               });
+               html += `</div></div>`;
+           });
+           host.innerHTML = html;
+       }
+       // ===== FIN MODIFICATION AGENDA =====
+
        function renderEventContent(arg) {
            const props = arg.event.extendedProps;
            const plat = platformsConfig.find(p => p.id === props.platformId);
@@ -1944,6 +2055,8 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
        function refreshCalendarEvents() {
            if (!calendar) return;
            calendar.setOption('events', getCalendarEvents());
+           // ===== MODIFICATION AGENDA : re-rendu de l'agenda si visible =====
+           if (calendarViewMode === 'agenda') renderAgenda();
        }
 
        async function setPlatformStatus(projectId, platformId, newStatus, selectEl) {
@@ -2090,7 +2203,7 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
            }
        }
 
-       // ===== DÉBUT MODIFICATION ÉDITION : modifier le titre ET la date d'un projet existant =====
+       // ===== édition du titre et de la date d'un projet existant =====
        function openEditDateModal(id) {
            const proj = projects.find(p => p.id === id);
            if (!proj) return;
@@ -2134,7 +2247,6 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                showToast('Mise à jour GitHub échouée : ' + e.message, 'error');
            }
        }
-       // ===== FIN MODIFICATION ÉDITION =====
 
        async function deleteProject(id) {
            const proj = projects.find(p => p.id === id);
@@ -2286,17 +2398,45 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
            viewSeoForPlatform(projectId, platformId);
        }
 
-       function viewSeo(projectId) {
+       // ===== DÉBUT MODIFICATION ÉDITION SEO : vue lecture + vue édition du package SEO complet =====
+       function viewSeo(projectId, editMode = false) {
            const proj = projects.find(p => p.id === projectId);
            if (!proj) return;
            seoCopyStore = {};
+           // hauteurs de textarea selon le type de champ
+           const fieldRows = (f) => ['Description', 'Caption', 'Post copy', 'Pin Description'].includes(f) ? 6 : 3;
            let html = `
            <div class="space-y-5">
                <div>
                    <h3 class="text-lg sm:text-xl font-bold text-white flex items-center gap-2 pr-8"><i class="fa-solid fa-video text-indigo-400"></i> ${escapeHtml(proj.title)}</h3>
-                   <p class="text-xs text-slate-400 mt-1"><i class="fa-regular fa-calendar mr-1"></i>Lancement YT (J0) : ${formatDateFr(proj.date)}</p>
-                   <p class="text-xs text-fuchsia-400 mt-0.5"><i class="fa-solid fa-list mr-1"></i>Playlist : ${escapeHtml((proj.seo && proj.seo.playlist) || '—')}</p>
-               </div>`;
+                   <p class="text-xs text-slate-400 mt-1"><i class="fa-regular fa-calendar mr-1"></i>Lancement YT (J0) : ${formatDateFr(proj.date)}</p>`;
+           if (editMode) {
+               html += `
+                   <div class="mt-1"><label class="block text-[10px] font-semibold text-fuchsia-400 mb-0.5">Playlist</label>
+                   <input type="text" id="edit_seo_playlist" value="${escapeHtml((proj.seo && proj.seo.playlist) || '')}" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"></div>`;
+           } else {
+               html += `
+                   <p class="text-xs text-fuchsia-400 mt-0.5"><i class="fa-solid fa-list mr-1"></i>Playlist : ${escapeHtml((proj.seo && proj.seo.playlist) || '—')}</p>`;
+           }
+           html += `</div>
+               <div class="flex flex-wrap items-center gap-2">`;
+           if (editMode) {
+               html += `
+                   <button onclick="saveEditSeo('${proj.id}')" class="px-3.5 py-2 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white rounded-lg text-xs font-semibold shadow-lg flex items-center gap-1.5">
+                       <i class="fa-solid fa-floppy-disk"></i> Enregistrer le package SEO
+                   </button>
+                   <button onclick="viewSeo('${proj.id}')" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium transition flex items-center gap-1.5">
+                       <i class="fa-solid fa-xmark text-[10px]"></i> Annuler
+                   </button>
+                   <span class="text-[10px] text-amber-400"><i class="fa-solid fa-circle-info mr-1"></i>Mode édition — modifiez librement tous les champs puis enregistrez.</span>`;
+           } else {
+               html += `
+                   <button onclick="openEditSeo('${proj.id}')" class="px-3 py-1.5 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white rounded-lg text-xs font-medium transition flex items-center gap-1.5 shadow-md">
+                       <i class="fa-solid fa-pencil text-[10px]"></i> Éditer le package SEO
+                   </button>
+                   <span class="text-[10px] text-slate-500">Astuce : cliquez sur un contenu pour le copier.</span>`;
+           }
+           html += `</div>`;
            for (const [platId, cfg] of Object.entries(seoFieldsConfig)) {
                const plat = platformsConfig.find(p => p.id === platId);
                const d = addDaysToDate(proj.date, plat.dayOffset);
@@ -2319,8 +2459,10 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                    </div>`;
                cfg.fields.forEach(f => {
                    const val = (proj.seo && proj.seo[platId] && proj.seo[platId][f]) || '';
-                   // ===== contenu copiable en un clic =====
-                   if (val) {
+                   if (editMode) {
+                       html += `<div class="mb-2"><p class="text-[10px] font-semibold text-slate-400">${f}</p><textarea id="edit_seo_${platId}_${f.replace(/[\s\/]/g, '_')}" rows="${fieldRows(f)}" placeholder="${f}..." class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 resize-y font-mono">${escapeHtml(val)}</textarea></div>`;
+                   } else if (val) {
+                       // ===== contenu copiable en un clic =====
                        const copyId = 'cp' + (Object.keys(seoCopyStore).length + 1);
                        seoCopyStore[copyId] = val;
                        html += `<div class="mb-2"><p class="text-[10px] font-semibold text-slate-400">${f}</p><p class="seo-copy text-xs text-slate-200 whitespace-pre-wrap break-words" title="Cliquer pour copier" onclick="copySeoFieldValue('${copyId}', this)">${escapeHtml(val)}</p></div>`;
@@ -2350,6 +2492,35 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
            document.getElementById('seoViewModal').classList.remove('hidden');
        }
 
+       function openEditSeo(projectId) {
+           viewSeo(projectId, true);
+       }
+
+       async function saveEditSeo(projectId) {
+           const proj = projects.find(p => p.id === projectId);
+           if (!proj) return;
+           // Collecte des valeurs éditées
+           const newSeo = { playlist: (document.getElementById('edit_seo_playlist')?.value || '').trim() };
+           for (const [platId, config] of Object.entries(seoFieldsConfig)) {
+               newSeo[platId] = {};
+               config.fields.forEach(f => {
+                   const el = document.getElementById(`edit_seo_${platId}_${f.replace(/[\s\/]/g, '_')}`);
+                   newSeo[platId][f] = el ? el.value : '';
+               });
+           }
+           const prevSeo = JSON.parse(JSON.stringify(proj.seo || {}));
+           proj.seo = newSeo;
+           try {
+               await pushDataToGitHub(`SocialSync : package SEO mis à jour — "${proj.title}"`);
+               showToast('✅ Package SEO mis à jour et sauvegardé !');
+               viewSeo(projectId); // sortie du mode édition, retour en lecture
+           } catch (e) {
+               proj.seo = prevSeo; // rollback complet
+               showToast('Sauvegarde GitHub échouée : ' + e.message, 'error');
+           }
+       }
+       // ===== FIN MODIFICATION ÉDITION SEO =====
+
        function viewSeoForPlatform(projectId, platformId) {
            const proj = projects.find(p => p.id === projectId);
            if (!proj) return;
@@ -2366,9 +2537,15 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                    <p class="text-xs text-slate-400 mt-1"><i class="fa-regular fa-calendar mr-1"></i>Lancement YT (J0) : ${formatDateFr(proj.date)}</p>
                    <p class="text-xs text-fuchsia-400 mt-0.5"><i class="fa-solid fa-list mr-1"></i>Playlist : ${escapeHtml((proj.seo && proj.seo.playlist) || '—')}</p>
                </div>
-               <button onclick="viewSeo('${proj.id}')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium transition flex items-center gap-1.5">
-                   <i class="fa-solid fa-arrow-left text-[10px]"></i> Voir toutes les plateformes
-               </button>
+               <div class="flex flex-wrap gap-2">
+                   <button onclick="viewSeo('${proj.id}')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium transition flex items-center gap-1.5">
+                       <i class="fa-solid fa-arrow-left text-[10px]"></i> Voir toutes les plateformes
+                   </button>
+                   <!-- ===== MODIFICATION ÉDITION SEO : accès direct à l'édition depuis la vue plateforme ===== -->
+                   <button onclick="openEditSeo('${proj.id}')" class="px-3 py-1.5 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white rounded-lg text-xs font-medium transition flex items-center gap-1.5 shadow-md">
+                       <i class="fa-solid fa-pencil text-[10px]"></i> Éditer le package SEO
+                   </button>
+               </div>
                <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 sm:p-4">
                    <div class="flex items-center justify-between gap-2 mb-3 flex-wrap">
                        <div class="flex items-center gap-2 flex-wrap">
@@ -2465,6 +2642,8 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                    calendar.render();
                    refreshCalendarEvents();
                }
+               // ===== MODIFICATION AGENDA : re-rendu de l'agenda si cette vue est active =====
+               if (calendarViewMode === 'agenda') renderAgenda();
            }
        }
 
