@@ -297,7 +297,7 @@
                    <h3 class="font-bold text-base sm:text-lg text-white mb-3 flex items-center justify-between">
                        <span><i class="fa-solid fa-list-check text-indigo-400 mr-2"></i>Projets Enregistrés</span>
                    </h3>
-                   <!-- ===== DÉBUT MODIFICATION RECHERCHE : barre de recherche par nom ===== -->
+                   <!-- barre de recherche par nom -->
                    <div class="relative mb-3">
                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs pointer-events-none"></i>
                        <input type="text" id="projectSearchInput" oninput="handleProjectSearch(this.value)"
@@ -308,7 +308,6 @@
                            <i class="fa-solid fa-xmark text-xs"></i>
                        </button>
                    </div>
-                   <!-- ===== FIN MODIFICATION RECHERCHE ===== -->
                    <div id="projectsList" class="flex-grow overflow-y-auto space-y-4 pr-1"></div>
                </div>
            </div>
@@ -463,19 +462,23 @@
        </div>
    </div>
 
-   <!-- MODAL ÉDITION DATE (projet existant) -->
+   <!-- ===== DÉBUT MODIFICATION ÉDITION : modal modification nom + date du projet existant ===== -->
    <div id="editDateModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 hidden">
        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-4 sm:p-6 space-y-5 shadow-2xl relative max-h-[92vh] overflow-y-auto">
            <button onclick="closeEditDateModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
            <div class="flex items-center gap-3">
-               <!-- ===== MODIFICATION CRAYON : icône crayon au lieu du calendrier ===== -->
                <div class="bg-slate-800 p-3 rounded-xl text-white"><i class="fa-solid fa-pencil text-2xl"></i></div>
                <div>
                    <h3 class="font-bold text-lg text-white">Modifier le projet</h3>
-                   <p class="text-xs text-slate-400 truncate" id="editDateProjTitle"></p>
+                   <p class="text-xs text-slate-400">Modifiez le titre et la date de lancement.</p>
                </div>
            </div>
            <div class="space-y-4 text-xs">
+               <div>
+                   <label class="block font-semibold text-slate-300 mb-1">Nouveau titre du projet <span class="text-red-400">*</span></label>
+                   <input type="text" id="editNameValue" placeholder="Ex: Ma nouvelle vidéo..." class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500">
+                   <p class="text-[10px] text-slate-500 mt-1">Le nom doit être unique — il ne peut pas être identique à un autre projet.</p>
+               </div>
                <div>
                    <label class="block font-semibold text-slate-300 mb-1">Nouvelle Date Lancement YT (J0) <span class="text-red-400">*</span></label>
                    <input type="date" id="editDateValue" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-100 focus:outline-none focus:border-indigo-500">
@@ -488,6 +491,7 @@
            </div>
        </div>
    </div>
+   <!-- ===== FIN MODIFICATION ÉDITION ===== -->
 
    <!-- MODAL VUE SEO -->
    <div id="seoViewModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 hidden">
@@ -550,7 +554,7 @@
        let currentEditProjectId = null;
        let duplicateSourceId = null;
        let editDateProjectId = null;
-       // ===== MODIFICATION RECHERCHE : terme de recherche des projets =====
+       // terme de recherche des projets
        let projectSearchTerm = '';
 
        // stockage des valeurs + copie en un clic
@@ -1973,7 +1977,7 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
        }
 
        // --- PROJETS ---
-       // ===== DÉBUT MODIFICATION RECHERCHE : filtre des projets par nom =====
+       // ===== filtre des projets par nom =====
        function handleProjectSearch(value) {
            projectSearchTerm = value || '';
            renderProjectsList();
@@ -1984,18 +1988,17 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
            if (input) input.value = '';
            renderProjectsList();
        }
-       // ===== FIN MODIFICATION RECHERCHE =====
 
        function renderProjectsList() {
            const list = document.getElementById('projectsList');
-           // ===== MODIFICATION RECHERCHE : visibilité du bouton d'effacement =====
+           // visibilité du bouton d'effacement
            const clearBtn = document.getElementById('projectSearchClear');
            if (clearBtn) clearBtn.classList.toggle('hidden', !projectSearchTerm);
            if (!projects.length) {
                list.innerHTML = `<div class="text-center text-slate-500 text-xs py-10"><i class="fa-regular fa-folder-open text-3xl mb-3 block"></i>Aucun projet enregistré.<br>Créez une programmation dans le Planificateur.</div>`;
                return;
            }
-           // ===== MODIFICATION RECHERCHE : filtrage insensible à la casse =====
+           // filtrage insensible à la casse
            const term = projectSearchTerm.trim().toLowerCase();
            let sorted = [...projects].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
            if (term) sorted = sorted.filter(p => (p.title || '').toLowerCase().includes(term));
@@ -2020,8 +2023,7 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                        </div>
                        <div class="flex items-center gap-1 flex-shrink-0">
                            <button onclick="viewSeo('${proj.id}')" title="Voir le package SEO" class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs"><i class="fa-regular fa-eye"></i></button>
-                           <!-- ===== MODIFICATION CRAYON : icône crayon pour la modification du projet ===== -->
-                           <button onclick="openEditDateModal('${proj.id}')" title="Modifier le projet (date)" class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs"><i class="fa-solid fa-pencil"></i></button>
+                           <button onclick="openEditDateModal('${proj.id}')" title="Modifier le projet (titre + date)" class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs"><i class="fa-solid fa-pencil"></i></button>
                            <button onclick="duplicateProject('${proj.id}')" title="Dupliquer le projet (nom unique + date libre)" class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs"><i class="fa-regular fa-clone"></i></button>
                            <button onclick="deleteProject('${proj.id}')" title="Supprimer" class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-red-900/60 text-slate-300 hover:text-red-300 text-xs"><i class="fa-regular fa-trash-can"></i></button>
                        </div>
@@ -2088,14 +2090,15 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
            }
        }
 
-       // ===== édition de la date d'un projet existant =====
+       // ===== DÉBUT MODIFICATION ÉDITION : modifier le titre ET la date d'un projet existant =====
        function openEditDateModal(id) {
            const proj = projects.find(p => p.id === id);
            if (!proj) return;
            editDateProjectId = id;
-           document.getElementById('editDateProjTitle').textContent = proj.title;
+           document.getElementById('editNameValue').value = proj.title || '';
            document.getElementById('editDateValue').value = proj.date || '';
            document.getElementById('editDateModal').classList.remove('hidden');
+           setTimeout(() => document.getElementById('editNameValue').focus(), 60);
        }
        function closeEditDateModal() {
            document.getElementById('editDateModal').classList.add('hidden');
@@ -2104,24 +2107,34 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
        async function confirmEditDate() {
            const proj = projects.find(p => p.id === editDateProjectId);
            if (!proj) { closeEditDateModal(); return; }
+           const newName = document.getElementById('editNameValue').value.trim();
            const newDate = document.getElementById('editDateValue').value;
+           if (!newName) { showToast('Le titre du projet est requis.', 'error'); return; }
+           if (projectNameExists(newName, proj.id)) {
+               showToast('Un projet porte déjà ce nom — le titre doit être unique.', 'error');
+               return;
+           }
            if (!newDate) { showToast('La nouvelle date est requise.', 'error'); return; }
-           if (newDate === proj.date) { closeEditDateModal(); return; }
+           if (newName === proj.title && newDate === proj.date) { closeEditDateModal(); return; }
+           const prevTitle = proj.title;
            const prevDate = proj.date;
+           proj.title = newName;
            proj.date = newDate;
            renderProjectsList();
            refreshCalendarEvents();
            closeEditDateModal();
            try {
-               await pushDataToGitHub(`SocialSync : date du projet "${proj.title}" déplacée au ${newDate}`);
-               showToast(`Date mise à jour : ${formatDateFr(newDate)} !`);
+               await pushDataToGitHub(`SocialSync : projet renommé en "${newName}" et déplacé au ${newDate}`);
+               showToast(`Projet mis à jour : "${newName}" · ${formatDateFr(newDate)} !`);
            } catch (e) {
+               proj.title = prevTitle;
                proj.date = prevDate;
                renderProjectsList();
                refreshCalendarEvents();
                showToast('Mise à jour GitHub échouée : ' + e.message, 'error');
            }
        }
+       // ===== FIN MODIFICATION ÉDITION =====
 
        async function deleteProject(id) {
            const proj = projects.find(p => p.id === id);
