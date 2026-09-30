@@ -436,11 +436,13 @@
       },
       "validations": {
         "yt": true,
-        "pin": true
+        "pin": true,
+        "ig": true
       },
       "status": {
         "yt": "publie",
-        "pin": "publie"
+        "pin": "publie",
+        "ig": "publie"
       },
       "assets": {},
       "createdAt": "2026-09-30T15:48:45.797Z"
