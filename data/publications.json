@@ -510,7 +510,19 @@
       "status": {
         "yt": "publie"
       },
-      "assets": {},
+      "assets": {
+        "yt": [
+          {
+            "name": "How did the smartest minds in.png",
+            "type": "image/png",
+            "size": 2658959,
+            "addedAt": "2026-09-30T16:39:00.952Z",
+            "url": "https://raw.githubusercontent.com/Hocemedinbg/Gfacts-Schedule-Cross-Plateformes/main/assets/proj_1790786108733_xgq42/yt/1790786340952_How_did_the_smartest_minds_in.png",
+            "sha": "f4e0a214b1c908aab1b59e3c1825f730faac6090",
+            "repoPath": "assets/proj_1790786108733_xgq42/yt/1790786340952_How_did_the_smartest_minds_in.png"
+          }
+        ]
+      },
       "createdAt": "2026-09-30T16:35:08.734Z"
     }
   ]
