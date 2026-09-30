@@ -696,7 +696,7 @@
            refreshCalendarEvents();
        }
 
-       // ===== DÉBUT MODIFICATION LISIBILITÉ : badges J+ / date / heure bien visibles =====
+       // ===== badges J+ / date / heure bien visibles =====
        function renderPlatMetaBadges(plat, d) {
            return `
            <span class="flex items-center gap-1.5 flex-wrap">
@@ -709,7 +709,6 @@
                </span>
            </span>`;
        }
-       // ===== FIN MODIFICATION LISIBILITÉ =====
 
        // --- SEO FIELDS RENDERING ---
        function renderSeoFields() {
@@ -787,9 +786,9 @@
 
        // --- IMPORT PACKAGE SEO ---
        const seoSectionAliases = { 'youtube': 'yt', 'tiktok': 'tiktok', 'instagram': 'ig', 'facebook': 'fb', 'pinterest': 'pin' };
-       // ===== alias 'alt text'/'alt', 'hashtag strategy', 'playlist name' =====
+       // ===== DÉBUT MODIFICATION PLAYLIST ALLOCATION : alias ajouté =====
        const seoFieldAliases = {
-           'playlist': '__PLAYLIST__', 'playlist name': '__PLAYLIST__',
+           'playlist': '__PLAYLIST__', 'playlist name': '__PLAYLIST__', 'playlist allocation': '__PLAYLIST__',
            'script start': 'Script Start', 'script': 'Script Start',
            'title': 'Title', 'description': 'Description',
            'tags': 'Tags', 'tag': 'Tags',
@@ -805,6 +804,7 @@
            'pin title': 'Pin Title', 'pin description': 'Pin Description',
            'alt text': 'ALT Text', 'alt': 'ALT Text', 'alt-text': 'ALT Text'
        };
+       // ===== FIN MODIFICATION PLAYLIST ALLOCATION =====
        function normSeoLine(s) { return s.toLowerCase().replace(/[*_#`~>]/g, '').replace(/\s+/g, ' ').trim(); }
 
        // ===== normalisation des doubles fences (```text imbriqués) =====
@@ -1132,7 +1132,8 @@ content
                'caption': 'Caption',
                'post copy': 'Post copy', 'post': 'Post copy',
                'alt text': 'ALT Text', 'alt': 'ALT Text', 'alt-text': 'ALT Text',
-               'playlist': '__PLAYLIST__', 'playlist name': '__PLAYLIST__'
+               // ===== MODIFICATION PLAYLIST ALLOCATION : alias ajouté =====
+               'playlist': '__PLAYLIST__', 'playlist name': '__PLAYLIST__', 'playlist allocation': '__PLAYLIST__'
            };
            return map[n] || null;
        }
@@ -2588,7 +2589,7 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                        <div class="flex items-center gap-2 flex-wrap">
                            <i class="${plat.icon} text-sm"></i>
                            <span class="font-bold text-sm text-white">${cfg.label}</span>
-                           <!-- ===== MODIFICATION LISIBILITÉ : badges J+ / date / heure bien visibles ===== -->
+                           <!-- ===== badges J+ / date / heure bien visibles ===== -->
                            ${renderPlatMetaBadges(plat, d)}
                        </div>
                        <select onchange="setPlatformStatus('${proj.id}', '${platId}', this.value, this)"
@@ -2691,7 +2692,7 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                        <div class="flex items-center gap-2 flex-wrap">
                            <i class="${plat.icon} text-sm"></i>
                            <span class="font-bold text-sm text-white">${cfg.label}</span>
-                           <!-- ===== MODIFICATION LISIBILITÉ : badges J+ / date / heure bien visibles ===== -->
+                           <!-- ===== badges J+ / date / heure bien visibles ===== -->
                            ${renderPlatMetaBadges(plat, d)}
                        </div>
                        <select onchange="setPlatformStatus('${proj.id}', '${platformId}', this.value, this)"
