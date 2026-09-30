@@ -448,7 +448,19 @@
         "fb": "publie",
         "tiktok": "publie"
       },
-      "assets": {},
+      "assets": {
+        "tiktok": [
+          {
+            "name": "In August 1854, a young mother.png",
+            "type": "image/png",
+            "size": 2575216,
+            "addedAt": "2026-09-30T16:27:36.934Z",
+            "url": "https://raw.githubusercontent.com/Hocemedinbg/Gfacts-Schedule-Cross-Plateformes/main/assets/proj_1790783325796_lsr68/tiktok/1790785656933_In_August_1854_a_young_mother.png",
+            "sha": "68f9878a070512906e96a3c0e2bdfe40a281a995",
+            "repoPath": "assets/proj_1790783325796_lsr68/tiktok/1790785656933_In_August_1854_a_young_mother.png"
+          }
+        ]
+      },
       "createdAt": "2026-09-30T15:48:45.797Z"
     }
   ]
