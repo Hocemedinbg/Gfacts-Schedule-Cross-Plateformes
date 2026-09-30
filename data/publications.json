@@ -434,8 +434,12 @@
           "ALT Text": "Vintage medical illustration of Victorian London showing a street scene with historical architecture and water pumps."
         }
       },
-      "validations": {},
-      "status": {},
+      "validations": {
+        "yt": true
+      },
+      "status": {
+        "yt": "publie"
+      },
       "assets": {},
       "createdAt": "2026-09-30T15:48:45.797Z"
     }
