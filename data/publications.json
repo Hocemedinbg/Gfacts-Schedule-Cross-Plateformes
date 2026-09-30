@@ -504,8 +504,12 @@
           "ALT Text": "Vintage medical illustration of a 19th-century London street map overlaid with historical outbreak data points."
         }
       },
-      "validations": {},
-      "status": {},
+      "validations": {
+        "yt": true
+      },
+      "status": {
+        "yt": "publie"
+      },
       "assets": {},
       "createdAt": "2026-09-30T16:35:08.734Z"
     }
