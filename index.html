@@ -696,6 +696,21 @@
            refreshCalendarEvents();
        }
 
+       // ===== DÉBUT MODIFICATION LISIBILITÉ : badges J+ / date / heure bien visibles =====
+       function renderPlatMetaBadges(plat, d) {
+           return `
+           <span class="flex items-center gap-1.5 flex-wrap">
+               <span class="inline-flex items-center text-[11px] font-bold px-2 py-0.5 rounded-full border ${plat.badgeColor}">J+${plat.dayOffset}</span>
+               <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-100 bg-slate-800 border border-slate-600 px-2 py-0.5 rounded-full" title="Date de publication">
+                   <i class="fa-regular fa-calendar text-[10px] text-indigo-300"></i>${formatDateFr(d)}
+               </span>
+               <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-100 bg-slate-800 border border-slate-600 px-2 py-0.5 rounded-full" title="Créneau horaire">
+                   <i class="fa-regular fa-clock text-[10px] text-indigo-300"></i>${plat.timeSlot}
+               </span>
+           </span>`;
+       }
+       // ===== FIN MODIFICATION LISIBILITÉ =====
+
        // --- SEO FIELDS RENDERING ---
        function renderSeoFields() {
            const container = document.getElementById('seoFieldsContainer');
@@ -2057,9 +2072,7 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
            host.innerHTML = html;
        }
 
-       // ===== DÉBUT CORRECTIF COULEURS VUE MOIS : la couleur de la palette est appliquée directement en style inline sur la box =====
-       // (dans la vue Mois, FullCalendar n'applique pas backgroundColor sur l'élément quand eventContent est personnalisé —
-       //  on garantit ainsi un rendu identique Mois | Semaine)
+       // ===== couleur de la palette appliquée directement en style inline sur la box (rendu identique Mois | Semaine) =====
        function renderEventContent(arg) {
            const props = arg.event.extendedProps;
            const plat = platformsConfig.find(p => p.id === props.platformId);
@@ -2081,7 +2094,6 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                </div>`
            };
        }
-       // ===== FIN CORRECTIF COULEURS VUE MOIS =====
 
        async function togglePlatformValidation(projectId, platformId, checked, inputEl) {
            const proj = projects.find(p => p.id === projectId);
@@ -2576,7 +2588,8 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                        <div class="flex items-center gap-2 flex-wrap">
                            <i class="${plat.icon} text-sm"></i>
                            <span class="font-bold text-sm text-white">${cfg.label}</span>
-                           <span class="text-[10px] text-slate-400">J+${plat.dayOffset} · ${formatDateFr(d)} · ${plat.timeSlot}</span>
+                           <!-- ===== MODIFICATION LISIBILITÉ : badges J+ / date / heure bien visibles ===== -->
+                           ${renderPlatMetaBadges(plat, d)}
                        </div>
                        <select onchange="setPlatformStatus('${proj.id}', '${platId}', this.value, this)"
                                class="ssync-status-select text-[11px] font-semibold rounded-lg border px-2.5 py-1.5 focus:outline-none ${statusSelectClasses(st)}"
@@ -2678,7 +2691,8 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                        <div class="flex items-center gap-2 flex-wrap">
                            <i class="${plat.icon} text-sm"></i>
                            <span class="font-bold text-sm text-white">${cfg.label}</span>
-                           <span class="text-[10px] text-slate-400">J+${plat.dayOffset} · ${formatDateFr(d)} · ${plat.timeSlot}</span>
+                           <!-- ===== MODIFICATION LISIBILITÉ : badges J+ / date / heure bien visibles ===== -->
+                           ${renderPlatMetaBadges(plat, d)}
                        </div>
                        <select onchange="setPlatformStatus('${proj.id}', '${platformId}', this.value, this)"
                                class="ssync-status-select text-[11px] font-semibold rounded-lg border px-2.5 py-1.5 focus:outline-none ${statusSelectClasses(st)}"
