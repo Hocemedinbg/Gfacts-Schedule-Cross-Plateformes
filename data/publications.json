@@ -579,14 +579,14 @@
         "fb": true,
         "ig": true,
         "tiktok": true,
-        "pin": true
+        "pin": false
       },
       "status": {
         "yt": "publie",
         "fb": "publie",
         "ig": "publie",
         "tiktok": "publie",
-        "pin": "publie"
+        "pin": "a_planifier"
       },
       "assets": {
         "yt": [
