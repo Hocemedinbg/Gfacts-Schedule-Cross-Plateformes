@@ -70,6 +70,10 @@
        .plat-chip { opacity: .35; filter: grayscale(.8); transition: all .15s ease; }
        .plat-chip.active { opacity: 1; filter: none; }
 
+       /* pastilles de plateforme cliquables dans les cartes projet */
+       .plat-badge-btn { cursor: pointer; transition: transform .12s ease; }
+       .plat-badge-btn:hover { transform: scale(1.15); }
+
        /* responsive : calendrier & boxes adaptés au mobile */
        @media (max-width: 640px) {
            .fc .fc-toolbar.fc-header-toolbar { flex-direction: column; gap: 8px; margin-bottom: 8px; }
@@ -323,11 +327,11 @@
                    </div>
                    <!-- chips de filtrage par plateforme -->
                    <div id="platformFilterBar" class="flex items-center gap-1.5 flex-wrap mb-3"></div>
-                   <!-- filtre par titre de projet -->
+                   <!-- ===== barre de recherche UNIQUE : filtre calendrier + agenda + projets enregistrés ===== -->
                    <div class="relative mb-2">
                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs pointer-events-none"></i>
                        <input type="text" id="calendarSearchInput" oninput="handleCalendarSearch(this.value)"
-                              placeholder="Filtrer le calendrier par titre de projet..."
+                              placeholder="Filtrer par titre de projet (calendrier, agenda, projets)..."
                               class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-9 pr-8 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
                        <button id="calendarSearchClear" onclick="clearCalendarSearch()" title="Effacer le filtre"
                                class="hidden absolute right-1.5 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center text-slate-500 hover:text-white rounded hover:bg-slate-800 transition">
@@ -342,17 +346,6 @@
                    <h3 class="font-bold text-base sm:text-lg text-white mb-3 flex items-center justify-between">
                        <span><i class="fa-solid fa-list-check text-indigo-400 mr-2"></i>Projets Enregistrés</span>
                    </h3>
-                   <!-- barre de recherche par nom -->
-                   <div class="relative mb-3">
-                       <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs pointer-events-none"></i>
-                       <input type="text" id="projectSearchInput" oninput="handleProjectSearch(this.value)"
-                              placeholder="Rechercher un projet par son nom..."
-                              class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-9 pr-8 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
-                       <button id="projectSearchClear" onclick="clearProjectSearch()" title="Effacer la recherche"
-                               class="hidden absolute right-1.5 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center text-slate-500 hover:text-white rounded hover:bg-slate-800 transition">
-                           <i class="fa-solid fa-xmark text-xs"></i>
-                       </button>
-                   </div>
                    <!-- section À publier aujourd'hui -->
                    <div id="todaySection" class="hidden mb-3"></div>
                    <div id="projectsList" class="flex-grow overflow-y-auto space-y-4 pr-1"></div>
@@ -570,21 +563,22 @@
            pin: { label: 'Pinterest', fields: ['Script Start', 'Pin Title', 'Pin Description', 'Hashtags', 'ALT Text'] }
        };
 
-       // ===== statuts plateforme (dropdown 3 choix) =====
+       // ===== DÉBUT MODIFICATION STATUTS : seulement "À planifier" et "Publié" =====
        const PLATFORM_STATUS = {
            a_planifier: { label: 'À planifier', emoji: '📝', classes: 'bg-slate-800 text-slate-300 border-slate-700' },
-           programme:   { label: 'Programmé',   emoji: '📅', classes: 'bg-amber-500/15 text-amber-300 border-amber-500/40' },
            publie:      { label: 'Publié',      emoji: '📤', classes: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40' }
        };
        function getPlatStatus(proj, platId) {
-           if (proj.status && proj.status[platId]) return proj.status[platId];
-           if (proj.validations && proj.validations[platId]) return 'publie';
-           return 'a_planifier';
+           let s = (proj.status && proj.status[platId]) ? proj.status[platId] : (proj.validations && proj.validations[platId] ? 'publie' : 'a_planifier');
+           // compat : l'ancien statut "programme" est assimilé à "à planifier"
+           if (s === 'programme') s = 'a_planifier';
+           return s;
        }
        function statusConfig(s) { return PLATFORM_STATUS[s] || PLATFORM_STATUS.a_planifier; }
        function statusLabel(s) { return statusConfig(s).label; }
        function statusEmoji(s) { return statusConfig(s).emoji; }
        function statusSelectClasses(s) { return statusConfig(s).classes; }
+       // ===== FIN MODIFICATION STATUTS =====
 
        // ===== palette variée pour les boxes du calendrier =====
        const CALENDAR_PALETTE = ['#6366f1', '#06b6d4', '#f59e0b', '#10b981', '#ec4899', '#8b5cf6', '#f97316'];
@@ -600,8 +594,6 @@
        let currentEditProjectId = null;
        let duplicateSourceId = null;
        let editDateProjectId = null;
-       // terme de recherche des projets
-       let projectSearchTerm = '';
        // état de la vue Calendrier | Agenda
        let calendarViewMode = 'calendar';
        let agendaShowAll = false;
@@ -611,7 +603,7 @@
            platformsConfig.forEach(pl => { platformFilter[pl.id] = true; });
        }
        initPlatformFilter();
-       // terme de filtre par titre de projet (calendrier)
+       // ===== MODIFICATION RECHERCHE UNIQUE : le filtre par titre pilote calendrier + agenda + projets =====
        let calendarSearchTerm = '';
 
        // stockage des valeurs + copie en un clic
@@ -818,17 +810,15 @@
            'pin title': 'Pin Title', 'pin description': 'Pin Description',
            'alt text': 'ALT Text', 'alt': 'ALT Text', 'alt-text': 'ALT Text'
        };
-       // ===== DÉBUT CORRECTIF DEUX-POINTS : normSeoLine supprime maintenant les ':' finaux =====
-       // (les packages au format "Playlist:", "Title:", "ALT Text:" etc. sont désormais reconnus)
+       // ===== normSeoLine supprime les ':' finaux (packages "Playlist:", "Title:", etc.) =====
        function normSeoLine(s) {
            return s.toLowerCase()
                .replace(/[*_#`~>]/g, '')
                .replace(/\s+/g, ' ')
                .trim()
-               .replace(/[:\s]+$/, '')   // retire les ':' (et espaces) de fin de ligne
+               .replace(/[:\s]+$/, '')
                .trim();
        }
-       // ===== FIN CORRECTIF DEUX-POINTS =====
 
        // ===== normalisation des doubles fences (```text imbriqués) =====
        function normalizeNestedFences(text) {
@@ -1921,11 +1911,12 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
        }
 
        // --- CALENDRIER ---
-       // ===== gestion du filtre par titre de projet (calendrier) =====
+       // ===== DÉBUT MODIFICATION RECHERCHE UNIQUE : le filtre pilote calendrier + agenda + projets =====
        function handleCalendarSearch(value) {
            calendarSearchTerm = value || '';
            updateCalendarSearchUI();
            refreshCalendarEvents();
+           renderProjectsList();
        }
        function clearCalendarSearch() {
            calendarSearchTerm = '';
@@ -1933,6 +1924,7 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
            if (input) input.value = '';
            updateCalendarSearchUI();
            refreshCalendarEvents();
+           renderProjectsList();
        }
        function updateCalendarSearchUI() {
            const clearBtn = document.getElementById('calendarSearchClear');
@@ -1945,15 +1937,16 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
            info.classList.remove('hidden');
            info.innerHTML = `<i class="fa-solid fa-filter mr-1"></i>Filtre actif : « ${escapeHtml(term)} » — <b>${count}</b> événement(s) correspondant(s). Si aucun n'apparaît dans la période affichée, naviguez avec ‹ › entre les mois.`;
        }
+       // ===== FIN MODIFICATION RECHERCHE UNIQUE =====
 
        // ===== couleurs variées + en retard + filtre plateformes + recherche par titre =====
        function getCalendarEvents() {
            const raw = [];
            const todayStr = new Date().toISOString().split('T')[0];
-           // RECHERCHE CALENDRIER : terme insensible à la casse
+           // RECHERCHE UNIQUE : terme insensible à la casse
            const term = calendarSearchTerm.trim().toLowerCase();
            projects.forEach(proj => {
-               // RECHERCHE CALENDRIER : projet exclu si le titre ne correspond pas
+               // RECHERCHE UNIQUE : projet exclu si le titre ne correspond pas
                if (term && !(proj.title || '').toLowerCase().includes(term)) return;
                platformsConfig.forEach(plat => {
                    // FILTRE PLATEFORMES : événement masqué si la plateforme est désactivée
@@ -2229,23 +2222,16 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
        }
 
        // --- PROJETS ---
-       // ===== filtre des projets par nom =====
-       function handleProjectSearch(value) {
-           projectSearchTerm = value || '';
-           renderProjectsList();
-       }
-       function clearProjectSearch() {
-           projectSearchTerm = '';
-           const input = document.getElementById('projectSearchInput');
-           if (input) input.value = '';
-           renderProjectsList();
-       }
+       // ===== DÉBUT MODIFICATION PASTILLES CLIQUABLES + filtre unique =====
 
        // ===== section "🔥 À publier aujourd'hui" + badge en retard sur les projets =====
        function getTodayItems() {
            const todayStr = new Date().toISOString().split('T')[0];
+           // le filtre par titre s'applique aussi à cette section
+           const term = calendarSearchTerm.trim().toLowerCase();
            const items = [];
            projects.forEach(proj => {
+               if (term && !(proj.title || '').toLowerCase().includes(term)) return;
                platformsConfig.forEach(plat => {
                    const d = addDaysToDate(proj.date, plat.dayOffset);
                    if (d !== todayStr) return;
@@ -2293,19 +2279,16 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
 
        function renderProjectsList() {
            const list = document.getElementById('projectsList');
-           // visibilité du bouton d'effacement
-           const clearBtn = document.getElementById('projectSearchClear');
-           if (clearBtn) clearBtn.classList.toggle('hidden', !projectSearchTerm);
            if (!projects.length) {
                list.innerHTML = `<div class="text-center text-slate-500 text-xs py-10"><i class="fa-regular fa-folder-open text-3xl mb-3 block"></i>Aucun projet enregistré.<br>Créez une programmation dans le Planificateur.</div>`;
                return;
            }
-           // filtrage insensible à la casse
-           const term = projectSearchTerm.trim().toLowerCase();
+           // ===== RECHERCHE UNIQUE : filtrage par le terme de la barre au-dessus du calendrier =====
+           const term = calendarSearchTerm.trim().toLowerCase();
            let sorted = [...projects].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
            if (term) sorted = sorted.filter(p => (p.title || '').toLowerCase().includes(term));
            if (!sorted.length) {
-               list.innerHTML = `<div class="text-center text-slate-500 text-xs py-10"><i class="fa-solid fa-magnifying-glass text-3xl mb-3 block"></i>Aucun projet ne correspond à votre recherche.</div>`;
+               list.innerHTML = `<div class="text-center text-slate-500 text-xs py-10"><i class="fa-solid fa-magnifying-glass text-3xl mb-3 block"></i>Aucun projet ne correspond au filtre « ${escapeHtml(calendarSearchTerm.trim())} ».</div>`;
                return;
            }
            list.innerHTML = sorted.map(proj => {
@@ -2316,10 +2299,11 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                const overdueBadge = overdueCount > 0
                    ? `<span title="${overdueCount} publication(s) en retard" class="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-red-500/40 bg-red-500/10 text-red-400 ssync-overdue-dot"><i class="fa-solid fa-triangle-exclamation"></i>${overdueCount}</span>`
                    : '';
+               // ===== PASTILLES CLIQUABLES : tap = ouvrir le package SEO de cette plateforme =====
                const badges = platformsConfig.map(pl => {
                    const v = proj.validations && proj.validations[pl.id];
-                   return `<span title="${pl.name}${v ? ' — Planifié ✓' : ''}" class="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border ${v ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : pl.badgeColor}">
-                       <i class="${pl.icon}"></i>${v ? '<i class="fa-solid fa-check"></i>' : ''}</span>`;
+                   return `<button onclick="event.stopPropagation(); viewSeoForPlatform('${proj.id}', '${pl.id}')" title="Ouvrir le package SEO ${pl.name}" class="plat-badge-btn inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border ${v ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : pl.badgeColor}">
+                       <i class="${pl.icon}"></i>${v ? '<i class="fa-solid fa-check"></i>' : ''}</button>`;
                }).join('');
                return `
                <div class="bg-slate-950 border ${overdueCount > 0 ? 'border-red-500/40' : 'border-slate-800'} rounded-xl p-4 space-y-2.5">
@@ -2346,6 +2330,7 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                </div>`;
            }).join('');
        }
+       // ===== FIN MODIFICATION PASTILLES CLIQUABLES + filtre unique =====
 
        // ===== duplication avec renommage + unicité + date libre =====
        function duplicateProject(id) {
@@ -2647,8 +2632,8 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                        <select onchange="setPlatformStatus('${proj.id}', '${platId}', this.value, this)"
                                class="ssync-status-select text-[11px] font-semibold rounded-lg border px-2.5 py-1.5 focus:outline-none ${statusSelectClasses(st)}"
                                title="Statut de publication">
+                           <!-- ===== MODIFICATION STATUTS : seulement 2 choix ===== -->
                            <option value="a_planifier" ${st === 'a_planifier' ? 'selected' : ''}>📝 À planifier</option>
-                           <option value="programme" ${st === 'programme' ? 'selected' : ''}>📅 Programmé</option>
                            <option value="publie" ${st === 'publie' ? 'selected' : ''}>📤 Publié</option>
                        </select>
                    </div>`;
@@ -2750,8 +2735,8 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                        <select onchange="setPlatformStatus('${proj.id}', '${platformId}', this.value, this)"
                                class="ssync-status-select text-[11px] font-semibold rounded-lg border px-2.5 py-1.5 focus:outline-none ${statusSelectClasses(st)}"
                                title="Statut de publication">
+                           <!-- ===== MODIFICATION STATUTS : seulement 2 choix ===== -->
                            <option value="a_planifier" ${st === 'a_planifier' ? 'selected' : ''}>📝 À planifier</option>
-                           <option value="programme" ${st === 'programme' ? 'selected' : ''}>📅 Programmé</option>
                            <option value="publie" ${st === 'publie' ? 'selected' : ''}>📤 Publié</option>
                        </select>
                    </div>`;
