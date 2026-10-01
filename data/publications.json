@@ -646,7 +646,19 @@
       },
       "validations": {},
       "status": {},
-      "assets": {},
+      "assets": {
+        "yt": [
+          {
+            "name": "In 1858, a horrific stench known.jpg",
+            "type": "image/jpeg",
+            "size": 568896,
+            "addedAt": "2026-10-01T14:04:00.628Z",
+            "url": "https://raw.githubusercontent.com/Hocemedinbg/Gfacts-Schedule-Cross-Plateformes/main/assets/proj_1790860540622_00w3f/yt/1790863440628_In_1858_a_horrific_stench_known.jpg",
+            "sha": "e4b32ae63e603c84262f6b828949f5ab56c72466",
+            "repoPath": "assets/proj_1790860540622_00w3f/yt/1790863440628_In_1858_a_horrific_stench_known.jpg"
+          }
+        ]
+      },
       "createdAt": "2026-10-01T13:15:40.623Z"
     }
   ]
