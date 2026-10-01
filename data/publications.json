@@ -644,8 +644,12 @@
           "ALT Text": "Vintage Victorian engineering illustration showing cross-section designs of 19th-century London brick sewer tunnels."
         }
       },
-      "validations": {},
-      "status": {},
+      "validations": {
+        "yt": true
+      },
+      "status": {
+        "yt": "publie"
+      },
       "assets": {
         "yt": [
           {
