@@ -323,11 +323,11 @@
                    </div>
                    <!-- chips de filtrage par plateforme -->
                    <div id="platformFilterBar" class="flex items-center gap-1.5 flex-wrap mb-3"></div>
-                   <!-- ===== DÉBUT MODIFICATION RECHERCHE CALENDRIER : filtre par titre de projet ===== -->
+                   <!-- filtre par titre de projet -->
                    <div class="relative mb-2">
                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs pointer-events-none"></i>
                        <input type="text" id="calendarSearchInput" oninput="handleCalendarSearch(this.value)"
-                              placeholder="Filtrer par titre de projet..."
+                              placeholder="Filtrer le calendrier par titre de projet..."
                               class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-9 pr-8 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
                        <button id="calendarSearchClear" onclick="clearCalendarSearch()" title="Effacer le filtre"
                                class="hidden absolute right-1.5 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center text-slate-500 hover:text-white rounded hover:bg-slate-800 transition">
@@ -335,7 +335,6 @@
                        </button>
                    </div>
                    <div id="calendarSearchInfo" class="hidden text-[10px] text-indigo-300 mb-2"></div>
-                   <!-- ===== FIN MODIFICATION RECHERCHE CALENDRIER ===== -->
                    <div id="calendar"></div>
                    <div id="agendaView" class="hidden overflow-y-auto pr-1 max-h-[600px]"></div>
                </div>
@@ -612,7 +611,7 @@
            platformsConfig.forEach(pl => { platformFilter[pl.id] = true; });
        }
        initPlatformFilter();
-       // ===== MODIFICATION RECHERCHE CALENDRIER : terme de filtre par titre de projet =====
+       // terme de filtre par titre de projet (calendrier)
        let calendarSearchTerm = '';
 
        // stockage des valeurs + copie en un clic
@@ -819,7 +818,17 @@
            'pin title': 'Pin Title', 'pin description': 'Pin Description',
            'alt text': 'ALT Text', 'alt': 'ALT Text', 'alt-text': 'ALT Text'
        };
-       function normSeoLine(s) { return s.toLowerCase().replace(/[*_#`~>]/g, '').replace(/\s+/g, ' ').trim(); }
+       // ===== DÉBUT CORRECTIF DEUX-POINTS : normSeoLine supprime maintenant les ':' finaux =====
+       // (les packages au format "Playlist:", "Title:", "ALT Text:" etc. sont désormais reconnus)
+       function normSeoLine(s) {
+           return s.toLowerCase()
+               .replace(/[*_#`~>]/g, '')
+               .replace(/\s+/g, ' ')
+               .trim()
+               .replace(/[:\s]+$/, '')   // retire les ':' (et espaces) de fin de ligne
+               .trim();
+       }
+       // ===== FIN CORRECTIF DEUX-POINTS =====
 
        // ===== normalisation des doubles fences (```text imbriqués) =====
        function normalizeNestedFences(text) {
@@ -1899,7 +1908,7 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                showToast('Sauvegarde échouée : ' + e.message, 'error');
            }
            btn.disabled = false;
-           btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Sauvegarder';
+           btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Sauvegarder dans GitHub';
            renderProjectsList();
            refreshCalendarEvents();
            updateBadge();
@@ -1912,7 +1921,7 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
        }
 
        // --- CALENDRIER ---
-       // ===== DÉBUT MODIFICATION RECHERCHE CALENDRIER : gestion du filtre par titre de projet =====
+       // ===== gestion du filtre par titre de projet (calendrier) =====
        function handleCalendarSearch(value) {
            calendarSearchTerm = value || '';
            updateCalendarSearchUI();
@@ -1936,16 +1945,15 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
            info.classList.remove('hidden');
            info.innerHTML = `<i class="fa-solid fa-filter mr-1"></i>Filtre actif : « ${escapeHtml(term)} » — <b>${count}</b> événement(s) correspondant(s). Si aucun n'apparaît dans la période affichée, naviguez avec ‹ › entre les mois.`;
        }
-       // ===== FIN MODIFICATION RECHERCHE CALENDRIER =====
 
-       // ===== couleurs variées + en retard + filtre plateformes + RECHERCHE PAR TITRE =====
+       // ===== couleurs variées + en retard + filtre plateformes + recherche par titre =====
        function getCalendarEvents() {
            const raw = [];
            const todayStr = new Date().toISOString().split('T')[0];
-           // ===== RECHERCHE CALENDRIER : terme insensible à la casse =====
+           // RECHERCHE CALENDRIER : terme insensible à la casse
            const term = calendarSearchTerm.trim().toLowerCase();
            projects.forEach(proj => {
-               // ===== RECHERCHE CALENDRIER : projet exclu si le titre ne correspond pas =====
+               // RECHERCHE CALENDRIER : projet exclu si le titre ne correspond pas
                if (term && !(proj.title || '').toLowerCase().includes(term)) return;
                platformsConfig.forEach(plat => {
                    // FILTRE PLATEFORMES : événement masqué si la plateforme est désactivée
