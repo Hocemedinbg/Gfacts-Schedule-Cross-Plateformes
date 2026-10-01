@@ -576,7 +576,19 @@
       },
       "validations": {},
       "status": {},
-      "assets": {},
+      "assets": {
+        "yt": [
+          {
+            "name": "On a cold December evening.png",
+            "type": "image/png",
+            "size": 2678942,
+            "addedAt": "2026-10-01T06:48:33.363Z",
+            "url": "https://raw.githubusercontent.com/Hocemedinbg/Gfacts-Schedule-Cross-Plateformes/main/assets/proj_1790837146035_epl72/yt/1790837313363_On_a_cold_December_evening.png",
+            "sha": "fec3d86826050a363792f908d4109fa8d83e879d",
+            "repoPath": "assets/proj_1790837146035_epl72/yt/1790837313363_On_a_cold_December_evening.png"
+          }
+        ]
+      },
       "createdAt": "2026-10-01T06:45:46.036Z"
     }
   ]
