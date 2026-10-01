@@ -645,10 +645,12 @@
         }
       },
       "validations": {
-        "yt": true
+        "yt": true,
+        "fb": true
       },
       "status": {
-        "yt": "publie"
+        "yt": "publie",
+        "fb": "publie"
       },
       "assets": {
         "yt": [
