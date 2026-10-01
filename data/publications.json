@@ -574,8 +574,12 @@
           "ALT Text": "A vintage style historical photo layout depicting a dimly lit 1970s urban street representing Belfast during the Troubles."
         }
       },
-      "validations": {},
-      "status": {},
+      "validations": {
+        "yt": true
+      },
+      "status": {
+        "yt": "publie"
+      },
       "assets": {
         "yt": [
           {
