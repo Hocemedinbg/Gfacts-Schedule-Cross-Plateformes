@@ -578,13 +578,15 @@
         "yt": true,
         "fb": true,
         "ig": true,
-        "tiktok": true
+        "tiktok": true,
+        "pin": false
       },
       "status": {
         "yt": "publie",
         "fb": "publie",
         "ig": "publie",
-        "tiktok": "publie"
+        "tiktok": "publie",
+        "pin": "programme"
       },
       "assets": {
         "yt": [
