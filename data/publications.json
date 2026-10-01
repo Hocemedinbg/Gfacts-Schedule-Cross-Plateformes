@@ -577,14 +577,14 @@
       "validations": {
         "yt": true,
         "fb": true,
-        "ig": false,
+        "ig": true,
         "tiktok": true,
         "pin": true
       },
       "status": {
         "yt": "publie",
         "fb": "publie",
-        "ig": "a_planifier",
+        "ig": "publie",
         "tiktok": "publie",
         "pin": "publie"
       },
