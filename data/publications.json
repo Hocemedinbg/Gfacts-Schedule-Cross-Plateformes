@@ -716,7 +716,19 @@
       },
       "validations": {},
       "status": {},
-      "assets": {},
+      "assets": {
+        "yt": [
+          {
+            "name": "In 1983, the Soviet.png",
+            "type": "image/png",
+            "size": 2294926,
+            "addedAt": "2026-10-02T06:30:57.797Z",
+            "url": "https://raw.githubusercontent.com/Hocemedinbg/Gfacts-Schedule-Cross-Plateformes/main/assets/proj_1790922571854_3j2o2/yt/1790922657797_In_1983_the_Soviet.png",
+            "sha": "655f2287cb70bd72cae0ce2721f1eda3750852f3",
+            "repoPath": "assets/proj_1790922571854_3j2o2/yt/1790922657797_In_1983_the_Soviet.png"
+          }
+        ]
+      },
       "createdAt": "2026-10-02T06:29:31.854Z"
     }
   ]
