@@ -715,10 +715,12 @@
         }
       },
       "validations": {
-        "yt": true
+        "yt": true,
+        "pin": true
       },
       "status": {
-        "yt": "publie"
+        "yt": "publie",
+        "pin": "publie"
       },
       "assets": {
         "yt": [
