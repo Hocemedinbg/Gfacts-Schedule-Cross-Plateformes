@@ -786,11 +786,13 @@
       },
       "validations": {
         "yt": true,
-        "pin": true
+        "pin": true,
+        "fb": true
       },
       "status": {
         "yt": "publie",
-        "pin": "publie"
+        "pin": "publie",
+        "fb": "publie"
       },
       "assets": {},
       "createdAt": "2026-10-02T06:54:28.538Z"
