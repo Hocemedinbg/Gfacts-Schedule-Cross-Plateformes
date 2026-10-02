@@ -62,10 +62,8 @@
        .seo-copy:hover { background: rgba(99,102,241,.18); }
        .copied-flash { background: rgba(16,185,129,.28) !important; }
 
-       /* ===== DÉBUT MODIFICATION HASHTAGS FACEBOOK : pills copiables une par une ===== */
        .seo-hash { display: inline-flex; align-items: center; cursor: pointer; border-radius: 6px; padding: 2px 7px; background: rgba(99,102,241,.10); border: 1px solid rgba(99,102,241,.28); color: #e2e8f0; font-size: 12px; transition: background .15s ease; }
        .seo-hash:hover { background: rgba(99,102,241,.30); }
-       /* ===== FIN MODIFICATION HASHTAGS FACEBOOK ===== */
 
        .plat-chip { opacity: .35; filter: grayscale(.8); transition: all .15s ease; }
        .plat-chip.active { opacity: 1; filter: none; }
@@ -568,7 +566,6 @@
        };
        function getPlatStatus(proj, platId) {
            let s = (proj.status && proj.status[platId]) ? proj.status[platId] : (proj.validations && proj.validations[platId] ? 'publie' : 'a_planifier');
-           // compat : l'ancien statut "programme" est assimilé à "à planifier"
            if (s === 'programme') s = 'a_planifier';
            return s;
        }
@@ -595,7 +592,7 @@
        let calendarViewMode = 'calendar';
        let agendaShowAll = false;
        // état du filtre plateformes
-       let platformFilter = {}; // { platId: true|false } — true = visible
+       let platformFilter = {};
        function initPlatformFilter() {
            platformsConfig.forEach(pl => { platformFilter[pl.id] = true; });
        }
@@ -639,9 +636,7 @@
                .catch(() => showToast('Copie impossible — appuyez longuement pour sélectionner le texte.', 'error'));
        }
 
-       // ===== DÉBUT MODIFICATION HASHTAGS FACEBOOK : rendu lecture des valeurs de champ =====
-       // Facebook + champ Hashtags uniquement : chaque hashtag est une pill copiable individuellement.
-       // Tous les autres champs / plateformes : copie du bloc entier en un clic (comportement inchangé).
+       // ===== Facebook Hashtags : pills copiables une par une (lecture uniquement) =====
        function renderReadFieldValue(platId, f, val) {
            if (platId === 'fb' && f === 'Hashtags') {
                const tags = String(val).trim().split(/\s+/).filter(t => t.startsWith('#'));
@@ -654,12 +649,10 @@
                    return `<div class="mb-2"><p class="text-[10px] font-semibold text-slate-400">${f}</p><div class="flex flex-wrap gap-1.5">${chips}</div></div>`;
                }
            }
-           // comportement normal : copie de tout le contenu en un clic
            const copyId = 'cp' + (Object.keys(seoCopyStore).length + 1);
            seoCopyStore[copyId] = val;
            return `<div class="mb-2"><p class="text-[10px] font-semibold text-slate-400">${f}</p><p class="seo-copy text-xs text-slate-200 whitespace-pre-wrap break-words" title="Cliquer pour copier" onclick="copySeoFieldValue('${copyId}', this)">${escapeHtml(val)}</p></div>`;
        }
-       // ===== FIN MODIFICATION HASHTAGS FACEBOOK =====
 
        // ===== configuration runtime chargée depuis le dépôt (secrets) =====
        let runtimeConfig = { gh_token: '', or_api_key: '' };
@@ -811,7 +804,6 @@
 
        // --- IMPORT PACKAGE SEO ---
        const seoSectionAliases = { 'youtube': 'yt', 'tiktok': 'tiktok', 'instagram': 'ig', 'facebook': 'fb', 'pinterest': 'pin' };
-       // ===== alias 'playlist allocation', 'alt text'/'alt', 'hashtag strategy', 'playlist name' =====
        const seoFieldAliases = {
            'playlist': '__PLAYLIST__', 'playlist name': '__PLAYLIST__', 'playlist allocation': '__PLAYLIST__',
            'script start': 'Script Start', 'script': 'Script Start',
@@ -851,7 +843,7 @@
                        inFence = true;
                        out.push(line);
                    } else if (/^```[\w+-]+$/.test(t)) {
-                       continue; // ouverture imbriquée à l'intérieur d'un bloc → supprimée
+                       continue;
                    } else {
                        inFence = false;
                        out.push(line);
@@ -1747,6 +1739,7 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
            if (!res.ok && res.status !== 404) throw new Error('Suppression GitHub impossible (HTTP ' + res.status + ')');
        }
 
+       // ===== DÉBUT CORRECTIF 422 : lecture via blob pour fichiers > 1 Mo =====
        async function fetchDataFromGitHub() {
            const { username, repo, token } = getGitHubConfig();
            const url = `https://api.github.com/repos/${username}/${repo}/contents/${FILE_PATH}?t=${Date.now()}`;
@@ -1755,23 +1748,131 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
            if (!res.ok) throw new Error('Lecture GitHub impossible (HTTP ' + res.status + ')');
            const json = await res.json();
            currentSha = json.sha;
+           let contentB64 = json.content || '';
+           // Fichier > 1 Mo : l'API Contents ne renvoie pas de contenu — on passe par le blob git
+           if (!contentB64) {
+               let blobUrl = json.git_url || '';
+               if (!blobUrl && json.sha) {
+                   blobUrl = `https://api.github.com/repos/${username}/${repo}/git/blobs/${json.sha}`;
+               }
+               if (!blobUrl) throw new Error('Fichier trop volumineux et blob inaccessible.');
+               const blobRes = await fetch(blobUrl, { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' } });
+               if (!blobRes.ok) throw new Error('Lecture du blob impossible (HTTP ' + blobRes.status + ')');
+               const blobJson = await blobRes.json();
+               contentB64 = blobJson.content || '';
+           }
            try {
-               const bytes = Uint8Array.from(atob(json.content.replace(/\s/g, '')), c => c.charCodeAt(0));
+               const bytes = Uint8Array.from(atob(contentB64.replace(/\s/g, '')), c => c.charCodeAt(0));
                return JSON.parse(new TextDecoder().decode(bytes));
            } catch (e) { throw new Error('Fichier JSON illisible.'); }
        }
+       // ===== FIN CORRECTIF 422 (lecture) =====
 
-       // ===== Correctif 409 : file d'attente + retry avec SHA rechargé =====
-       // File d'attente : les écritures GitHub sont sérialisées (jamais deux PUT simultanés)
+       // ===== DÉBUT CORRECTIF 422 : écriture via l'API Git Data pour fichiers > 1 Mo =====
+       // File d'attente : les écritures GitHub sont sérialisées (jamais deux pushs simultanés)
        let pushChain = Promise.resolve();
+
+       // Seuil : au-delà, on passe directement par l'API Git Data
+       // (l'API Contents refuse les fichiers > 1 Mo avec HTTP 422)
+       const GIT_DATA_THRESHOLD = 1000000; // caractères base64 (~720 Ko de données)
+
+       // Cache de la branche par défaut (évitons un fetch à chaque écriture)
+       let repoDefaultBranchCache = {};
+       async function getRepoDefaultBranch(username, repo, token) {
+           const key = `${username}/${repo}`;
+           if (repoDefaultBranchCache[key]) return repoDefaultBranchCache[key];
+           const res = await fetch(`https://api.github.com/repos/${username}/${repo}`, {
+               headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' }
+           });
+           if (!res.ok) throw new Error('Lecture du dépôt impossible (HTTP ' + res.status + ')');
+           const j = await res.json();
+           const b = j.default_branch || 'main';
+           repoDefaultBranchCache[key] = b;
+           return b;
+       }
+
+       // Écriture via l'API Git Data (blobs/trees/commits) — supporte jusqu'à 100 Mo
+       // et remplace UNIQUEMENT le fichier publications.json (les autres fichiers du dépôt sont préservés)
+       async function pushViaGitDataAPI(username, repo, token, b64Content, message) {
+           const ghHeaders = { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json' };
+           // 1. Branche par défaut
+           const branch = await getRepoDefaultBranch(username, repo, token);
+           // 2. Ref de la branche → SHA du commit courant
+           const refRes = await fetch(`https://api.github.com/repos/${username}/${repo}/git/ref/heads/${encodeURIComponent(branch)}`, {
+               headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' }
+           });
+           if (!refRes.ok) throw new Error('Lecture de la branche impossible (HTTP ' + refRes.status + ')');
+           const refJson = await refRes.json();
+           const parentCommitSha = refJson.object.sha;
+           // 3. Commit courant → SHA de l'arbre
+           const commitRes = await fetch(`https://api.github.com/repos/${username}/${repo}/git/commits/${parentCommitSha}`, {
+               headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' }
+           });
+           if (!commitRes.ok) throw new Error('Lecture du commit impossible (HTTP ' + commitRes.status + ')');
+           const commitJson = await commitRes.json();
+           const baseTreeSha = commitJson.tree.sha;
+           // 4. Création du blob (contenu en base64)
+           const blobRes = await fetch(`https://api.github.com/repos/${username}/${repo}/git/blobs`, {
+               method: 'POST',
+               headers: ghHeaders,
+               body: JSON.stringify({ content: b64Content, encoding: 'base64' })
+           });
+           if (!blobRes.ok) throw new Error('Création du blob impossible (HTTP ' + blobRes.status + ')');
+           const blobJson = await blobRes.json();
+           // 5. Création de l'arbre : publications.json remplacé, tout le reste conservé (base_tree)
+           const treeRes = await fetch(`https://api.github.com/repos/${username}/${repo}/git/trees`, {
+               method: 'POST',
+               headers: ghHeaders,
+               body: JSON.stringify({
+                   base_tree: baseTreeSha,
+                   tree: [{ path: FILE_PATH, mode: '100644', type: 'blob', sha: blobJson.sha }]
+               })
+           });
+           if (!treeRes.ok) throw new Error('Création de l\'arbre impossible (HTTP ' + treeRes.status + ')');
+           const treeJson = await treeRes.json();
+           // 6. Création du commit
+           const newCommitRes = await fetch(`https://api.github.com/repos/${username}/${repo}/git/commits`, {
+               method: 'POST',
+               headers: ghHeaders,
+               body: JSON.stringify({
+                   message: message || 'Mise à jour publications.json',
+                   tree: treeJson.sha,
+                   parents: [parentCommitSha]
+               })
+           });
+           if (!newCommitRes.ok) throw new Error('Création du commit impossible (HTTP ' + newCommitRes.status + ')');
+           const newCommitJson = await newCommitRes.json();
+           // 7. La branche pointe sur le nouveau commit
+           const refPatchRes = await fetch(`https://api.github.com/repos/${username}/${repo}/git/refs/heads/${encodeURIComponent(branch)}`, {
+               method: 'PATCH',
+               headers: ghHeaders,
+               body: JSON.stringify({ sha: newCommitJson.sha, force: false })
+           });
+           if (!refPatchRes.ok) throw new Error('Mise à jour de la branche impossible (HTTP ' + refPatchRes.status + ')');
+           currentSha = newCommitJson.sha;
+           return true;
+       }
 
        async function pushDataToGitHub(message) {
            const run = async () => {
                const { username, repo, token } = getGitHubConfig();
                if (!username || !repo || !token) throw new Error('GitHub non configuré');
+               const b64 = utf8ToBase64(JSON.stringify({ projects }, null, 2));
                let lastErr = null;
-               // jusqu'à 3 tentatives en cas de 409 (SHA périmé — fichier modifié entre-temps sur GitHub)
+               // jusqu'à 3 tentatives (409 = SHA périmé, 422 = fichier trop gros pour l'API Contents)
                for (let attempt = 1; attempt <= 3; attempt++) {
+                   // Gros fichier : API Git Data directement
+                   if (b64.length > GIT_DATA_THRESHOLD) {
+                       try {
+                           await pushViaGitDataAPI(username, repo, token, b64, message);
+                           return true;
+                       } catch (e) {
+                           lastErr = e;
+                           await new Promise(r => setTimeout(r, 700 * attempt));
+                           continue;
+                       }
+                   }
+                   // Voie classique : API Contents
                    let sha = null;
                    try {
                        const resGet = await fetch(`https://api.github.com/repos/${username}/${repo}/contents/${FILE_PATH}?t=${Date.now()}`, {
@@ -1781,7 +1882,7 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                    } catch (e) { /* fichier peut-être inexistant */ }
                    const payload = {
                        message: message || 'Mise à jour publications.json',
-                       content: utf8ToBase64(JSON.stringify({ projects }, null, 2))
+                       content: b64
                    };
                    if (sha) payload.sha = sha;
                    const res = await fetch(`https://api.github.com/repos/${username}/${repo}/contents/${FILE_PATH}`, {
@@ -1800,15 +1901,28 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                        await new Promise(r => setTimeout(r, 700 * attempt));
                        continue;
                    }
+                   if (res.status === 422) {
+                       // Fichier trop volumineux pour l'API Contents → bascule API Git Data
+                       lastErr = new Error('Écriture GitHub impossible (HTTP 422 — fichier trop volumineux)');
+                       try {
+                           await pushViaGitDataAPI(username, repo, token, b64, message);
+                           return true;
+                       } catch (e) {
+                           lastErr = e;
+                           await new Promise(r => setTimeout(r, 700 * attempt));
+                           continue;
+                       }
+                   }
                    throw new Error('Écriture GitHub impossible (HTTP ' + res.status + ')');
                }
-               throw lastErr || new Error('Écriture GitHub impossible (HTTP 409)');
+               throw lastErr || new Error('Écriture GitHub impossible');
            };
            // Sérialisation : chaque push attend la fin du précédent (même s'il a échoué)
            const p = pushChain.then(run, run);
            pushChain = p.catch(() => {});
            return p;
        }
+       // ===== FIN CORRECTIF 422 (écriture) =====
 
        async function syncFromGitHub(silent = false) {
            try {
