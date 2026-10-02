@@ -62,6 +62,11 @@
        .seo-copy:hover { background: rgba(99,102,241,.18); }
        .copied-flash { background: rgba(16,185,129,.28) !important; }
 
+       /* ===== DÉBUT MODIFICATION HASHTAGS FACEBOOK : pills copiables une par une ===== */
+       .seo-hash { display: inline-flex; align-items: center; cursor: pointer; border-radius: 6px; padding: 2px 7px; background: rgba(99,102,241,.10); border: 1px solid rgba(99,102,241,.28); color: #e2e8f0; font-size: 12px; transition: background .15s ease; }
+       .seo-hash:hover { background: rgba(99,102,241,.30); }
+       /* ===== FIN MODIFICATION HASHTAGS FACEBOOK ===== */
+
        .plat-chip { opacity: .35; filter: grayscale(.8); transition: all .15s ease; }
        .plat-chip.active { opacity: 1; filter: none; }
 
@@ -633,6 +638,28 @@
                })
                .catch(() => showToast('Copie impossible — appuyez longuement pour sélectionner le texte.', 'error'));
        }
+
+       // ===== DÉBUT MODIFICATION HASHTAGS FACEBOOK : rendu lecture des valeurs de champ =====
+       // Facebook + champ Hashtags uniquement : chaque hashtag est une pill copiable individuellement.
+       // Tous les autres champs / plateformes : copie du bloc entier en un clic (comportement inchangé).
+       function renderReadFieldValue(platId, f, val) {
+           if (platId === 'fb' && f === 'Hashtags') {
+               const tags = String(val).trim().split(/\s+/).filter(t => t.startsWith('#'));
+               if (tags.length) {
+                   const chips = tags.map(t => {
+                       const copyId = 'cp' + (Object.keys(seoCopyStore).length + 1);
+                       seoCopyStore[copyId] = t;
+                       return `<span class="seo-hash" title="Cliquer pour copier ce hashtag" onclick="copySeoFieldValue('${copyId}', this)">${escapeHtml(t)}</span>`;
+                   }).join('');
+                   return `<div class="mb-2"><p class="text-[10px] font-semibold text-slate-400">${f}</p><div class="flex flex-wrap gap-1.5">${chips}</div></div>`;
+               }
+           }
+           // comportement normal : copie de tout le contenu en un clic
+           const copyId = 'cp' + (Object.keys(seoCopyStore).length + 1);
+           seoCopyStore[copyId] = val;
+           return `<div class="mb-2"><p class="text-[10px] font-semibold text-slate-400">${f}</p><p class="seo-copy text-xs text-slate-200 whitespace-pre-wrap break-words" title="Cliquer pour copier" onclick="copySeoFieldValue('${copyId}', this)">${escapeHtml(val)}</p></div>`;
+       }
+       // ===== FIN MODIFICATION HASHTAGS FACEBOOK =====
 
        // ===== configuration runtime chargée depuis le dépôt (secrets) =====
        let runtimeConfig = { gh_token: '', or_api_key: '' };
@@ -1734,7 +1761,7 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
            } catch (e) { throw new Error('Fichier JSON illisible.'); }
        }
 
-       // ===== DÉBUT CORRECTIF 409 : file d'attente + retry avec SHA rechargé =====
+       // ===== Correctif 409 : file d'attente + retry avec SHA rechargé =====
        // File d'attente : les écritures GitHub sont sérialisées (jamais deux PUT simultanés)
        let pushChain = Promise.resolve();
 
@@ -1782,7 +1809,6 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
            pushChain = p.catch(() => {});
            return p;
        }
-       // ===== FIN CORRECTIF 409 =====
 
        async function syncFromGitHub(silent = false) {
            try {
@@ -2653,10 +2679,8 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                    if (editMode) {
                        html += `<div class="mb-2"><p class="text-[10px] font-semibold text-slate-400">${f}</p><textarea id="edit_seo_${platId}_${f.replace(/[\s\/]/g, '_')}" rows="${fieldRows(f)}" placeholder="${f}..." class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 resize-y font-mono">${escapeHtml(val)}</textarea></div>`;
                    } else if (val) {
-                       // ===== contenu copiable en un clic =====
-                       const copyId = 'cp' + (Object.keys(seoCopyStore).length + 1);
-                       seoCopyStore[copyId] = val;
-                       html += `<div class="mb-2"><p class="text-[10px] font-semibold text-slate-400">${f}</p><p class="seo-copy text-xs text-slate-200 whitespace-pre-wrap break-words" title="Cliquer pour copier" onclick="copySeoFieldValue('${copyId}', this)">${escapeHtml(val)}</p></div>`;
+                       // ===== contenu copiable en un clic (Facebook : hashtags copiables un par un) =====
+                       html += renderReadFieldValue(platId, f, val);
                    } else {
                        html += `<div class="mb-2"><p class="text-[10px] font-semibold text-slate-400">${f}</p><p class="text-xs text-slate-500">—</p></div>`;
                    }
@@ -2752,11 +2776,9 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
                    </div>`;
            cfg.fields.forEach(f => {
                const val = (proj.seo && proj.seo[platformId] && proj.seo[platformId][f]) || '';
-               // ===== contenu copiable en un clic =====
+               // ===== contenu copiable en un clic (Facebook : hashtags copiables un par un) =====
                if (val) {
-                   const copyId = 'cp' + (Object.keys(seoCopyStore).length + 1);
-                   seoCopyStore[copyId] = val;
-                   html += `<div class="mb-2"><p class="text-[10px] font-semibold text-slate-400">${f}</p><p class="seo-copy text-xs text-slate-200 whitespace-pre-wrap break-words" title="Cliquer pour copier" onclick="copySeoFieldValue('${copyId}', this)">${escapeHtml(val)}</p></div>`;
+                   html += renderReadFieldValue(platformId, f, val);
                } else {
                    html += `<div class="mb-2"><p class="text-[10px] font-semibold text-slate-400">${f}</p><p class="text-xs text-slate-500">—</p></div>`;
                }
