@@ -784,8 +784,12 @@
           "ALT Text": "Vintage historical graphic depicting a desert canyon landscape with sepia tones highlighting the history of the American Southwest."
         }
       },
-      "validations": {},
-      "status": {},
+      "validations": {
+        "yt": true
+      },
+      "status": {
+        "yt": "publie"
+      },
       "assets": {},
       "createdAt": "2026-10-02T06:54:28.538Z"
     }
