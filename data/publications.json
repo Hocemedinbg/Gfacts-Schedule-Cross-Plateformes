@@ -714,8 +714,12 @@
           "ALT Text": "Vintage Cold War era illustration showing a command center monitor displaying an early warning satellite detection map."
         }
       },
-      "validations": {},
-      "status": {},
+      "validations": {
+        "yt": true
+      },
+      "status": {
+        "yt": "publie"
+      },
       "assets": {
         "yt": [
           {
