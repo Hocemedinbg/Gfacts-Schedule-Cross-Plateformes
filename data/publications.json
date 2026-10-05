@@ -902,11 +902,13 @@
       },
       "validations": {
         "pin": true,
-        "yt": true
+        "yt": true,
+        "fb": true
       },
       "status": {
         "pin": "publie",
-        "yt": "publie"
+        "yt": "publie",
+        "fb": "publie"
       },
       "assets": {},
       "createdAt": "2026-10-05T19:23:03.124Z"
