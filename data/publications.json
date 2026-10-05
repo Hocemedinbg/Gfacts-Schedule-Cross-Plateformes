@@ -903,12 +903,14 @@
       "validations": {
         "pin": true,
         "yt": true,
-        "fb": true
+        "fb": true,
+        "ig": true
       },
       "status": {
         "pin": "publie",
         "yt": "publie",
-        "fb": "publie"
+        "fb": "publie",
+        "ig": "publie"
       },
       "assets": {},
       "createdAt": "2026-10-05T19:23:03.124Z"
