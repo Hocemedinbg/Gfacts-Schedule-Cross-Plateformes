@@ -900,8 +900,12 @@
           "ALT Text": "Vintage historical graphic depicting an 1800s American frontier landscape with historical documentation themes."
         }
       },
-      "validations": {},
-      "status": {},
+      "validations": {
+        "pin": true
+      },
+      "status": {
+        "pin": "publie"
+      },
       "assets": {},
       "createdAt": "2026-10-05T19:23:03.124Z"
     }
