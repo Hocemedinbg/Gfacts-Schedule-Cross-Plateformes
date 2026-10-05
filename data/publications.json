@@ -845,12 +845,14 @@
       "validations": {
         "yt": true,
         "pin": true,
-        "tiktok": true
+        "tiktok": true,
+        "fb": true
       },
       "status": {
         "yt": "publie",
         "pin": "publie",
-        "tiktok": "publie"
+        "tiktok": "publie",
+        "fb": "publie"
       },
       "assets": {},
       "createdAt": "2026-10-05T18:42:43.985Z"
