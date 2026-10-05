@@ -842,8 +842,12 @@
           "ALT Text": "Vintage historical graphic depicting a 1970s laboratory setup with technical blueprints and scientific instruments."
         }
       },
-      "validations": {},
-      "status": {},
+      "validations": {
+        "yt": true
+      },
+      "status": {
+        "yt": "publie"
+      },
       "assets": {},
       "createdAt": "2026-10-05T18:42:43.985Z"
     }
