@@ -904,13 +904,15 @@
         "pin": true,
         "yt": true,
         "fb": true,
-        "ig": true
+        "ig": true,
+        "tiktok": true
       },
       "status": {
         "pin": "publie",
         "yt": "publie",
         "fb": "publie",
-        "ig": "publie"
+        "ig": "publie",
+        "tiktok": "publie"
       },
       "assets": {},
       "createdAt": "2026-10-05T19:23:03.124Z"
