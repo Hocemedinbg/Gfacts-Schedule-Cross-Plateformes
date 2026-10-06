@@ -961,12 +961,14 @@
       "validations": {
         "yt": true,
         "pin": true,
-        "ig": true
+        "ig": true,
+        "fb": true
       },
       "status": {
         "yt": "publie",
         "pin": "publie",
-        "ig": "publie"
+        "ig": "publie",
+        "fb": "publie"
       },
       "assets": {},
       "createdAt": "2026-10-05T20:29:13.908Z"
