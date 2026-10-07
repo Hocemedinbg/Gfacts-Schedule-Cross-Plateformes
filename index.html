@@ -2633,7 +2633,69 @@ When you receive a PDF, extract the core ideas, reorganize them for pacing and d
            </div>`;
        }
 
+       // ===== compression automatique des images (miniatures / assets) =====
+       // Redimensionne les images trop grandes et recompresse en WebP/JPEG/PNG.
+       // Ne touche ni aux GIF (animation) ni aux SVG (vectoriel). En cas d'échec, renvoie le fichier original.
+       async function compressImageIfNeeded(file, maxDim = 1920, quality = 0.82) {
+           if (!file || !file.type || !file.type.startsWith('image/')) return file;
+           if (file.type === 'image/gif' || file.type === 'image/svg+xml') return file;
+           try {
+               const dataUrl = await new Promise((resolve, reject) => {
+                   const r = new FileReader();
+                   r.onload = () => resolve(r.result);
+                   r.onerror = () => reject(new Error('lecture image impossible'));
+                   r.readAsDataURL(file);
+               });
+               const img = await new Promise((resolve, reject) => {
+                   const i = new Image();
+                   i.onload = () => resolve(i);
+                   i.onerror = () => reject(new Error('chargement image impossible'));
+                   i.src = dataUrl;
+               });
+               let { width, height } = img;
+               if (width > maxDim || height > maxDim) {
+                   if (width >= height) {
+                       height = Math.round(height * (maxDim / width));
+                       width = maxDim;
+                   } else {
+                       width = Math.round(width * (maxDim / height));
+                       height = maxDim;
+                   }
+               }
+               const canvas = document.createElement('canvas');
+               canvas.width = width;
+               canvas.height = height;
+               const ctx = canvas.getContext('2d');
+               let outputType = 'image/jpeg';
+               // Préserver la transparence pour les PNG en tentant WebP (largement supporté)
+               if (file.type === 'image/png') {
+                   const test = canvas.toDataURL('image/webp');
+                   outputType = test.startsWith('data:image/webp') ? 'image/webp' : 'image/png';
+               }
+               if (outputType === 'image/jpeg') {
+                   ctx.fillStyle = '#ffffff';
+                   ctx.fillRect(0, 0, width, height);
+               }
+               ctx.drawImage(img, 0, 0, width, height);
+               const blob = await new Promise(resolve => canvas.toBlob(b => resolve(b), outputType, quality));
+               if (!blob || blob.size >= file.size) return file;
+               const ext = outputType === 'image/webp' ? '.webp' : (outputType === 'image/png' ? '.png' : '.jpg');
+               const newName = file.name.replace(/\.[^.]+$/, '') + ext;
+               try {
+                   return new File([blob], newName, { type: outputType, lastModified: Date.now() });
+               } catch (err) {
+                   // Fallback : Blob enrichi d'un .name pour compatibilité
+                   blob.name = newName;
+                   return blob;
+               }
+           } catch (e) {
+               return file;
+           }
+       }
+
        async function createAssetEntry(projectId, platformId, file) {
+           // Compression automatique des images avant upload (miniatures, visuels, etc.)
+           file = await compressImageIfNeeded(file);
            const gh = getGitHubConfig();
            const ghReady = !!(gh.username && gh.repo && gh.token);
            const MAX_GH = 20 * 1048576, MAX_B64 = 2 * 1048576;
