@@ -1019,12 +1019,14 @@
       "validations": {
         "yt": true,
         "fb": true,
-        "ig": true
+        "ig": true,
+        "pin": true
       },
       "status": {
         "yt": "publie",
         "fb": "publie",
-        "ig": "publie"
+        "ig": "publie",
+        "pin": "publie"
       },
       "assets": {},
       "createdAt": "2026-10-10T11:08:30.560Z"
