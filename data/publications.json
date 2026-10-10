@@ -1017,10 +1017,12 @@
         }
       },
       "validations": {
-        "yt": true
+        "yt": true,
+        "fb": true
       },
       "status": {
-        "yt": "publie"
+        "yt": "publie",
+        "fb": "publie"
       },
       "assets": {},
       "createdAt": "2026-10-10T11:08:30.560Z"
