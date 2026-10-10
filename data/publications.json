@@ -1018,11 +1018,13 @@
       },
       "validations": {
         "yt": true,
-        "fb": true
+        "fb": true,
+        "ig": true
       },
       "status": {
         "yt": "publie",
-        "fb": "publie"
+        "fb": "publie",
+        "ig": "publie"
       },
       "assets": {},
       "createdAt": "2026-10-10T11:08:30.560Z"
