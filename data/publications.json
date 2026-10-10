@@ -1016,8 +1016,12 @@
           "ALT Text": "Vintage Cold War era graphic with a retro intelligence dossier layout featuring historical spy camera blueprints and text files."
         }
       },
-      "validations": {},
-      "status": {},
+      "validations": {
+        "yt": true
+      },
+      "status": {
+        "yt": "publie"
+      },
       "assets": {},
       "createdAt": "2026-10-10T11:08:30.560Z"
     }
