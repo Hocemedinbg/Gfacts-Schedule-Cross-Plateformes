@@ -1178,8 +1178,12 @@
           "ALT Text": "Infographic title graphic detailing the espionage history and double betrayal of MI6 agent Kim Philby during World War II and the Cold War."
         }
       },
-      "validations": {},
-      "status": {},
+      "validations": {
+        "yt": true
+      },
+      "status": {
+        "yt": "publie"
+      },
       "assets": {},
       "createdAt": "2026-10-15T11:38:13.079Z"
     }
