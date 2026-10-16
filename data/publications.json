@@ -1239,12 +1239,14 @@
       "validations": {
         "yt": true,
         "pin": true,
-        "tiktok": true
+        "tiktok": true,
+        "fb": true
       },
       "status": {
         "yt": "publie",
         "pin": "publie",
-        "tiktok": "publie"
+        "tiktok": "publie",
+        "fb": "publie"
       },
       "assets": {},
       "createdAt": "2026-10-16T07:15:15.721Z"
