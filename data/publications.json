@@ -1294,8 +1294,12 @@
           "ALT Text": "Infographic title graphic breaking down the FBI's Operation Ghost Stories and the unmasking of Russian SVR spy Vladimir Guryev."
         }
       },
-      "validations": {},
-      "status": {},
+      "validations": {
+        "yt": true
+      },
+      "status": {
+        "yt": "publie"
+      },
       "assets": {},
       "createdAt": "2026-10-18T11:49:03.900Z"
     }
