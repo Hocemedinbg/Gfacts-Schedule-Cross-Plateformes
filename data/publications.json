@@ -1410,8 +1410,12 @@
           "ALT Text": "Infographic title graphic detailing the battle timeline of Red Cloud's War and the Fetterman Fight in 1866."
         }
       },
-      "validations": {},
-      "status": {},
+      "validations": {
+        "yt": true
+      },
+      "status": {
+        "yt": "publie"
+      },
       "assets": {},
       "createdAt": "2026-10-18T14:21:12.463Z"
     }
