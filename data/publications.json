@@ -1296,11 +1296,13 @@
       },
       "validations": {
         "yt": true,
-        "fb": true
+        "fb": true,
+        "pin": true
       },
       "status": {
         "yt": "publie",
-        "fb": "publie"
+        "fb": "publie",
+        "pin": "publie"
       },
       "assets": {},
       "createdAt": "2026-10-18T11:49:03.900Z"
