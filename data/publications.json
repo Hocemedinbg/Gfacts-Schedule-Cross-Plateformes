@@ -1354,11 +1354,13 @@
       },
       "validations": {
         "yt": true,
-        "pin": true
+        "pin": true,
+        "fb": true
       },
       "status": {
         "yt": "publie",
-        "pin": "publie"
+        "pin": "publie",
+        "fb": "publie"
       },
       "assets": {},
       "createdAt": "2026-10-18T13:20:35.610Z"
