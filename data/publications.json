@@ -1355,12 +1355,14 @@
       "validations": {
         "yt": true,
         "pin": true,
-        "fb": true
+        "fb": true,
+        "tiktok": true
       },
       "status": {
         "yt": "publie",
         "pin": "publie",
-        "fb": "publie"
+        "fb": "publie",
+        "tiktok": "publie"
       },
       "assets": {},
       "createdAt": "2026-10-18T13:20:35.610Z"
