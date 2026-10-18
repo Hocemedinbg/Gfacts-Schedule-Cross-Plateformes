@@ -1412,11 +1412,15 @@
       },
       "validations": {
         "yt": true,
-        "pin": true
+        "pin": true,
+        "fb": false,
+        "tiktok": true
       },
       "status": {
         "yt": "publie",
-        "pin": "publie"
+        "pin": "publie",
+        "fb": "a_planifier",
+        "tiktok": "publie"
       },
       "assets": {},
       "createdAt": "2026-10-18T14:21:12.463Z"
