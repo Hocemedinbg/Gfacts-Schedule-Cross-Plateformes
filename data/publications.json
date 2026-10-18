@@ -1353,10 +1353,12 @@
         }
       },
       "validations": {
-        "yt": true
+        "yt": true,
+        "pin": true
       },
       "status": {
-        "yt": "publie"
+        "yt": "publie",
+        "pin": "publie"
       },
       "assets": {},
       "createdAt": "2026-10-18T13:20:35.610Z"
