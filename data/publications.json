@@ -1468,8 +1468,12 @@
           "ALT Text": "Infographic title graphic breaking down the spy techniques of short burst radio transmissions and digital photo steganography."
         }
       },
-      "validations": {},
-      "status": {},
+      "validations": {
+        "yt": true
+      },
+      "status": {
+        "yt": "publie"
+      },
       "assets": {},
       "createdAt": "2026-10-19T10:56:51.562Z"
     }
