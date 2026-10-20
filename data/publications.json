@@ -1527,10 +1527,14 @@
         }
       },
       "validations": {
-        "yt": true
+        "yt": true,
+        "pin": false,
+        "fb": true
       },
       "status": {
-        "yt": "publie"
+        "yt": "publie",
+        "pin": "a_planifier",
+        "fb": "publie"
       },
       "assets": {},
       "createdAt": "2026-10-20T06:23:08.139Z"
