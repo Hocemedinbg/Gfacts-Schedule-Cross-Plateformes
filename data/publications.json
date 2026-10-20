@@ -1182,14 +1182,14 @@
         "yt": true,
         "pin": true,
         "fb": true,
-        "ig": false,
+        "ig": true,
         "tiktok": true
       },
       "status": {
         "yt": "publie",
         "pin": "publie",
         "fb": "publie",
-        "ig": "a_planifier",
+        "ig": "publie",
         "tiktok": "publie"
       },
       "assets": {},
