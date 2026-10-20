@@ -1530,13 +1530,15 @@
         "yt": true,
         "pin": false,
         "fb": true,
-        "ig": true
+        "ig": true,
+        "tiktok": true
       },
       "status": {
         "yt": "publie",
         "pin": "a_planifier",
         "fb": "publie",
-        "ig": "publie"
+        "ig": "publie",
+        "tiktok": "publie"
       },
       "assets": {},
       "createdAt": "2026-10-20T06:23:08.139Z"
