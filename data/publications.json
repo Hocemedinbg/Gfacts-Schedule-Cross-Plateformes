@@ -1584,8 +1584,12 @@
           "ALT Text": "Infographic title graphic summarizing three historical decisions by Julius Caesar, Emperor Constantine, and Martin Luther that shaped world history."
         }
       },
-      "validations": {},
-      "status": {},
+      "validations": {
+        "yt": true
+      },
+      "status": {
+        "yt": "publie"
+      },
       "assets": {},
       "createdAt": "2026-10-22T06:17:05.196Z"
     }
