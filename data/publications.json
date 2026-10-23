@@ -1700,8 +1700,12 @@
           "ALT Text": "Infographic title graphic summarizing the timeline of Operation Gladio, the Strategy of Tension, and the Years of Lead in Italy."
         }
       },
-      "validations": {},
-      "status": {},
+      "validations": {
+        "yt": true
+      },
+      "status": {
+        "yt": "publie"
+      },
       "assets": {},
       "createdAt": "2026-10-23T06:31:54.541Z"
     }
