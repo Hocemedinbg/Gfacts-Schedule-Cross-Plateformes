@@ -1642,8 +1642,12 @@
           "ALT Text": "Infographic title graphic comparing the nuclear decisions of President Harry Truman in 1945 and President John F. Kennedy in 1962."
         }
       },
-      "validations": {},
-      "status": {},
+      "validations": {
+        "yt": true
+      },
+      "status": {
+        "yt": "publie"
+      },
       "assets": {},
       "createdAt": "2026-10-22T06:43:11.471Z"
     }
