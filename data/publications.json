@@ -1817,10 +1817,12 @@
         }
       },
       "validations": {
-        "yt": true
+        "yt": true,
+        "pin": true
       },
       "status": {
-        "yt": "publie"
+        "yt": "publie",
+        "pin": "publie"
       },
       "assets": {},
       "createdAt": "2026-10-24T15:48:21.177Z"
