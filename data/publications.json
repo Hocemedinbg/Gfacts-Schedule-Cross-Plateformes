@@ -1935,12 +1935,14 @@
       "validations": {
         "yt": true,
         "pin": true,
-        "fb": true
+        "fb": true,
+        "ig": true
       },
       "status": {
         "yt": "publie",
         "pin": "publie",
-        "fb": "publie"
+        "fb": "publie",
+        "ig": "publie"
       },
       "assets": {},
       "createdAt": "2026-10-24T17:55:07.528Z"
