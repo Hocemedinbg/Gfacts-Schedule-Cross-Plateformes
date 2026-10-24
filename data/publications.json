@@ -1932,8 +1932,12 @@
           "ALT Text": "Infographic title graphic summarizing the 1990 declassification timeline of Operation Gladio and European parliamentary investigations."
         }
       },
-      "validations": {},
-      "status": {},
+      "validations": {
+        "yt": true
+      },
+      "status": {
+        "yt": "publie"
+      },
       "assets": {},
       "createdAt": "2026-10-24T17:55:07.528Z"
     }
