@@ -1876,11 +1876,13 @@
       },
       "validations": {
         "yt": true,
-        "fb": true
+        "fb": true,
+        "pin": true
       },
       "status": {
         "yt": "publie",
-        "fb": "publie"
+        "fb": "publie",
+        "pin": "publie"
       },
       "assets": {},
       "createdAt": "2026-10-24T17:23:25.614Z"
