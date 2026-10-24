@@ -1874,8 +1874,12 @@
           "ALT Text": "Infographic title graphic breaking down the historical timeline of Ngo Dinh Diem's regime and the 1963 Saigon coup."
         }
       },
-      "validations": {},
-      "status": {},
+      "validations": {
+        "yt": true
+      },
+      "status": {
+        "yt": "publie"
+      },
       "assets": {},
       "createdAt": "2026-10-24T17:23:25.614Z"
     }
