@@ -1934,11 +1934,13 @@
       },
       "validations": {
         "yt": true,
-        "pin": true
+        "pin": true,
+        "fb": true
       },
       "status": {
         "yt": "publie",
-        "pin": "publie"
+        "pin": "publie",
+        "fb": "publie"
       },
       "assets": {},
       "createdAt": "2026-10-24T17:55:07.528Z"
