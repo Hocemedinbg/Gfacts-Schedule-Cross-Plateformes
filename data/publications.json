@@ -1816,8 +1816,12 @@
           "ALT Text": "Infographic title graphic breaking down the historical timeline of U.S. involvement in Vietnam during the 1950s."
         }
       },
-      "validations": {},
-      "status": {},
+      "validations": {
+        "yt": true
+      },
+      "status": {
+        "yt": "publie"
+      },
       "assets": {},
       "createdAt": "2026-10-24T15:48:21.177Z"
     }
