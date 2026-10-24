@@ -1875,10 +1875,12 @@
         }
       },
       "validations": {
-        "yt": true
+        "yt": true,
+        "fb": true
       },
       "status": {
-        "yt": "publie"
+        "yt": "publie",
+        "fb": "publie"
       },
       "assets": {},
       "createdAt": "2026-10-24T17:23:25.614Z"
