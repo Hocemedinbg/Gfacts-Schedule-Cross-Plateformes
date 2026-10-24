@@ -1762,13 +1762,15 @@
         "yt": true,
         "fb": true,
         "ig": true,
-        "tiktok": true
+        "tiktok": true,
+        "pin": true
       },
       "status": {
         "yt": "publie",
         "fb": "publie",
         "ig": "publie",
-        "tiktok": "publie"
+        "tiktok": "publie",
+        "pin": "publie"
       },
       "assets": {},
       "createdAt": "2026-10-24T09:56:19.891Z"
