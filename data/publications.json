@@ -1758,8 +1758,12 @@
           "ALT Text": "Infographic title graphic detailing the unmasking of Anna Chapman and the Russian illegals spy network by the FBI."
         }
       },
-      "validations": {},
-      "status": {},
+      "validations": {
+        "yt": true
+      },
+      "status": {
+        "yt": "publie"
+      },
       "assets": {},
       "createdAt": "2026-10-24T09:56:19.891Z"
     }
