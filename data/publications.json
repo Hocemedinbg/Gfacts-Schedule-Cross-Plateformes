@@ -2048,11 +2048,13 @@
       },
       "validations": {
         "yt": true,
-        "pin": true
+        "pin": true,
+        "fb": true
       },
       "status": {
         "yt": "publie",
-        "pin": "publie"
+        "pin": "publie",
+        "fb": "publie"
       },
       "assets": {},
       "createdAt": "2026-10-25T10:52:59.768Z"
