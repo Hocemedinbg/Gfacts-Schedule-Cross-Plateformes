@@ -1988,8 +1988,12 @@
           "ALT Text": "Infographic title graphic summarizing the historical decisions of Napoleon Bonaparte in 1804 and Gavrilo Princip in 1914."
         }
       },
-      "validations": {},
-      "status": {},
+      "validations": {
+        "yt": true
+      },
+      "status": {
+        "yt": "publie"
+      },
       "assets": {},
       "createdAt": "2026-10-24T20:10:36.589Z"
     }
