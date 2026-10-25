@@ -2046,8 +2046,12 @@
           "ALT Text": "Infographic title graphic breaking down the events of the 2010 FBI Operation Ghost Stories and the Vienna spy swap."
         }
       },
-      "validations": {},
-      "status": {},
+      "validations": {
+        "yt": true
+      },
+      "status": {
+        "yt": "publie"
+      },
       "assets": {},
       "createdAt": "2026-10-25T10:52:59.768Z"
     }
