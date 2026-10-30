@@ -2104,8 +2104,12 @@
           "ALT Text": "Infographic graphic detailing the historical timeline of the Navajo Long Walk and Kit Carson's campaign in 1864."
         }
       },
-      "validations": {},
-      "status": {},
+      "validations": {
+        "yt": true
+      },
+      "status": {
+        "yt": "publie"
+      },
       "assets": {},
       "createdAt": "2026-10-30T06:48:19.097Z"
     }
