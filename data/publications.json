@@ -125,8 +125,12 @@
           "Hashtags": "#RadiumGirls #DarkHistory #1920sHistory #HistoricalFacts #HistoryBuff #TrueStories #HistoricalDocumentary #VintageHistory #HistoricalStories #ScienceHistory #LaborHistory"
         }
       },
-      "validations": {},
-      "status": {},
+      "validations": {
+        "pin": true
+      },
+      "status": {
+        "pin": "publie"
+      },
       "assets": {
         "yt": [
           {
